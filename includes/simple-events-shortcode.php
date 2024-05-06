@@ -73,7 +73,7 @@ function simple_events_calendar_archive_shortcode($atts)
             echo '<div id="load-more-events" class="load-more" style="display: none;">Loading...</div>';
         } else {
             // No events message
-            echo '<div id="simple-events-container" class="simple-events-calendar">There are no events to display.</div>';
+            echo '<div id="simple-events-container" class="simple-events-calendar">There are no more events to display.</div>';
         }
 
         // Get the buffered content into a variable
