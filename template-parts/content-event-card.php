@@ -14,34 +14,27 @@
  *                        - excerpt: The excerpt of the event.
  */
 if (isset($post_data)) : ?>
-    <!-- Output an article for each event post -->
-    <article class="simple-events-post events type-events status-publish has-post-thumbnail hentry entry has-media">
-        <?php // Output the thumbnail image of the event post if it has one ?>
+    <article class="simple-events-calendar__post post-id-<?php echo get_the_ID(); ?> <?php echo !empty($post_data['thumbnail']) ? 'has-thumbnail' : ''; ?>">
         <?php if ($post_data['thumbnail']) : ?>
-            <a class="simple-events-post__thumbnail__link" href="<?php echo esc_url($post_data['permalink']); ?>">
-                <div class="simple-events-post__thumbnail">
-                    <!-- Output the thumbnail image of the event post -->
-                    <img src="<?php echo esc_url($post_data['thumbnail']); ?>" 
-                         alt="<?php echo esc_attr($post_data['title']); ?>" />
+            <a href="<?php echo esc_url($post_data['permalink']); ?>" class="simple-events-calendar__post__link">
+                <div class="simple-events-calendar__post__thumbnail">
+                    <img src="<?php echo esc_url($post_data['thumbnail']); ?>" alt="<?php echo esc_attr($post_data['title']); ?>" />
                 </div>
             </a>
         <?php endif; ?>
-        
-        <div class="simple-events-post__text">
-            <h3 class="simple-events-post__title">
-                <!-- Output a link to the event post -->
+
+        <div class="simple-events-calendar__post__description">
+            <h3 class="simple-events-calendar__post__title">
                 <a href="<?php echo esc_url($post_data['permalink']); ?>">
                     <?php echo esc_html($post_data['title']); ?>
                 </a>
             </h3>
-            
-            <div class="simple-events-post__meta-data">
-                <!-- Output the date of the event -->
-                <span class="simple-events-post-date">
+
+            <div class="simple-events-calendar__post__meta">
+                <span class="simple-events-calendar__post__date">
                     <?php echo esc_html($post_data['date']); ?>
                 </span>
-                <!-- Output the start and end time of the event if they are provided -->
-                <span class="simple-events-post-time">
+                <span class="simple-events-calendar__post__time">
                     <?php
                     if ($post_data['start_time']) {
                         echo ' | ' . esc_html($post_data['start_time']);
@@ -52,9 +45,8 @@ if (isset($post_data)) : ?>
                     ?>
                 </span>
             </div>
-            
-            <div class="simple-events-post__excerpt">
-                <!-- Output the excerpt of the event -->
+
+            <div class="simple-events-calendar__post__excerpt">
                 <p><?php echo esc_html($post_data['excerpt']); ?></p>
             </div>
         </div>

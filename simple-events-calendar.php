@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: Simple Events Calendar
  * Plugin URI: https://github.com/Level-Up-Studios-LLC/simple-events-calendar
@@ -23,8 +24,8 @@ define('PLUGIN_URL', untrailingslashit(plugin_dir_url(__FILE__)));
 define('PLUGIN_ASSETS', PLUGIN_URL . '/assets');
 define('PLUGIN_VERSION', '2.0.0');
 
-if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
-    define( 'HOUR_IN_SECONDS', 3600 );
+if (!defined('HOUR_IN_SECONDS')) {
+    define('HOUR_IN_SECONDS', 3600);
 }
 
 /**
@@ -60,11 +61,11 @@ add_filter('acf/settings/url', function ($url) {
 if (is_plugin_active('advanced-custom-fields/acf.php')) {
     // Free plugin activated, show notice
     add_action('admin_notices', function () {
-    ?>
+?>
         <div class="updated" style="border-left: 4px solid #ffba00;">
             <p>The ACF plugin cannot be activated at the same time as Third-Party Product and has been deactivated. Please keep ACF installed to allow you to use ACF functionality.</p>
         </div>
-    <?php
+<?php
     }, 99);
 
     // Disable ACF free plugin
@@ -101,7 +102,7 @@ function enqueue_simple_events_scripts()
         'ajax_params', // Object name.
         array(
             'ajaxurl' => admin_url('admin-ajax.php'), // Ajax URL.
-            'nonce' => wp_create_nonce('load_more_events_nonce') // Nonce for security.
+            'nonce'   => wp_create_nonce('load_more_events_nonce') // Nonce for security.
         )
     );
 }

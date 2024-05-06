@@ -18,6 +18,7 @@ function simple_events_calendar_archive_shortcode($atts)
 
     // Retrieve the cached HTML or generate it if it's not cached
     $events_html = get_transient($transient_key);
+
     if (false === $events_html) {
         // Set query arguments
         $args = array(
@@ -45,7 +46,7 @@ function simple_events_calendar_archive_shortcode($atts)
         // Check if there are any posts
         if ($the_query->have_posts()) {
             // Container for the events
-            echo '<div id="simple-events-container" class="simple-events-calendar">';
+            echo '<div class="simple-events-calendar">';
 
             // Loop through the posts
             while ($the_query->have_posts()) {
@@ -68,12 +69,9 @@ function simple_events_calendar_archive_shortcode($atts)
 
             // Close the container for the events
             echo '</div>';
-
-            // Loading message
-            echo '<div id="load-more-events" class="load-more" style="display: none;">Loading...</div>';
         } else {
             // No events message
-            echo '<div id="simple-events-container" class="simple-events-calendar">There are no more events to display.</div>';
+            echo '<div class="simple-events-calendar">There are no more events to display.</div>';
         }
 
         // Get the buffered content into a variable

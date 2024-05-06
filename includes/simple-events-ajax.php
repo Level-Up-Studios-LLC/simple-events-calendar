@@ -69,7 +69,7 @@ function ajax_load_more_events()
             }
         } else {
             // No more events to display
-            echo 'No more events!';
+            echo 'No events found';
         }
 
         // Get the buffered output and clear the buffer
