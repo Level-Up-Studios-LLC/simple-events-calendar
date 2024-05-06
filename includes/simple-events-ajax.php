@@ -8,7 +8,8 @@
  *
  * @return void
  */
-function ajax_load_more_events() {
+function ajax_load_more_events()
+{
     // Verify nonce
     check_ajax_referer('load_more_events_nonce', 'nonce'); // Security check
 
@@ -24,13 +25,13 @@ function ajax_load_more_events() {
     if (false === $events_html) {
         // Set up the arguments for the WP_Query
         $args = array(
-            'post_type'      => 'simple-events',
-            'post_status'    => 'publish',
-            'posts_per_page' => 6,
-            'offset'         => $offset,
-            'orderby'        => 'meta_value_num', // Order events by date
-            'order'          => 'ASC',
-            'meta_query'     => array(
+            'post_type'       => 'simple-events',
+            'post_status'     => 'publish',
+            'posts_per_page'  => 6,
+            'offset'          => $offset,
+            'orderby'         => 'meta_value_num', // Order events by date
+            'order'           => 'ASC',
+            'meta_query'      => array(
                 array(
                     'key'     => 'event_date',
                     'compare' => '>=',
@@ -54,13 +55,13 @@ function ajax_load_more_events() {
 
                 // Get the data for the current post
                 $post_data = array(
-                    'title' => get_the_title(),
-                    'permalink' => get_permalink(),
-                    'thumbnail' => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
-                    'excerpt' => wp_trim_words(get_the_excerpt(), 30, '...'),
-                    'date' => get_field('event_date'),
+                    'title'      => get_the_title(),
+                    'permalink'  => get_permalink(),
+                    'thumbnail'  => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
+                    'excerpt'    => wp_trim_words(get_the_excerpt(), 30, '...'),
+                    'date'       => get_field('event_date'),
                     'start_time' => get_field('event_start_time'),
-                    'end_time' => get_field('event_end_time')
+                    'end_time'   => get_field('event_end_time')
                 );
 
                 // Render the template for each event
