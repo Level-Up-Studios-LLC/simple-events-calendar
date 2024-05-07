@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated the WP_QUERY arguments to display events by future date and before their end time, if provided.
 - Made some adjustments to the core files.
+- Updated the required PHP version to 7.4 from 8.1
+- Updated the required WordPress version to 6.0 from 6.2
 
 ### Removed
 
