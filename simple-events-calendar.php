@@ -4,9 +4,9 @@
  * Plugin Name: Simple Events Calendar
  * Plugin URI: https://github.com/Level-Up-Studios-LLC/simple-events-calendar
  * Description: As it says in its name, it's just a simple events calendar plugin for WordPress.
- * Version: 2.0.0
- * Requires at least: 6.2
- * Requires PHP: 8.1
+ * Version: 2.1.0
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  * Author: Level Up Studios, LLC
  * Author URI: https://www.levelupstudios.com/
  * License: GPL v2 or later
@@ -22,11 +22,7 @@ define('PLUGIN_TEXT_DOMAIN', 'simple_events');
 define('PLUGIN_DIR', __DIR__);
 define('PLUGIN_URL', untrailingslashit(plugin_dir_url(__FILE__)));
 define('PLUGIN_ASSETS', PLUGIN_URL . '/assets');
-define('PLUGIN_VERSION', '2.0.0');
-
-if (!defined('HOUR_IN_SECONDS')) {
-    define('HOUR_IN_SECONDS', 3600);
-}
+define('PLUGIN_VERSION', '2.1.0');
 
 /**
  * Detecting if the ACF PRO Plugin Is Installed

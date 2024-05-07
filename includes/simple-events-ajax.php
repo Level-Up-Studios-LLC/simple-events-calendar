@@ -16,74 +16,82 @@ function ajax_load_more_events()
     // Get the offset from the AJAX request
     $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
 
-    // Generate a unique transient key based on the offset
-    $transient_key = 'simple_events_ajax_' . $offset;
+    // Today's date and current time based on the WordPress timezone settings
+    $today_date = date('Ymd'); // Current date in 'YYYYMMDD' format
+    $current_time = current_time('H:i'); // Current time
 
-    // Retrieve the events HTML from the transient
-    $events_html = get_transient($transient_key);
+    // Basic argument for querying future events based on date
+    $date_query = array(
+        'key'       => 'event_date',
+        'compare'   => '>=',
+        'value'     => $today_date,
+        'type'      => 'DATE'
+    );
 
-    if (false === $events_html) {
-        // Set up the arguments for the WP_Query
-        $args = array(
-            'post_type'       => 'simple-events',
-            'post_status'     => 'publish',
-            'posts_per_page'  => 6,
-            'offset'          => $offset,
-            'orderby'         => 'meta_value_num', // Order events by date
-            'order'           => 'ASC',
-            'meta_query'      => array(
-                array(
-                    'key'     => 'event_date',
-                    'compare' => '>=',
-                    'value'   => date("Ymd"),
-                    'type'    => 'DATE'
-                )
+    // Advanced meta query that includes checking if the end time is provided
+    $meta_query = array(
+        'relation' => 'AND',
+        $date_query,
+        array(
+            'relation' => 'OR',
+            array( // This part handles events with a valid end time
+                'key'     => 'event_end_time',
+                'compare' => '>=',
+                'value'   => $current_time,
+                'type'    => 'TIME'
+            ),
+            array( // This handles events where the end time field might be empty
+                'key'     => 'event_end_time',
+                'compare' => '=',
+                'value' => ''
             )
-        );
+        )
+    );
 
-        // Get the query
-        $the_query = new WP_Query($args);
+    // Query arguments
+    $args = array(
+        'post_type'       => 'simple-events',
+        'post_status'     => 'publish',
+        'posts_per_page'  => 6,
+        'offset'          => $offset,
+        'orderby'         => 'meta_value_num',
+        'order'           => 'ASC',
+        'meta_query'      => $meta_query
+    );
 
-        // Start output buffering
-        ob_start();
+    // Get the query
+    $the_query = new WP_Query($args);
 
-        // Check if there are any posts
-        if ($the_query->have_posts()) {
-            // Loop through the posts and render the template for each one
-            while ($the_query->have_posts()) {
-                $the_query->the_post();
+    // Start output buffering
+    ob_start();
 
-                // Get the data for the current post
-                $post_data = array(
-                    'title'      => get_the_title(),
-                    'permalink'  => get_permalink(),
-                    'thumbnail'  => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
-                    'excerpt'    => wp_trim_words(get_the_excerpt(), 30, '...'),
-                    'date'       => get_field('event_date'),
-                    'start_time' => get_field('event_start_time'),
-                    'end_time'   => get_field('event_end_time')
-                );
+    // Check if there are any posts
+    if ($the_query->have_posts()) {
+        // Loop through the posts and render the template for each one
+        while ($the_query->have_posts()) {
+            $the_query->the_post();
 
-                // Render the template for each event
-                include(PLUGIN_DIR . '/template-parts/content-event-card.php');
-            }
-        } else {
-            // No more events to display
-            echo 'No events found';
+            // Get the data for the current post
+            $post_data = array(
+                'title'      => get_the_title(),
+                'permalink'  => get_permalink(),
+                'thumbnail'  => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
+                'excerpt'    => wp_trim_words(get_the_excerpt(), 30, '...'),
+                'date'       => get_field('event_date'),
+                'start_time' => get_field('event_start_time'),
+                'end_time'   => get_field('event_end_time')
+            );
+
+            // Render the template for each event
+            include(PLUGIN_DIR . '/template-parts/content-event-card.php');
         }
-
-        // Get the buffered output and clear the buffer
-        $events_html = ob_get_clean();
-
-        // Store the events HTML in the transient
-        set_transient($transient_key, $events_html, HOUR_IN_SECONDS);
-
-        // Reset the post data
-        wp_reset_postdata();
+    } else {
+        // No more events to display
+        echo 'No events found';
     }
 
-    // Return the events HTML
-    echo $events_html;
+    // Reset the post data
+    wp_reset_postdata();
 
     // Terminate the AJAX request
     wp_die();

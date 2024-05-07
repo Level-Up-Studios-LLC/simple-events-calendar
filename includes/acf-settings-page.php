@@ -70,6 +70,7 @@ function create_date_field($name) {
         'label' => $fieldLabel,
         'name' => $name,
         'type' => 'date_picker',
+        'required' => 1,
         'display_format' => 'm/d/Y',
         'return_format' => 'F j, Y',
     ];
@@ -97,12 +98,12 @@ function create_time_field($name) {
     // Create the associative array with the necessary keys and values
     // to define a time field in ACF.
     return [
-        'key' => $fieldKey, // The field key
-        'label' => $fieldLabel, // The field label
-        'name' => $name, // The field name
-        'type' => 'time_picker', // The field type (time picker)
-        'display_format' => 'g:i a', // The display format of the time
-        'return_format' => 'g:i a', // The return format of the time
+        'key' => $fieldKey,
+        'label' => $fieldLabel,
+        'name' => $name,
+        'type' => 'time_picker',
+        'display_format' => 'g:i a',
+        'return_format' => 'g:i a',
     ];
 }
 
@@ -128,10 +129,10 @@ function create_text_field($name) {
     // Create the associative array with the necessary keys and values
     // to define a text field in ACF.
     return [
-        'key' => $fieldKey, // The field key
-        'label' => $fieldLabel, // The field label
-        'name' => $name, // The field name
-        'type' => 'text', // The field type (text)
+        'key' => $fieldKey,
+        'label' => $fieldLabel,
+        'name' => $name,
+        'type' => 'text',
     ];
 }
 
@@ -150,9 +151,9 @@ function create_post_type_location($postType) {
     // the 'value' key represents the value to compare against.
     return [
         [
-            'param' => 'post_type', // The parameter to compare.
-            'operator' => '==', // The operator to use in the comparison.
-            'value' => $postType, // The value to compare against.
+            'param' => 'post_type',
+            'operator' => '==',
+            'value' => $postType,
         ],
     ];
 }
