@@ -28,7 +28,7 @@ function ajax_load_more_events()
         'type'      => 'DATE'
     );
 
-    // Advanced meta query that includes checking if the end time is provided
+    // Meta query for events that have not yet ended today
     $meta_query = array(
         'relation' => 'AND',
         $date_query,
@@ -42,8 +42,7 @@ function ajax_load_more_events()
             ),
             array( // This handles events where the end time field might be empty
                 'key'     => 'event_end_time',
-                'compare' => '=',
-                'value' => ''
+                'compare' => 'NOT EXISTS'
             )
         )
     );

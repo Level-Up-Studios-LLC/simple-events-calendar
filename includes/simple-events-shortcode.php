@@ -17,7 +17,7 @@ function simple_events_calendar_archive_shortcode($atts)
     $today_date = date('Ymd'); // Current date in 'YYYYMMDD' format
     $current_time = current_time('H:i'); // Current time
 
-    // Basic argument for querying future events based on date
+    // Date query for events starting from today
     $date_query = array(
         'key'       => 'event_date',
         'compare'   => '>=',
@@ -25,7 +25,7 @@ function simple_events_calendar_archive_shortcode($atts)
         'type'      => 'DATE'
     );
 
-    // Advanced meta query that includes checking if the end time is provided
+    // Meta query for events that have not yet ended today
     $meta_query = array(
         'relation' => 'AND',
         $date_query,
@@ -39,8 +39,7 @@ function simple_events_calendar_archive_shortcode($atts)
             ),
             array( // This handles events where the end time field might be empty
                 'key'     => 'event_end_time',
-                'compare' => '=',
-                'value' => ''
+                'compare' => 'NOT EXISTS'
             )
         )
     );
@@ -57,6 +56,8 @@ function simple_events_calendar_archive_shortcode($atts)
 
     // Get the query
     $the_query = new WP_Query($args);
+
+    var_dump($the_query);
 
     // Start output buffering
     ob_start();
