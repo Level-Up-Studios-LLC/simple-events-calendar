@@ -13,37 +13,6 @@ function simple_events_calendar_archive_shortcode($atts)
         'posts_per_page' => 9, // Number of events to display per page
     ), $atts, 'simple_events_calendar');
 
-    // Today's date and current time based on the WordPress timezone settings
-    $today_date = date('Ymd'); // Current date in 'YYYYMMDD' format
-    $current_time = current_time('H:i'); // Current time
-
-    // Date query for events starting from today
-    $date_query = array(
-        'key'       => 'event_date',
-        'compare'   => '>=',
-        'value'     => $today_date,
-        'type'      => 'DATE'
-    );
-
-    // Meta query for events that have not yet ended today
-    $meta_query = array(
-        'relation' => 'AND',
-        $date_query,
-        array(
-            'relation' => 'OR',
-            array( // This part handles events with a valid end time
-                'key'     => 'event_end_time',
-                'compare' => '>=',
-                'value'   => $current_time,
-                'type'    => 'TIME'
-            ),
-            array( // This handles events where the end time field might be empty
-                'key'     => 'event_end_time',
-                'compare' => 'NOT EXISTS'
-            )
-        )
-    );
-
     // Query arguments
     $args = array(
         'post_type'         => 'simple-events',
@@ -51,7 +20,14 @@ function simple_events_calendar_archive_shortcode($atts)
         'posts_per_page'    => $atts['posts_per_page'],
         'orderby'           => 'meta_value_num',
         'order'             => 'ASC',
-        'meta_query'        => $meta_query
+        'meta_query'        => array(
+            array(
+                'key'       => 'event_date',
+                'compare'   => '>=',
+                'value'     => date('Ymd'),
+                'type'      => 'DATE'
+            )
+        )
     );
 
     // Get the query
