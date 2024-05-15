@@ -57,8 +57,6 @@ function simple_events_calendar_archive_shortcode($atts)
     // Get the query
     $the_query = new WP_Query($args);
 
-    var_dump($the_query);
-
     // Start output buffering
     ob_start();
 
