@@ -22,16 +22,20 @@ function simple_events_calendar_archive_shortcode($atts)
 {
     // Set default attributes with validation
     $atts = shortcode_atts(array(
-        'posts_per_page' => 6, // Changed from 9 to 6
+        'posts_per_page' => 6,
         'category'       => '',
         'show_past'      => 'no',
         'order'          => 'ASC',
-        'orderby'        => 'event_date'
+        'orderby'        => 'event_date',
+        'show_time'         => 'yes',
+        'show_excerpt'     => 'no',
+        'show_location'  => 'no',
+        'show_footer'    => 'yes'
     ), $atts, 'simple_events_calendar');
 
     // Sanitize attributes
     $posts_per_page = absint($atts['posts_per_page']);
-    $posts_per_page = ($posts_per_page > 0 && $posts_per_page <= 50) ? $posts_per_page : 6; // Changed default fallback to 6
+    $posts_per_page = ($posts_per_page > 0 && $posts_per_page <= 50) ? $posts_per_page : 6;
 
     $category = sanitize_text_field($atts['category']);
     $show_past = ($atts['show_past'] === 'yes') ? true : false;
@@ -94,26 +98,23 @@ function simple_events_calendar_archive_shortcode($atts)
     if ($the_query->have_posts()) {
         echo '<div class="simple-events-calendar" data-shortcode="true">';
 
-        // Add a note about what's being displayed if not showing past events
-        if (!$show_past) {
-            echo '<div class="simple-events-info">';
-            echo '<p class="simple-events-display-note">' . __('Showing current and upcoming events only.', PLUGIN_TEXT_DOMAIN) . '</p>';
-            echo '</div>';
-        }
-
         // Loop through the posts
         while ($the_query->have_posts()) {
             $the_query->the_post();
 
             // Prepare post data with validation
             $post_data = array(
-                'title'      => get_the_title(),
-                'permalink'  => get_permalink(),
-                'thumbnail'  => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
-                'excerpt'    => wp_trim_words(get_the_excerpt(), 30, '...'),
-                'date'       => get_field('event_date'),
-                'start_time' => get_field('event_start_time'),
-                'end_time'   => get_field('event_end_time')
+                'title'        => get_the_title(),
+                'permalink'    => get_permalink(),
+                'thumbnail'    => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
+                'excerpt'      => wp_trim_words(get_the_excerpt(), 30, '...'),
+                'date'         => get_field('event_date'),
+                'start_time'   => get_field('event_start_time'),
+                'end_time'     => get_field('event_end_time'),
+                'show_time'    => $atts['show_time'],
+                'show_excerpt' => $atts['show_excerpt'],
+                'show_location' => $atts['show_location'],
+                'show_footer'  => $atts['show_footer']
             );
 
             // Skip events without required data
@@ -140,12 +141,6 @@ function simple_events_calendar_archive_shortcode($atts)
         $count_args['fields'] = 'ids';
         $count_query = new WP_Query($count_args);
         $total_events = $count_query->post_count;
-
-        if ($total_events > $posts_per_page) {
-            echo '<div class="simple-events-load-more-info">';
-            echo '<p class="simple-events-scroll-hint">Scroll down to load more events...</p>';
-            echo '</div>';
-        }
     } else {
         // No events message with helpful information
         echo '<div class="simple-events-calendar simple-events-no-events">';

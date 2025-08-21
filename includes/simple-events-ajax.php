@@ -134,11 +134,11 @@ function simple_events_render_fallback_card($post_data)
 ?>
     <article class="simple-events-calendar__post simple-events-fallback">
         <div class="simple-events-calendar__post__description">
-            <h3 class="simple-events-calendar__post__title">
-                <a href="<?php echo esc_url($post_data['permalink']); ?>">
+            <a href="<?php echo esc_url($post_data['permalink']); ?>">
+                <h4 class="simple-events-calendar__post__title">
                     <?php echo esc_html($post_data['title']); ?>
-                </a>
-            </h3>
+                </h4>
+            </a>
             <div class="simple-events-calendar__post__meta">
                 <span class="simple-events-calendar__post__date">
                     <?php echo esc_html($post_data['date']); ?>

@@ -202,7 +202,7 @@ jQuery(document).ready(function ($) {
   function showNoMoreEventsMessage() {
     if ($('#simple-events-end').length === 0) {
       const endMessage = $('<div id="simple-events-end" class="simple-events-end">' +
-        '<p>🎉 You\'ve seen all our upcoming events!</p>' +
+        '<p>You\'ve seen all our upcoming events!</p>' +
         '<p>Check back soon for new events.</p>' +
         '</div>');
 

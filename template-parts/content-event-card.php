@@ -44,6 +44,10 @@ $date = esc_html($post_data['date']);
 $start_time = !empty($post_data['start_time']) ? esc_html($post_data['start_time']) : '';
 $end_time = !empty($post_data['end_time']) ? esc_html($post_data['end_time']) : '';
 $excerpt = !empty($post_data['excerpt']) ? esc_html($post_data['excerpt']) : '';
+$show_time = ($post_data['show_time'] === 'yes') ? true : false;
+$show_excerpt = ($post_data['show_excerpt'] === 'yes') ? true : false;
+$show_location = ($post_data['show_location'] === 'yes') ? true : false;
+$show_footer = ($post_data['show_footer'] === 'yes') ? true : false;
 
 // Generate CSS classes
 $css_classes = ['simple-events-calendar__post'];
@@ -55,7 +59,7 @@ if ($thumbnail) {
 // Generate time display
 $time_display = '';
 if ($start_time) {
-    $time_display = ' | ' . $start_time;
+    $time_display = ' <span class="simple-events-calendar__post__time__separator">|</span> 🕒 ' . $start_time;
     if ($end_time) {
         $time_display .= ' - ' . $end_time;
     }
@@ -77,10 +81,11 @@ if ($end_time) {
 if ($excerpt) {
     $event_schema['description'] = $excerpt;
 }
+
+// var_dump($post_data);
 ?>
 
 <article class="<?php echo implode(' ', $css_classes); ?>" itemscope itemtype="https://schema.org/Event">
-
     <!-- Structured Data -->
     <script type="application/ld+json">
         <?php echo wp_json_encode($event_schema); ?>
@@ -103,13 +108,11 @@ if ($excerpt) {
     <div class="simple-events-calendar__post__description">
 
         <header class="simple-events-calendar__post__header">
-            <h3 class="simple-events-calendar__post__title" itemprop="name">
-                <a href="<?php echo $permalink; ?>"
-                    itemprop="url"
-                    rel="bookmark">
+            <a href="<?php echo $permalink; ?>" itemprop="url" rel="bookmark">
+                <h4 class="simple-events-calendar__post__title" itemprop="name">
                     <?php echo $title; ?>
-                </a>
-            </h3>
+                </h4>
+            </a>
         </header>
 
         <div class="simple-events-calendar__post__meta">
@@ -121,14 +124,14 @@ if ($excerpt) {
                 </span>
             </time>
 
-            <?php if ($time_display) : ?>
-                <span class="simple-events-calendar__post__time" aria-label="<?php printf(__('Event time: %s', PLUGIN_TEXT_DOMAIN), trim($time_display, ' |')); ?>">
+            <?php if ($time_display && $show_time) : ?>
+                <span class="simple-events-calendar__post__time" aria-label="<?php printf(__('Event time: %s', PLUGIN_TEXT_DOMAIN), trim($time_display, ' <span class="simple-events-calendar__post__time__separator">|</span>')); ?>">
                     <?php echo $time_display; ?>
                 </span>
             <?php endif; ?>
         </div>
 
-        <?php if ($excerpt) : ?>
+        <?php if ($excerpt && $show_excerpt) : ?>
             <div class="simple-events-calendar__post__excerpt" itemprop="description">
                 <p><?php echo $excerpt; ?></p>
             </div>
@@ -137,7 +140,7 @@ if ($excerpt) {
         <!-- Event location if available -->
         <?php
         $location = get_field('event_location');
-        if ($location) :
+        if ($location && $show_location) :
         ?>
             <div class="simple-events-calendar__post__location" itemprop="location" itemscope itemtype="https://schema.org/Place">
                 <span class="simple-events-calendar__location-label" aria-label="<?php _e('Event location:', PLUGIN_TEXT_DOMAIN); ?>">
@@ -151,16 +154,18 @@ if ($excerpt) {
 
     </div>
 
-    <!-- Call to action footer -->
-    <footer class="simple-events-calendar__post__footer">
-        <a href="<?php echo $permalink; ?>"
-            class="simple-events-calendar__read-more"
-            aria-label="<?php printf(__('Read more about %s', PLUGIN_TEXT_DOMAIN), $title); ?>">
-            <?php _e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
-            <svg class="simple-events-calendar__arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-            </svg>
-        </a>
-    </footer>
+    <?php if ($show_footer) : ?>
+        <!-- Call to action footer -->
+        <footer class="simple-events-calendar__post__footer">
+            <a href="<?php echo $permalink; ?>"
+                class="simple-events-calendar__read-more"
+                aria-label="<?php printf(__('Read more about %s', PLUGIN_TEXT_DOMAIN), $title); ?>">
+                <?php _e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
+                <svg class="simple-events-calendar__arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                </svg>
+            </a>
+        </footer>
+    <?php endif; ?>
 
 </article>
