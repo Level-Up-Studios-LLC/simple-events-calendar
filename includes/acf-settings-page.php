@@ -247,10 +247,6 @@ function simple_events_force_register_fields()
     if (function_exists('acf_add_local_field_group')) {
         register_event_details_fields();
 
-        // Log successful registration
-        if (function_exists('error_log')) {
-            error_log('Simple Events Calendar: Field group forcibly registered');
-        }
 
         return true;
     }

@@ -406,8 +406,6 @@ function simple_events_load_components()
         $file_path = PLUGIN_DIR . '/' . $component;
         if (file_exists($file_path)) {
             require_once $file_path;
-        } else {
-            error_log("Simple Events Calendar: Missing component file - {$component}");
         }
     }
 

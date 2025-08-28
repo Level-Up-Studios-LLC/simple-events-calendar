@@ -59,7 +59,7 @@ if ($thumbnail) {
 // Generate time display
 $time_display = '';
 if ($start_time) {
-    $time_display = ' <span class="simple-events-calendar__post__time__separator">|</span> 🕒 ' . $start_time;
+    $time_display = ' <span class="simple-events-calendar__post__time__separator">|</span> ' . $start_time;
     if ($end_time) {
         $time_display .= ' - ' . $end_time;
     }
@@ -82,7 +82,6 @@ if ($excerpt) {
     $event_schema['description'] = $excerpt;
 }
 
-// var_dump($post_data);
 ?>
 
 <article class="<?php echo implode(' ', $css_classes); ?>" itemscope itemtype="https://schema.org/Event">

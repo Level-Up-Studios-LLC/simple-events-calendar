@@ -168,9 +168,6 @@ function simple_events_render_fallback_card($post_data)
 function simple_events_ajax_error_handler()
 {
     if (defined('DOING_AJAX') && DOING_AJAX) {
-        // Log the error for debugging
-        error_log('Simple Events Calendar AJAX Error: ' . print_r($_POST, true));
-
         // Return user-friendly error
         wp_die('An error occurred while loading events. Please refresh the page and try again.', 'Loading Error', array('response' => 500));
     }
