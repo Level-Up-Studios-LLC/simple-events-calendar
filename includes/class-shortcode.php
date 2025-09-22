@@ -181,12 +181,6 @@ class Simple_Events_Shortcode {
 
         echo '<div class="simple-events-calendar" data-shortcode="true" ' . $data_attrs . '>';
 
-        if (!$atts['show_past']) {
-            echo '<div class="simple-events-info">';
-            echo '<p class="simple-events-display-note">' . __('Showing current and upcoming events only.', PLUGIN_TEXT_DOMAIN) . '</p>';
-            echo '</div>';
-        }
-
         while ($query->have_posts()) {
             $query->the_post();
             $this->render_event_card($atts);
@@ -276,18 +270,7 @@ class Simple_Events_Shortcode {
      * @param array $atts Sanitized attributes
      */
     private function render_load_more_hint($query, $atts) {
-        $count_args = $this->build_query_args($atts);
-        $count_args['posts_per_page'] = -1;
-        $count_args['fields'] = 'ids';
-        $count_query = new WP_Query($count_args);
-        $total_events = $count_query->post_count;
-        wp_reset_postdata();
-
-        if ($total_events > $atts['posts_per_page']) {
-            echo '<div class="simple-events-load-more-info">';
-            echo '<p class="simple-events-scroll-hint">📜 Scroll down to see more events...</p>';
-            echo '</div>';
-        }
+        // Removed hint message - events load automatically on scroll
     }
 
     /**
