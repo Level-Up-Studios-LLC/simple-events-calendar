@@ -1,17 +1,19 @@
 {
   "name": "simple-events-calendar",
-  "version": "3.0.0",
+  "version": "4.2.3",
   "description": "A simple events calendar plugin for WordPress",
   "main": "assets/js/simple-events.js",
   "scripts": {
-    "build": "echo 'Build: Copy source files to assets' && npm run copy:js && npm run copy:css",
+    "build": "npm run copy:js && npm run build:css",
+    "build:css": "sass src/css:assets/css --style=compressed --no-source-map",
+    "build:css:dev": "sass src/css:assets/css --style=expanded --source-map",
     "copy:js": "cp src/js/*.js assets/js/",
-    "copy:css": "cp src/css/*.scss assets/css/ || echo 'SCSS files copied'",
     "lint:js": "echo 'JS Linting: Run manually with a code editor'",
-    "lint:css": "echo 'CSS Linting: Run manually with a code editor'",
+    "lint:css": "stylelint \"src/css/**/*.scss\"",
     "lint": "npm run lint:js && npm run lint:css",
-    "watch": "echo 'Watch mode: Use your IDE file watcher'",
-    "dev": "npm run build",
+    "watch": "chokidar \"src/css/**/*.scss\" -c \"npm run build:css:dev\"",
+    "watch:css": "sass src/css:assets/css --style=expanded --source-map --watch",
+    "dev": "npm run build:css:dev",
     "dist": "rm -rf dist && mkdir dist && robocopy . dist /E /XD node_modules src .git dist /XF .gitignore package.json package-lock.json .npmrc phpcs.xml *.md /NFL /NDL /NJH /NJS || echo 'Distribution created'",
     "zip": "npm run dist && cd dist && python -c \"import zipfile, os; z = zipfile.ZipFile('../simple-events-calendar.zip', 'w'); [z.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), '.')) for root, dirs, files in os.walk('.') for file in files]; z.close()\""
   },
@@ -28,7 +30,12 @@
     "type": "git",
     "url": "https://github.com/Level-Up-Studios-LLC/simple-events-calendar.git"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "chokidar-cli": "^3.0.0",
+    "sass": "^1.93.0",
+    "stylelint": "^16.24.0",
+    "stylelint-config-standard-scss": "^16.0.0"
+  },
   "browserslist": [
     "> 1%",
     "last 2 versions",
