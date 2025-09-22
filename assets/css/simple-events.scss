@@ -117,16 +117,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  font-size: 1.0625rem;
-  color: var(--e-global-color-7eb2be3);
 }
 
 .simple-events-calendar__post__date {
-  color: var(--e-global-color-accent);
+  /* Removed color to allow theme inheritance */
 }
 
 .simple-events-calendar__post__time {
-  color: var(--e-global-color-7eb2be3);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -142,8 +139,6 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #666;
   padding: 8px 12px;
   background: #f8f9fa;
   border-radius: 6px;
@@ -165,7 +160,6 @@
 .simple-events-calendar__post__excerpt p {
   margin: 0;
   line-height: 1.6;
-  color: #555;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -183,20 +177,12 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #007cba;
   text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
   transition: all 0.3s ease;
-  padding: 8px 16px;
-  border: 1px solid #007cba;
-  border-radius: 6px;
-  background: transparent;
+  /* Removed specific styling to allow theme/Elementor button inheritance */
 }
 
 .simple-events-calendar__read-more:hover {
-  background: #007cba;
-  color: white;
   gap: 10px;
   transform: translateY(-1px);
 }
