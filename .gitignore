@@ -1,6 +1,47 @@
+# OS Files
 .DS_Store
 Thumbs.db
-.vscode
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+/dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
 *.log
-*.scss
-*.map
+
+# Dependency directories
+vendor/
+
+# Temporary files
+.tmp/
+.temp/
+
+# Environment files
+.env
+.env.local
+
+# Source maps (keep source files in src/)
+/assets/**/*.map
+
+# WordPress specific
+wp-config.php
+.htaccess
+
+# Testing
+/tests/output/
+/coverage/
+
+# Cache files
+.cache/

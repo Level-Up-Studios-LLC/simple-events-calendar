@@ -1,0 +1,298 @@
+# Simple Events Calendar
+# Copyright (C) 2024 Level Up Studios, LLC
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Simple Events Calendar 3.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/issues\n"
+"POT-Creation-Date: 2024-01-01 00:00:00+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: WP-CLI 2.8.1\n"
+"X-Domain: simple_events\n"
+
+#: includes/class-admin-columns.php:33
+msgid "Image"
+msgstr ""
+
+#: includes/class-admin-columns.php:34
+msgid "Event Date"
+msgstr ""
+
+#: includes/class-admin-columns.php:35
+msgid "Time"
+msgstr ""
+
+#: includes/class-admin-columns.php:36
+msgid "Location"
+msgstr ""
+
+#: includes/class-admin-columns.php:37
+msgid "Categories"
+msgstr ""
+
+#: includes/class-admin-columns.php:88
+msgid "Past"
+msgstr ""
+
+#: includes/class-admin-columns.php:90
+msgid "Today"
+msgstr ""
+
+#: includes/class-admin-columns.php:92
+msgid "Upcoming"
+msgstr ""
+
+#: includes/class-admin-columns.php:195
+msgid "All Categories"
+msgstr ""
+
+#: includes/class-admin-columns.php:205
+msgid "All Events"
+msgstr ""
+
+#: includes/class-admin-columns.php:206
+msgid "Upcoming Events"
+msgstr ""
+
+#: includes/class-admin-columns.php:207
+msgid "Today's Events"
+msgstr ""
+
+#: includes/class-admin-columns.php:208
+msgid "Past Events"
+msgstr ""
+
+#: includes/class-post-type.php:23
+msgctxt "Post Type General Name"
+msgid "Events"
+msgstr ""
+
+#: includes/class-post-type.php:24
+msgctxt "Post Type Singular Name"
+msgid "Event"
+msgstr ""
+
+#: includes/class-post-type.php:25
+msgid "Events"
+msgstr ""
+
+#: includes/class-post-type.php:26
+msgid "Event Archives"
+msgstr ""
+
+#: includes/class-post-type.php:31
+msgid "Event"
+msgstr ""
+
+#: includes/class-post-type.php:33
+msgid "Event Attributes"
+msgstr ""
+
+#: includes/class-post-type.php:34
+msgid "Parent Event:"
+msgstr ""
+
+#: includes/class-post-type.php:35
+msgid "All Events"
+msgstr ""
+
+#: includes/class-post-type.php:36
+msgid "Add New Event"
+msgstr ""
+
+#: includes/class-post-type.php:37
+msgid "Add New"
+msgstr ""
+
+#: includes/class-post-type.php:38
+msgid "New Event"
+msgstr ""
+
+#: includes/class-post-type.php:39
+msgid "Edit Event"
+msgstr ""
+
+#: includes/class-post-type.php:40
+msgid "Update Event"
+msgstr ""
+
+#: includes/class-post-type.php:41
+msgid "View Event"
+msgstr ""
+
+#: includes/class-post-type.php:42
+msgid "View Events"
+msgstr ""
+
+#: includes/class-post-type.php:43
+msgid "Search Events"
+msgstr ""
+
+#: includes/class-post-type.php:44
+msgid "Not found"
+msgstr ""
+
+#: includes/class-post-type.php:45
+msgid "Not found in Trash"
+msgstr ""
+
+#: includes/class-post-type.php:46
+msgid "Featured Image"
+msgstr ""
+
+#: includes/class-post-type.php:47
+msgid "Set featured image"
+msgstr ""
+
+#: includes/class-post-type.php:48
+msgid "Remove featured image"
+msgstr ""
+
+#: includes/class-post-type.php:49
+msgid "Use as featured image"
+msgstr ""
+
+#: includes/class-post-type.php:50
+msgid "Insert into event"
+msgstr ""
+
+#: includes/class-post-type.php:51
+msgid "Uploaded to this event"
+msgstr ""
+
+#: includes/class-post-type.php:52
+msgid "Events list"
+msgstr ""
+
+#: includes/class-post-type.php:53
+msgid "Events list navigation"
+msgstr ""
+
+#: includes/class-post-type.php:54
+msgid "Filter events list"
+msgstr ""
+
+#: includes/class-post-type.php:58
+msgid "Events for the Simple Events Calendar"
+msgstr ""
+
+#: includes/class-post-type.php:98
+msgctxt "Taxonomy General Name"
+msgid "Event Categories"
+msgstr ""
+
+#: includes/class-post-type.php:99
+msgctxt "Taxonomy Singular Name"
+msgid "Event Category"
+msgstr ""
+
+#: includes/class-post-type.php:100
+msgid "Event Categories"
+msgstr ""
+
+#: includes/class-post-type.php:101
+msgid "All Event Categories"
+msgstr ""
+
+#: includes/class-post-type.php:102
+msgid "Parent Event Category"
+msgstr ""
+
+#: includes/class-post-type.php:103
+msgid "Parent Event Category:"
+msgstr ""
+
+#: includes/class-post-type.php:104
+msgid "New Event Category Name"
+msgstr ""
+
+#: includes/class-post-type.php:105
+msgid "Add New Event Category"
+msgstr ""
+
+#: includes/class-post-type.php:106
+msgid "Edit Event Category"
+msgstr ""
+
+#: includes/class-post-type.php:107
+msgid "Update Event Category"
+msgstr ""
+
+#: includes/class-post-type.php:108
+msgid "View Event Category"
+msgstr ""
+
+#: includes/class-post-type.php:109
+msgid "Separate event categories with commas"
+msgstr ""
+
+#: includes/class-post-type.php:110
+msgid "Add or remove event categories"
+msgstr ""
+
+#: includes/class-post-type.php:111
+msgid "Choose from the most used"
+msgstr ""
+
+#: includes/class-post-type.php:112
+msgid "Popular Event Categories"
+msgstr ""
+
+#: includes/class-post-type.php:113
+msgid "Search Event Categories"
+msgstr ""
+
+#: includes/class-post-type.php:114
+msgid "Not Found"
+msgstr ""
+
+#: includes/class-post-type.php:115
+msgid "No event categories"
+msgstr ""
+
+#: includes/class-post-type.php:116
+msgid "Event categories list"
+msgstr ""
+
+#: includes/class-post-type.php:117
+msgid "Event categories list navigation"
+msgstr ""
+
+#: includes/class-shortcode.php:128
+msgid "Showing current and upcoming events only."
+msgstr ""
+
+#: includes/class-shortcode.php:185
+msgid "No events found in the \"%s\" category."
+msgstr ""
+
+#: includes/class-shortcode.php:187
+msgid "No upcoming events scheduled. Check back soon!"
+msgstr ""
+
+#: includes/class-shortcode.php:189
+msgid "No events have been created yet."
+msgstr ""
+
+#: includes/class-shortcode.php:195
+msgid "Add New Event"
+msgstr ""
+
+#: includes/class-ajax.php:250
+msgid "Loading more events..."
+msgstr ""
+
+#: includes/class-ajax.php:251
+msgid "Error loading events. Please try again."
+msgstr ""
+
+#: includes/class-ajax.php:252
+msgid "No more events to load."
+msgstr ""
