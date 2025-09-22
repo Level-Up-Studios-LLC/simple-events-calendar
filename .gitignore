@@ -51,3 +51,6 @@ wp-config.php
 *.tar.gz
 *.rar
 *.7z
+
+# Claude instructions (local development only)
+.claude-instructions

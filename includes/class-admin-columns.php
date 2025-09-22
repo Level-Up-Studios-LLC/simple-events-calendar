@@ -45,24 +45,16 @@ class Simple_Events_Admin_Columns {
      * @return array Modified columns
      */
     public function register_columns($columns) {
-        $new_columns = array();
-
-        $new_columns['cb'] = $columns['cb'];
-        $new_columns['title'] = $columns['title'];
-
-        $new_columns['event_thumbnail'] = __('Image', PLUGIN_TEXT_DOMAIN);
-        $new_columns['event_date'] = __('Event Date', PLUGIN_TEXT_DOMAIN);
-        $new_columns['event_time'] = __('Time', PLUGIN_TEXT_DOMAIN);
-        $new_columns['event_location'] = __('Location', PLUGIN_TEXT_DOMAIN);
-        $new_columns['taxonomy-simple-events-cat'] = __('Categories', PLUGIN_TEXT_DOMAIN);
-
-        if (isset($columns['date'])) {
-            $new_columns['date'] = $columns['date'];
-        }
-
-        unset($columns['thumbnail']);
-
-        return $new_columns;
+        return array(
+            'cb' => isset($columns['cb']) ? $columns['cb'] : '<input type="checkbox" />',
+            'title' => __('Event Title', PLUGIN_TEXT_DOMAIN),
+            'event_thumbnail' => __('Image', PLUGIN_TEXT_DOMAIN),
+            'event_date' => __('Event Date', PLUGIN_TEXT_DOMAIN),
+            'event_time' => __('Time', PLUGIN_TEXT_DOMAIN),
+            'event_location' => __('Location', PLUGIN_TEXT_DOMAIN),
+            'taxonomy-simple-events-cat' => __('Categories', PLUGIN_TEXT_DOMAIN),
+            'date' => isset($columns['date']) ? $columns['date'] : __('Published', PLUGIN_TEXT_DOMAIN)
+        );
     }
 
     /**
@@ -72,6 +64,14 @@ class Simple_Events_Admin_Columns {
      * @param int $post_id Post ID
      */
     public function fill_columns($column, $post_id) {
+        static $processed_columns = array();
+
+        $column_key = $column . '_' . $post_id;
+        if (isset($processed_columns[$column_key])) {
+            return;
+        }
+        $processed_columns[$column_key] = true;
+
         switch ($column) {
             case 'event_thumbnail':
                 $this->render_thumbnail_column($post_id);

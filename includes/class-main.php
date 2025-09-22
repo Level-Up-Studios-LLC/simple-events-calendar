@@ -417,21 +417,20 @@ class Simple_Events_Calendar {
 
         ?>
         <div class="notice notice-error">
-            <h3>Simple Events Calendar - Dependency Error</h3>
+            <h3>Simple Events Calendar</h3>
 
             <?php if (!$status['pro_installed'] && !$status['free_installed']): ?>
-                <p><strong>Advanced Custom Fields is not installed.</strong></p>
-                <p>Simple Events Calendar requires ACF to manage event data. Please install either the free or pro version.</p>
+                <p><strong>Simple Events Calendar requires Advanced Custom Fields (ACF) plugin to be installed and activated.</strong></p>
                 <p>
-                    <a href="<?php echo esc_url($install_url); ?>" class="button button-primary">Install ACF Free</a>
+                    <a href="<?php echo esc_url($install_url); ?>" class="button button-primary">Download ACF Free Plugin</a>
                     <a href="https://www.advancedcustomfields.com/pro/" class="button" target="_blank">Get ACF Pro</a>
                 </p>
 
             <?php elseif (($status['pro_installed'] && !$status['pro_active']) || ($status['free_installed'] && !$status['free_active'])): ?>
-                <p><strong>Advanced Custom Fields is installed but not activated.</strong></p>
-                <p>Please activate ACF to use Simple Events Calendar.</p>
+                <p><strong>Simple Events Calendar requires Advanced Custom Fields (ACF) plugin to be installed and activated.</strong></p>
+                <p>ACF is installed but needs to be activated.</p>
                 <p>
-                    <a href="<?php echo esc_url($plugins_url); ?>" class="button button-primary">Go to Plugins</a>
+                    <a href="<?php echo esc_url($plugins_url); ?>" class="button button-primary">Activate ACF Plugin</a>
                 </p>
 
             <?php else: ?>
