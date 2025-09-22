@@ -84,6 +84,11 @@ Simple Events Calendar provides an elegant way to create and display events on y
 - `category` - Filter by event category slug
 - `show_past` - Show past events (default: 'no')
 - `order` - Sort order (default: 'ASC')
+- `orderby` - Sort by field (default: 'event_date')
+- `show_time` - Display event times (default: 'yes')
+- `show_excerpt` - Display event excerpts (default: 'yes')
+- `show_location` - Display event locations (default: 'yes')
+- `show_footer` - Display read more links (default: 'yes')
 
 **Examples:**
 
@@ -91,6 +96,7 @@ Simple Events Calendar provides an elegant way to create and display events on y
 [simple_events_calendar posts_per_page="9"]
 [simple_events_calendar category="workshops"]
 [simple_events_calendar show_past="yes"]
+[simple_events_calendar show_time="no" show_location="no"]
 ```
 
 ### Archive Pages
@@ -114,10 +120,12 @@ Each event includes these custom fields:
 ## Admin Features
 
 - **Event Status Filtering**: View All, Upcoming, Today's, or Past events
-- **Smart Columns**: Date, time, location, and thumbnail display
-- **Sortable Interface**: Click column headers to sort
+- **Smart Columns**: Event thumbnail, date, time, location, and categories
+- **Sortable Interface**: Click column headers to sort by date, time, or location
 - **Quick Edit**: Fast editing of event details
 - **Category Management**: Organize events with categories
+- **Duplicate Prevention**: Admin columns prevent duplicate content display
+- **ACF Dependency Check**: Clear error messages with download links if ACF is missing
 
 ## Responsive Breakpoints
 
@@ -152,16 +160,27 @@ Each event includes these custom fields:
 simple-events-calendar/
 ├── simple-events-calendar.php         # Main plugin file
 ├── assets/
-│   ├── css/simple-events.css          # Styles
-│   └── js/simple-events.js            # JavaScript
+│   ├── css/
+│   │   ├── simple-events.css          # Compiled styles
+│   │   └── simple-events.scss         # Source SCSS
+│   └── js/
+│       ├── simple-events.js           # Main JavaScript
+│       └── simple-events-shortcode.js # Shortcode-specific JS
 ├── includes/
 │   ├── acf-json.php                   # ACF integration
 │   ├── acf-settings-page.php          # Field definitions
-│   ├── simple-events-post-type.php    # Post type registration
-│   ├── simple-events-taxonomies.php   # Category taxonomy
-│   ├── simple-events-admin-columns.php # Admin interface
-│   ├── simple-events-shortcode.php    # Shortcode functionality
-│   └── simple-events-ajax.php         # AJAX handlers
+│   ├── class-admin-columns.php        # Admin interface
+│   ├── class-ajax.php                 # AJAX handlers
+│   ├── class-main.php                 # Main plugin class
+│   ├── class-post-type.php            # Post type registration
+│   ├── class-shortcode.php            # Shortcode functionality
+│   └── functions.php                  # Utility functions
+├── languages/                         # Translation files
+├── src/                               # Source files for build
+│   ├── css/simple-events.scss         # Source SCSS
+│   └── js/
+│       ├── simple-events.js           # Source JavaScript
+│       └── simple-events-shortcode.js # Source shortcode JS
 └── template-parts/
     └── content-event-card.php         # Event card template
 ```

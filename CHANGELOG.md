@@ -5,7 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v3.0.0] (2025-08-20)
+## [v4.1.1] (2024-09-22)
+
+### Removed
+
+* Removed "Showing current and upcoming events only." message from shortcode display
+* Removed scroll hint bar "📜 Scroll down to see more events..." from after events
+* Events now load automatically on scroll without instructional messages
+
+## [v4.1.0] (2024-09-22)
+
+### Improved
+
+* Enhanced ACF dependency error message for better user experience
+* Error message now shows "Simple Events Calendar requires Advanced Custom Fields (ACF) plugin to be installed and activated"
+* Added direct download link button "Download ACF Free Plugin" to WordPress plugin installer
+* Cleaner, more actionable error messages for missing dependencies
+
+## [v4.0.3] (2024-09-22)
+
+### Fixed
+
+* Fixed duplicate content appearing in admin columns (thumbnail, date, time, location)
+* Added static tracking to prevent `fill_columns` method from processing same column/post multiple times
+* Eliminated stacked duplicate content within individual admin columns
+
+## [v4.0.2] (2024-09-22)
+
+### Fixed
+
+* Fixed duplicate admin columns by completely overriding WordPress default columns
+* Prevented WordPress from showing automatic thumbnail, content, and excerpt columns
+* Admin columns now display only custom event-specific columns without duplicates
+
+## [v4.0.1] (2024-09-22)
+
+### Fixed
+
+* Fixed duplicate thumbnail display in admin columns by removing default WordPress thumbnail column
+* Admin now shows only custom event thumbnail without WordPress default thumbnail
+
+## [v4.0.0] (2024-09-22)
+
+### Added
+
+* Updated WordPress minimum requirement to 6.2+ for better block editor support
+* Updated PHP minimum requirement to 8.0+ (PHP 7.4 is end-of-life)
+* Added build system with `npm run dist` and `npm run zip` commands
+* Added compressed file exclusions to .gitignore
+* Added automated semantic versioning instructions
+
+### Changed
+
+* **BREAKING**: Increased minimum WordPress and PHP requirements
+* Refactored plugin architecture with proper class-based structure
+* Improved admin columns functionality with better duplicate prevention
+
+## [v3.0.0] (2024-08-20)
 
 ### Added
 
@@ -91,6 +147,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CSS file
 - Updated the "No more events" message from the `simple-events-shortcode.php` file.
 
+[v4.1.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.0...v4.1.1
+[v4.1.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.0.3...v4.1.0
+[v4.0.3]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.0.2...v4.0.3
+[v4.0.2]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.0.1...v4.0.2
+[v4.0.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.0.0...v4.0.1
+[v4.0.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v3.0.0...v4.0.0
 [v3.0.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v2.1.2...v3.0.0
 [v2.1.2]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v2.1.1...v2.1.2
 [v2.1.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v2.1.0...v2.1.1
