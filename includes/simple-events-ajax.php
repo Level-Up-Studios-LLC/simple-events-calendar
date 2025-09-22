@@ -32,6 +32,12 @@ function ajax_load_more_events()
     // Sanitize and validate input
     $offset = isset($_POST['offset']) ? absint($_POST['offset']) : 0;
 
+    // Get display options from AJAX request (with defaults)
+    $show_time = isset($_POST['show_time']) ? ($_POST['show_time'] === 'true') : true;
+    $show_excerpt = isset($_POST['show_excerpt']) ? ($_POST['show_excerpt'] === 'true') : true;
+    $show_location = isset($_POST['show_location']) ? ($_POST['show_location'] === 'true') : true;
+    $show_footer = isset($_POST['show_footer']) ? ($_POST['show_footer'] === 'true') : true;
+
     // Validate offset is reasonable (prevent potential abuse)
     if ($offset < 0 || $offset > 10000) {
         wp_send_json_error('Invalid offset value', 400);
@@ -48,7 +54,9 @@ function ajax_load_more_events()
         'orderby'         => 'meta_value',
         'order'           => 'ASC',
         'meta_key'        => 'event_date',
+        'meta_type'       => 'DATE',
         'meta_query'      => array(
+            'relation' => 'AND',
             array(
                 'key'       => 'event_date',
                 'compare'   => '>=',
@@ -60,6 +68,7 @@ function ajax_load_more_events()
         'no_found_rows'   => true,
         'update_post_meta_cache' => false,
         'update_post_term_cache' => false,
+        'suppress_filters' => false, // Allow filters to work for non-logged-in users
     );
 
     // Execute query
@@ -82,7 +91,13 @@ function ajax_load_more_events()
                 'excerpt'    => wp_trim_words(get_the_excerpt(), 30, '...'),
                 'date'       => get_field('event_date'),
                 'start_time' => get_field('event_start_time'),
-                'end_time'   => get_field('event_end_time')
+                'end_time'   => get_field('event_end_time'),
+                'location'   => get_field('event_location'), // Add location field
+                // Pass display options to template
+                'show_time'     => $show_time,
+                'show_excerpt'  => $show_excerpt,
+                'show_location' => $show_location,
+                'show_footer'   => $show_footer
             );
 
             // Validate that we have required data
@@ -134,11 +149,11 @@ function simple_events_render_fallback_card($post_data)
 ?>
     <article class="simple-events-calendar__post simple-events-fallback">
         <div class="simple-events-calendar__post__description">
-            <a href="<?php echo esc_url($post_data['permalink']); ?>">
-                <h4 class="simple-events-calendar__post__title">
+            <h3 class="simple-events-calendar__post__title">
+                <a href="<?php echo esc_url($post_data['permalink']); ?>">
                     <?php echo esc_html($post_data['title']); ?>
-                </h4>
-            </a>
+                </a>
+            </h3>
             <div class="simple-events-calendar__post__meta">
                 <span class="simple-events-calendar__post__date">
                     <?php echo esc_html($post_data['date']); ?>
@@ -168,6 +183,9 @@ function simple_events_render_fallback_card($post_data)
 function simple_events_ajax_error_handler()
 {
     if (defined('DOING_AJAX') && DOING_AJAX) {
+        // Log the error for debugging
+        error_log('Simple Events Calendar AJAX Error: ' . print_r($_POST, true));
+
         // Return user-friendly error
         wp_die('An error occurred while loading events. Please refresh the page and try again.', 'Loading Error', array('response' => 500));
     }
