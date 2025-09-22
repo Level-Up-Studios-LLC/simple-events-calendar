@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Simple Events Calendar
  * Plugin URI: https://github.com/Level-Up-Studios-LLC/simple-events-calendar
- * Description: A simple events calendar plugin for WordPress. Requires Advanced Custom Fields (Free or Pro).
+ * Description: A simple events calendar plugin for WordPress. Requires Advanced Custom Fields (ACF®).
  * Version: 4.1.1
  * Requires at least: 6.2
  * Requires PHP: 8.0
