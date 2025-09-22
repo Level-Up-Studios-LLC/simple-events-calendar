@@ -38,7 +38,7 @@ Simple Events Calendar provides an elegant way to create and display events on y
 
 ### 🛠 **Easy to Use**
 
-- Simple shortcode: `[simple_events_calendar]`
+- Simple shortcode: `[sec_events]`
 - Custom post type with intuitive fields
 - Built-in event categories
 - No complex configuration needed
@@ -75,7 +75,7 @@ Simple Events Calendar provides an elegant way to create and display events on y
 **Using the Shortcode:**
 
 ```text
-[simple_events_calendar]
+[sec_events]
 ```
 
 **Shortcode Parameters:**
@@ -87,16 +87,16 @@ Simple Events Calendar provides an elegant way to create and display events on y
 - `orderby` - Sort by field (default: 'event_date')
 - `show_time` - Display event times (default: 'yes')
 - `show_excerpt` - Display event excerpts (default: 'yes')
-- `show_location` - Display event locations (default: 'yes')
-- `show_footer` - Display read more links (default: 'yes')
+- `show_location` - Display event locations (default: 'no')
+- `show_footer` - Display read more links (default: 'no')
 
 **Examples:**
 
 ```text
-[simple_events_calendar posts_per_page="9"]
-[simple_events_calendar category="workshops"]
-[simple_events_calendar show_past="yes"]
-[simple_events_calendar show_time="no" show_location="no"]
+[sec_events posts_per_page="9"]
+[sec_events category="workshops"]
+[sec_events show_past="yes"]
+[sec_events show_time="no" show_location="no"]
 ```
 
 ### Archive Pages

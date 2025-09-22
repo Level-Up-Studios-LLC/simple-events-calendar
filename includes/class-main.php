@@ -345,7 +345,7 @@ class Simple_Events_Calendar {
             $should_load = true;
         }
 
-        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'simple_events_calendar')) {
+        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'sec_events')) {
             $should_load = true;
         }
 

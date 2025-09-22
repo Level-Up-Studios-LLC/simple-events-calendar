@@ -28,7 +28,7 @@ class Simple_Events_Shortcode {
      * Initialize hooks
      */
     private function init_hooks() {
-        add_shortcode('simple_events_calendar', array($this, 'render_shortcode'));
+        add_shortcode('sec_events', array($this, 'render_shortcode'));
         add_action('save_post', array($this, 'clear_cache'));
         add_action('delete_post', array($this, 'clear_cache'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
@@ -50,9 +50,9 @@ class Simple_Events_Shortcode {
             'orderby'        => 'event_date',
             'show_time'      => 'yes',
             'show_excerpt'   => 'yes',
-            'show_location'  => 'yes',
-            'show_footer'    => 'yes'
-        ), $atts, 'simple_events_calendar');
+            'show_location'  => 'no',
+            'show_footer'    => 'no'
+        ), $atts, 'sec_events');
 
         $sanitized_atts = $this->sanitize_attributes($atts);
 
@@ -88,10 +88,10 @@ class Simple_Events_Shortcode {
             'show_past'      => ($atts['show_past'] === 'yes'),
             'order'          => in_array(strtoupper($atts['order']), ['ASC', 'DESC']) ? strtoupper($atts['order']) : 'ASC',
             'orderby'        => sanitize_text_field($atts['orderby']),
-            'show_time'      => ($atts['show_time'] !== 'no'),
-            'show_excerpt'   => ($atts['show_excerpt'] !== 'no'),
-            'show_location'  => ($atts['show_location'] !== 'no'),
-            'show_footer'    => ($atts['show_footer'] !== 'no')
+            'show_time'      => ($atts['show_time'] === 'yes'),
+            'show_excerpt'   => ($atts['show_excerpt'] === 'yes'),
+            'show_location'  => ($atts['show_location'] === 'yes'),
+            'show_footer'    => ($atts['show_footer'] === 'yes')
         );
     }
 
@@ -198,14 +198,18 @@ class Simple_Events_Shortcode {
      */
     private function render_event_card($atts) {
         $post_data = array(
-            'title'      => get_the_title(),
-            'permalink'  => get_permalink(),
-            'thumbnail'  => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
-            'excerpt'    => wp_trim_words(get_the_excerpt(), 30, '...'),
-            'date'       => get_field('event_date'),
-            'start_time' => get_field('event_start_time'),
-            'end_time'   => get_field('event_end_time'),
-            'location'   => get_field('event_location')
+            'title'        => get_the_title(),
+            'permalink'    => get_permalink(),
+            'thumbnail'    => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
+            'excerpt'      => wp_trim_words(get_the_excerpt(), 30, '...'),
+            'date'         => get_field('event_date'),
+            'start_time'   => get_field('event_start_time'),
+            'end_time'     => get_field('event_end_time'),
+            'location'     => get_field('event_location'),
+            'show_time'    => $atts['show_time'] ? 'yes' : 'no',
+            'show_excerpt' => $atts['show_excerpt'] ? 'yes' : 'no',
+            'show_location' => $atts['show_location'] ? 'yes' : 'no',
+            'show_footer'  => $atts['show_footer'] ? 'yes' : 'no'
         );
 
         if (empty($post_data['title']) || empty($post_data['date'])) {
@@ -256,6 +260,13 @@ class Simple_Events_Shortcode {
                 <?php if ($atts['show_excerpt'] && !empty($post_data['excerpt'])): ?>
                     <div class="simple-events-calendar__post__excerpt">
                         <p><?php echo esc_html($post_data['excerpt']); ?></p>
+                    </div>
+                <?php endif; ?>
+                <?php if ($atts['show_footer']): ?>
+                    <div class="simple-events-calendar__post__footer">
+                        <a href="<?php echo esc_url($post_data['permalink']); ?>" class="simple-events-calendar__read-more">
+                            <?php _e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
+                        </a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -332,7 +343,7 @@ class Simple_Events_Shortcode {
      */
     public function enqueue_scripts() {
         global $post;
-        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'simple_events_calendar')) {
+        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'sec_events')) {
             wp_enqueue_script(
                 'simple-events-shortcode',
                 PLUGIN_ASSETS . '/js/simple-events-shortcode.js',
