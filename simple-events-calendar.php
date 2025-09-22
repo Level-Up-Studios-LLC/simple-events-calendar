@@ -415,7 +415,6 @@ function simple_events_load_components() {
     // Ensure ACF fields are accessible to non-logged-in users
     add_action('init', 'simple_events_ensure_public_access');
 }
-}
 
 /**
  * Ensure ACF fields and events are accessible to non-logged-in users
@@ -582,8 +581,8 @@ function simple_events_uninstall() {
     
     // Clean up transients and options
     global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_simple_events_%'");
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_simple_events_%'");
+    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_simple_events_%'));
+    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_simple_events_%'));
     
     // Flush rewrite rules
     flush_rewrite_rules();

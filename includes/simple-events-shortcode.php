@@ -227,7 +227,7 @@ function simple_events_clear_shortcode_cache($post_id)
 
     // Clear all shortcode transients
     global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_simple_events_shortcode_%'");
+    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_simple_events_shortcode_%'));
 }
 
 /**
