@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.2.4] (2024-09-22)
+
+### Added
+
+* Added SCSS build system with Sass compiler and stylelint
+* Added development and production CSS build scripts (`npm run build:css`, `npm run build:css:dev`)
+* Added file watching capabilities (`npm run watch`, `npm run watch:css`)
+* Added CSS linting with stylelint and standard SCSS configuration
+* Added automatic version synchronization between plugin header, constants, and package.json
+
+### Changed
+
+* **BREAKING**: Updated shortcode from `[simple_events_calendar]` to `[sec_events]` for consistency
+* Improved responsive design with better media query organization
+* Enhanced theme color inheritance for better integration with WordPress themes
+* Refactored CSS build process from simple file copying to proper SCSS compilation
+* Updated build system to generate both compressed (production) and expanded (development) CSS
+* Improved accessibility features and reduced motion support
+* Updated package.json version management and build scripts
+
+### Fixed
+
+* Fixed plugin description to clearly specify ACF® requirement
+* Improved WordPress version compatibility requirements
+* Enhanced color definitions and margin adjustments for better layout consistency
+* Fixed media query structure for improved readability and maintainability
+
+### Development
+
+* Added source maps for development builds
+* Added proper CSS minification for production builds
+* Added automated distribution and zip creation process
+* Enhanced .claude-instructions with comprehensive version management guidelines
+
 ## [v4.1.1] (2024-09-22)
 
 ### Removed
@@ -147,6 +181,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CSS file
 - Updated the "No more events" message from the `simple-events-shortcode.php` file.
 
+[v4.2.4]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.1...v4.2.4
 [v4.1.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.0...v4.1.1
 [v4.1.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.0.3...v4.1.0
 [v4.0.3]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.0.2...v4.0.3
