@@ -98,13 +98,8 @@
 }
 
 .simple-events-calendar__post__description .simple-events-calendar__post__header a {
-  color: var(--e-global-color-7eb2be3);
   text-decoration: none;
   transition: color 0.3s ease;
-}
-
-.simple-events-calendar__post__description .simple-events-calendar__post__header a:hover {
-  color: var(--e-global-color-accent);
 }
 
 .simple-events-calendar__post__title {
@@ -117,10 +112,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-}
-
-.simple-events-calendar__post__date {
-  /* Removed color to allow theme inheritance */
 }
 
 .simple-events-calendar__post__time {

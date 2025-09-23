@@ -6,28 +6,28 @@
 }
 
 /* Desktop/Large displays (1367px and up) - 3 columns, 80px gaps */
-@media (min-width: 1367px) {
+@media screen and (width >= 1367px) {
   .simple-events-calendar {
     grid-template-columns: repeat(3, 1fr);
     gap: 80px;
   }
 }
 /* Laptop displays (769px to 1366px) - 3 columns, 40px gaps */
-@media (min-width: 769px) and (max-width: 1366px) {
+@media screen and (769px <= width <= 1366px) {
   .simple-events-calendar {
     grid-template-columns: repeat(3, 1fr);
     gap: 40px;
   }
 }
 /* Tablet displays (481px to 768px) - 2 columns, 30px gaps */
-@media (min-width: 481px) and (max-width: 768px) {
+@media screen and (481px <= width <= 768px) {
   .simple-events-calendar {
     grid-template-columns: repeat(2, 1fr);
     gap: 30px;
   }
 }
 /* Mobile displays (up to 480px) - 1 column, 30px gaps */
-@media (max-width: 480px) {
+@media screen and (width <= 480px) {
   .simple-events-calendar {
     grid-template-columns: 1fr;
     gap: 30px;
@@ -93,13 +93,8 @@
 }
 
 .simple-events-calendar__post__description .simple-events-calendar__post__header a {
-  color: var(--e-global-color-7eb2be3);
   text-decoration: none;
   transition: color 0.3s ease;
-}
-
-.simple-events-calendar__post__description .simple-events-calendar__post__header a:hover {
-  color: var(--e-global-color-accent);
 }
 
 .simple-events-calendar__post__title {
@@ -112,10 +107,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-}
-
-.simple-events-calendar__post__date {
-  /* Removed color to allow theme inheritance */
 }
 
 .simple-events-calendar__post__time {
@@ -174,7 +165,6 @@
   gap: 8px;
   text-decoration: none;
   transition: all 0.3s ease;
-  /* Removed specific styling to allow theme/Elementor button inheritance */
 }
 
 .simple-events-calendar__read-more:hover {
@@ -236,14 +226,14 @@
 }
 
 .simple-events-error p {
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
   color: #721c24;
   font-weight: 500;
 }
 
 .simple-events-retry-btn {
   background: #dc3545;
-  color: white;
+  color: #fff;
   border: none;
   padding: 10px 20px;
   border-radius: 6px;
@@ -266,14 +256,14 @@
 }
 
 .simple-events-empty-state h3 {
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
   color: #666;
   font-size: 1.5rem;
   font-weight: 600;
 }
 
 .simple-events-empty-state p {
-  margin: 0 0 24px 0;
+  margin: 0 0 24px;
   color: #888;
   line-height: 1.6;
   font-size: 1rem;
@@ -306,7 +296,7 @@
 }
 
 /* Tablet Specific Adjustments */
-@media (min-width: 481px) and (max-width: 768px) {
+@media screen and (481px <= width <= 768px) {
   .simple-events-calendar__post__thumbnail {
     margin-bottom: 20px;
   }
@@ -320,7 +310,7 @@
   }
 }
 /* Mobile Specific Adjustments */
-@media (max-width: 480px) {
+@media screen and (width <= 480px) {
   .simple-events-calendar__post__thumbnail {
     margin-bottom: 10px;
   }
@@ -366,8 +356,8 @@
     color: #000;
   }
   .simple-events-calendar__read-more {
-    color: #0000ee;
-    border-color: #0000ee;
+    color: #00e;
+    border-color: #00e;
   }
 }
 /* Print Styles */
@@ -382,7 +372,7 @@
     display: block;
   }
   .simple-events-calendar__post {
-    page-break-inside: avoid;
+    break-inside: avoid;
     margin-bottom: 30px;
     box-shadow: none;
     border: 1px solid #000;

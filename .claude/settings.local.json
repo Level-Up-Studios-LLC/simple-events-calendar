@@ -4,7 +4,9 @@
       "Bash(npm run dev:*)",
       "Bash(npm run build:*)",
       "Bash(npm run dist:*)",
-      "Bash(npm run zip:*)"
+      "Bash(npm run zip:*)",
+      "Bash(npm run build:css:*)",
+      "Bash(npm run build:css:dev:*)"
     ],
     "deny": [],
     "ask": []
