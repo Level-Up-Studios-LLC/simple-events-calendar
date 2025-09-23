@@ -32,7 +32,9 @@ vendor/
 .env
 .env.local
 
-# Source maps (keep source files in src/)
+# Generated files (keep only source SCSS in src/)
+/src/**/*.css
+/src/**/*.css.map
 /assets/**/*.map
 
 # WordPress specific

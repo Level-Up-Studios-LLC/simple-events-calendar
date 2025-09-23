@@ -96,6 +96,9 @@ class Simple_Events_Calendar {
      * Initialize plugin
      */
     public function init() {
+        // Load text domain for translations
+        $this->load_textdomain();
+
         // Runtime dependency check
         if (!$this->runtime_dependency_check()) {
             return;
@@ -146,18 +149,20 @@ class Simple_Events_Calendar {
         $this->ajax = new Simple_Events_Ajax();
         $this->admin_columns = new Simple_Events_Admin_Columns();
 
-        // Load existing files for now (will be phased out)
-        $legacy_components = array(
-            'includes/acf-json.php',
-            'includes/acf-settings-page.php',
-        );
+        // Load required components
+        require_once PLUGIN_DIR . '/includes/acf-json.php';
+        require_once PLUGIN_DIR . '/includes/acf-settings-page.php';
+    }
 
-        foreach ($legacy_components as $component) {
-            $file_path = PLUGIN_DIR . '/' . $component;
-            if (file_exists($file_path)) {
-                require_once $file_path;
-            }
-        }
+    /**
+     * Load plugin text domain for translations
+     */
+    public function load_textdomain() {
+        load_plugin_textdomain(
+            PLUGIN_TEXT_DOMAIN,
+            false,
+            dirname(plugin_basename(SIMPLE_EVENTS_PLUGIN_FILE)) . '/languages/'
+        );
     }
 
     /**

@@ -1,6 +1,6 @@
 # Simple Events Calendar
 
-A clean, responsive WordPress plugin for displaying events with infinite scroll and modern design. Built with simplicity and performance in mind.
+A clean, responsive WordPress plugin for displaying events with infinite scroll and modern design. Built with simplicity, performance, and developer experience in mind. Now includes a complete SCSS build system for easy customization.
 
 ## Description
 
@@ -28,6 +28,8 @@ Simple Events Calendar provides an elegant way to create and display events on y
 - Loads 6 events initially, then 6 more on scroll
 - Optimized queries with proper caching
 - Minimal resource usage
+- SCSS compilation with minified production builds
+- Source maps for development
 
 ### 🎯 **Smart Filtering**
 
@@ -42,6 +44,8 @@ Simple Events Calendar provides an elegant way to create and display events on y
 - Custom post type with intuitive fields
 - Built-in event categories
 - No complex configuration needed
+- Complete build system with npm scripts
+- CSS linting and file watching for development
 
 ## Requirements
 
@@ -87,8 +91,8 @@ Simple Events Calendar provides an elegant way to create and display events on y
 - `orderby` - Sort by field (default: 'event_date')
 - `show_time` - Display event times (default: 'yes')
 - `show_excerpt` - Display event excerpts (default: 'yes')
-- `show_location` - Display event locations (default: 'no')
-- `show_footer` - Display read more links (default: 'no')
+- `show_location` - Display event locations (default: 'yes')
+- `show_footer` - Display read more links (default: 'yes')
 
 **Examples:**
 
@@ -152,17 +156,73 @@ Each event includes these custom fields:
 - High contrast mode support
 - Reduced motion respect
 
+## Internationalization
+
+The plugin supports multiple languages out of the box:
+
+- **English** (default)
+- **Spanish** (es_ES)
+- **French** (fr_FR)
+
+Translation files are located in the `languages/` directory. The plugin uses WordPress's standard translation system and is ready for additional translations.
+
 ## Development
+
+### Build System
+
+The plugin includes a modern build system for SCSS compilation and development workflow:
+
+**Available npm scripts:**
+
+```bash
+# Development builds (expanded CSS with source maps)
+npm run dev
+npm run build:css:dev
+npm run watch          # Watch SCSS files for changes
+npm run watch:css      # Alternative watcher using Sass
+
+# Production builds (minified CSS)
+npm run build
+npm run build:css
+
+# Linting
+npm run lint:css       # Lint SCSS files
+npm run lint           # Lint both JS and CSS
+
+# Distribution
+npm run dist           # Create distribution folder
+npm run zip            # Create plugin zip file
+```
+
+**SCSS Development:**
+
+- Source files: `src/css/`
+- Compiled output: `assets/css/`
+- Supports source maps for debugging
+- Automatic vendor prefixing
+- CSS linting with stylelint
+
+**JavaScript Development:**
+
+- JavaScript files are maintained directly in `assets/js/`
+- No build process required for JS files
+- Files are ready for production use
 
 ### File Structure
 
 ```text
 simple-events-calendar/
 ├── simple-events-calendar.php         # Main plugin file
+├── package.json                       # npm dependencies and scripts
+├── .stylelintrc.json                  # CSS linting configuration
+├── readme.txt                         # WordPress.org readme
+├── changelog.md                       # Version history
+├── .claude-instructions               # Development guidelines
 ├── assets/
 │   ├── css/
-│   │   ├── simple-events.css          # Compiled styles
-│   │   └── simple-events.scss         # Source SCSS
+│   │   ├── simple-events.css          # Compiled styles (production)
+│   │   ├── simple-events.css.map      # Source map (development)
+│   │   └── simple-events.scss         # Legacy SCSS (use src/ instead)
 │   └── js/
 │       ├── simple-events.js           # Main JavaScript
 │       └── simple-events-shortcode.js # Shortcode-specific JS
@@ -176,13 +236,12 @@ simple-events-calendar/
 │   ├── class-shortcode.php            # Shortcode functionality
 │   └── functions.php                  # Utility functions
 ├── languages/                         # Translation files
-├── src/                               # Source files for build
-│   ├── css/simple-events.scss         # Source SCSS
-│   └── js/
-│       ├── simple-events.js           # Source JavaScript
-│       └── simple-events-shortcode.js # Source shortcode JS
-└── template-parts/
-    └── content-event-card.php         # Event card template
+├── src/                               # Source files for build system
+│   └── css/                           # SCSS source files
+├── template-parts/
+│   └── content-event-card.php         # Event card template
+├── dist/                              # Distribution folder (generated)
+└── node_modules/                      # npm dependencies (generated)
 ```
 
 ### Hooks & Filters
@@ -219,7 +278,7 @@ For support and bug reports, please:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL v2 or later - see the [LICENSE](LICENSE) file for details.
 
 ## Credits
 

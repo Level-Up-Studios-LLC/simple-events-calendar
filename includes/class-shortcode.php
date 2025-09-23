@@ -15,19 +15,22 @@ if (!defined('ABSPATH')) {
 /**
  * Simple Events Shortcode class
  */
-class Simple_Events_Shortcode {
+class Simple_Events_Shortcode
+{
 
     /**
      * Constructor
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->init_hooks();
     }
 
     /**
      * Initialize hooks
      */
-    private function init_hooks() {
+    private function init_hooks()
+    {
         add_shortcode('sec_events', array($this, 'render_shortcode'));
         add_action('save_post', array($this, 'clear_cache'));
         add_action('delete_post', array($this, 'clear_cache'));
@@ -41,7 +44,8 @@ class Simple_Events_Shortcode {
      * @param array $atts Shortcode attributes
      * @return string HTML output
      */
-    public function render_shortcode($atts) {
+    public function render_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'posts_per_page' => 6,
             'category'       => '',
@@ -50,8 +54,8 @@ class Simple_Events_Shortcode {
             'orderby'        => 'event_date',
             'show_time'      => 'yes',
             'show_excerpt'   => 'yes',
-            'show_location'  => 'no',
-            'show_footer'    => 'no'
+            'show_location'  => 'yes',
+            'show_footer'    => 'yes'
         ), $atts, 'sec_events');
 
         $sanitized_atts = $this->sanitize_attributes($atts);
@@ -78,7 +82,8 @@ class Simple_Events_Shortcode {
      * @param array $atts Raw attributes
      * @return array Sanitized attributes
      */
-    private function sanitize_attributes($atts) {
+    private function sanitize_attributes($atts)
+    {
         $posts_per_page = absint($atts['posts_per_page']);
         $posts_per_page = ($posts_per_page > 0 && $posts_per_page <= 50) ? $posts_per_page : 6;
 
@@ -101,7 +106,8 @@ class Simple_Events_Shortcode {
      * @param array $atts Sanitized attributes
      * @return string HTML output
      */
-    private function generate_output($atts) {
+    private function generate_output($atts)
+    {
         $args = $this->build_query_args($atts);
         $the_query = new WP_Query($args);
 
@@ -124,7 +130,8 @@ class Simple_Events_Shortcode {
      * @param array $atts Sanitized attributes
      * @return array Query arguments
      */
-    private function build_query_args($atts) {
+    private function build_query_args($atts)
+    {
         $args = array(
             'post_type'         => 'simple-events',
             'post_status'       => 'publish',
@@ -170,7 +177,8 @@ class Simple_Events_Shortcode {
      * @param WP_Query $query The query object
      * @param array $atts Sanitized attributes
      */
-    private function render_events_container($query, $atts) {
+    private function render_events_container($query, $atts)
+    {
         $data_attrs = sprintf(
             'data-show-time="%s" data-show-excerpt="%s" data-show-location="%s" data-show-footer="%s"',
             $atts['show_time'] ? 'true' : 'false',
@@ -196,7 +204,8 @@ class Simple_Events_Shortcode {
      *
      * @param array $atts Display options
      */
-    private function render_event_card($atts) {
+    private function render_event_card($atts)
+    {
         $post_data = array(
             'title'        => get_the_title(),
             'permalink'    => get_permalink(),
@@ -230,8 +239,9 @@ class Simple_Events_Shortcode {
      * @param array $post_data Event data
      * @param array $atts Display options
      */
-    private function render_fallback_card($post_data, $atts) {
-        ?>
+    private function render_fallback_card($post_data, $atts)
+    {
+?>
         <article class="simple-events-calendar__post simple-events-fallback">
             <div class="simple-events-calendar__post__description">
                 <h3 class="simple-events-calendar__post__title">
@@ -271,7 +281,7 @@ class Simple_Events_Shortcode {
                 <?php endif; ?>
             </div>
         </article>
-        <?php
+<?php
     }
 
     /**
@@ -280,7 +290,8 @@ class Simple_Events_Shortcode {
      * @param WP_Query $query The query object
      * @param array $atts Sanitized attributes
      */
-    private function render_load_more_hint($query, $atts) {
+    private function render_load_more_hint($query, $atts)
+    {
         // Removed hint message - events load automatically on scroll
     }
 
@@ -289,7 +300,8 @@ class Simple_Events_Shortcode {
      *
      * @param array $atts Sanitized attributes
      */
-    private function render_no_events_message($atts) {
+    private function render_no_events_message($atts)
+    {
         echo '<div class="simple-events-calendar simple-events-no-events">';
         echo '<div class="simple-events-empty-state">';
         echo '<h3>No Events Found</h3>';
@@ -316,7 +328,8 @@ class Simple_Events_Shortcode {
      *
      * @param int $post_id Post ID
      */
-    public function clear_cache($post_id) {
+    public function clear_cache($post_id)
+    {
         if (get_post_type($post_id) !== 'simple-events') {
             return;
         }
@@ -332,7 +345,8 @@ class Simple_Events_Shortcode {
      * @param string $old_status Old post status
      * @param WP_Post $post Post object
      */
-    public function clear_cache_on_status_change($new_status, $old_status, $post) {
+    public function clear_cache_on_status_change($new_status, $old_status, $post)
+    {
         if ($post->post_type === 'simple-events' && $new_status !== $old_status) {
             $this->clear_cache($post->ID);
         }
@@ -341,7 +355,8 @@ class Simple_Events_Shortcode {
     /**
      * Enqueue shortcode-specific scripts
      */
-    public function enqueue_scripts() {
+    public function enqueue_scripts()
+    {
         global $post;
         if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'sec_events')) {
             wp_enqueue_script(

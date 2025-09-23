@@ -1,13 +1,13 @@
 {
   "name": "simple-events-calendar",
-  "version": "4.2.4",
+  "version": "4.3.0",
   "description": "A simple events calendar plugin for WordPress",
   "main": "assets/js/simple-events.js",
   "scripts": {
-    "build": "npm run copy:js && npm run build:css",
+    "build": "npm run build:css",
     "build:css": "sass src/css:assets/css --style=compressed --no-source-map",
     "build:css:dev": "sass src/css:assets/css --style=expanded --source-map",
-    "copy:js": "cp src/js/*.js assets/js/",
+    "copy:js": "echo 'JavaScript files are maintained directly in assets/js/'",
     "lint:js": "echo 'JS Linting: Run manually with a code editor'",
     "lint:css": "stylelint \"src/css/**/*.scss\"",
     "lint": "npm run lint:js && npm run lint:css",

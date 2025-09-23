@@ -96,7 +96,7 @@ if ($excerpt) {
                 class="simple-events-calendar__post__link"
                 aria-label="<?php printf(__('View event: %s', PLUGIN_TEXT_DOMAIN), $title); ?>">
                 <img src="<?php echo $thumbnail; ?>"
-                    alt="<?php echo esc_attr(sprintf(__('Image for event: %s'), $title)); ?>"
+                    alt="<?php echo esc_attr(sprintf(__('Image for event: %s', PLUGIN_TEXT_DOMAIN), $title)); ?>"
                     itemprop="image"
                     loading="lazy"
                     decoding="async" />

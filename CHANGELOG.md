@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.3.0] (2024-09-22)
+
+### Added
+
+* **Multilingual Support**: Added complete translation support for Spanish (es_ES) and French (fr_FR)
+* Added professional-quality translations for all plugin strings
+* Added .po and .mo files for Spanish and French languages
+* Added internationalization documentation and setup guide
+
+### Changed
+
+* Updated .pot file with current version and creation date
+* Enhanced plugin description to highlight multilingual capabilities
+* Updated documentation to include translation information
+
 ## [v4.2.4] (2024-09-22)
 
 ### Added
@@ -181,6 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CSS file
 - Updated the "No more events" message from the `simple-events-shortcode.php` file.
 
+[v4.3.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.2.4...v4.3.0
 [v4.2.4]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.1...v4.2.4
 [v4.1.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.0...v4.1.1
 [v4.1.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.0.3...v4.1.0
