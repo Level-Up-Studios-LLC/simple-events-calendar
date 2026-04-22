@@ -5,7 +5,7 @@ Tags: events, calendar, acf, advanced custom fields, shortcode, responsive
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 4.3.0
+Stable tag: 4.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,6 +102,24 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 4. Shortcode parameters and usage examples
 
 == Changelog ==
+
+= 4.3.1 (2026-04-22) =
+
+**Security**
+* Converted AJAX `load_more_events` endpoint to JSON responses (`wp_send_json_success` / `wp_send_json_error`); frontend JS updated in lockstep
+* Sanitized nonce and admin `$_GET` reads; whitelist-validated the admin event status filter; escaped all admin filter dropdown output
+
+**Fixed**
+* Fixed asset cache-busting (plugin version was hardcoded to an older value, causing browsers to serve stale CSS/JS after upgrades)
+* Fixed archive query meta_query merging so existing relation keys from other plugins are preserved
+* Prevented duplicate `init()` execution caused by hooking both `plugins_loaded` and `acf/init`
+* Moved translation loading to the `init` hook to silence the WordPress 6.7+ notice
+* AJAX-loaded event cards now render the "Learn More" footer link, matching shortcode output
+
+**Changed**
+* Shortcode transient cache keys now include plugin version and login state so caches auto-invalidate on upgrade
+* Extracted duplicated fallback event-card markup into a shared helper
+* Introduced `SIMPLE_EVENTS_NONCE_ACTION` constant for the AJAX nonce action
 
 = 4.3.0 (2024-09-22) =
 

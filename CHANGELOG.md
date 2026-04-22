@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.3.1] (2026-04-22)
+
+### Security
+
+* Converted AJAX `load_more_events` endpoint to `wp_send_json_success` / `wp_send_json_error` with a `{ html, has_more }` payload; JS updated in lockstep to consume the JSON shape and surface server error messages
+* Added `wp_unslash` + `sanitize_text_field` to nonce and admin `$_GET` reads (`event_status`, `simple-events-cat`)
+* Whitelist-validated the admin `event_status` filter value before it reaches the query
+* Escaped all `<option>` output in admin filter dropdowns
+
+### Fixed
+
+* Fixed asset cache-busting: `$version` was hardcoded to `3.0.0` while `PLUGIN_VERSION` was `4.3.0`, so browsers served stale CSS/JS after upgrades
+* Fixed `modify_archive_query` meta_query merge: existing `relation` keys and nested clauses from other plugins are now preserved by nesting under a fresh `AND` wrapper instead of flattening with `array_merge`
+* Guarded `init()` against double-execution (it hooks both `plugins_loaded` and `acf/init`) to prevent duplicate hook registrations
+* Moved `load_plugin_textdomain` to the `init` hook to silence the WordPress 6.7+ `_doing_it_wrong` notice
+* AJAX-loaded event cards now render the footer "Learn More" link to match the shortcode output
+
+### Changed
+
+* Shortcode transient cache key now mixes in `PLUGIN_VERSION` and `is_user_logged_in()` so caches auto-invalidate on upgrade and admin/anon variations stay isolated
+* Introduced `SIMPLE_EVENTS_NONCE_ACTION` constant to replace the hardcoded nonce string across call sites (existing nonce value preserved for upgrade safety)
+* Extracted duplicated fallback event-card markup into `simple_events_render_fallback_card()` shared between the shortcode and AJAX handlers
+
+### Removed
+
+* Removed the empty `render_load_more_hint()` method stub
+
 ## [v4.3.0] (2024-09-22)
 
 ### Added
@@ -196,6 +223,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CSS file
 - Updated the "No more events" message from the `simple-events-shortcode.php` file.
 
+[v4.3.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.3.0...v4.3.1
 [v4.3.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.2.4...v4.3.0
 [v4.2.4]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.1...v4.2.4
 [v4.1.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.0...v4.1.1
