@@ -267,24 +267,29 @@ class Simple_Events_Admin_Columns {
      */
     private function render_category_filter() {
         $taxonomy = 'simple-events-cat';
-        $selected_cat = isset($_GET[$taxonomy]) ? $_GET[$taxonomy] : '';
+        $selected_cat = isset($_GET[$taxonomy])
+            ? sanitize_text_field(wp_unslash($_GET[$taxonomy]))
+            : '';
 
         $terms = get_terms(array(
             'taxonomy' => $taxonomy,
             'hide_empty' => true
         ));
 
-        if (!empty($terms)) {
-            echo '<select name="' . $taxonomy . '" id="' . $taxonomy . '" class="postform">';
-            echo '<option value="">' . __('All Categories', PLUGIN_TEXT_DOMAIN) . '</option>';
+        if (!empty($terms) && !is_wp_error($terms)) {
+            printf(
+                '<select name="%1$s" id="%1$s" class="postform">',
+                esc_attr($taxonomy)
+            );
+            echo '<option value="">' . esc_html__('All Categories', PLUGIN_TEXT_DOMAIN) . '</option>';
 
             foreach ($terms as $term) {
                 printf(
                     '<option value="%s"%s>%s (%d)</option>',
-                    $term->slug,
+                    esc_attr($term->slug),
                     selected($selected_cat, $term->slug, false),
-                    $term->name,
-                    $term->count
+                    esc_html($term->name),
+                    (int) $term->count
                 );
             }
 
@@ -296,13 +301,26 @@ class Simple_Events_Admin_Columns {
      * Render status filter dropdown
      */
     private function render_status_filter() {
-        $selected_status = isset($_GET['event_status']) ? $_GET['event_status'] : '';
+        $selected_status = isset($_GET['event_status'])
+            ? sanitize_text_field(wp_unslash($_GET['event_status']))
+            : '';
+
+        $options = array(
+            ''         => __('All Events', PLUGIN_TEXT_DOMAIN),
+            'upcoming' => __('Upcoming Events', PLUGIN_TEXT_DOMAIN),
+            'today'    => __('Today\'s Events', PLUGIN_TEXT_DOMAIN),
+            'past'     => __('Past Events', PLUGIN_TEXT_DOMAIN),
+        );
 
         echo '<select name="event_status" id="event_status" class="postform">';
-        echo '<option value="">' . __('All Events', PLUGIN_TEXT_DOMAIN) . '</option>';
-        echo '<option value="upcoming"' . selected($selected_status, 'upcoming', false) . '>' . __('Upcoming Events', PLUGIN_TEXT_DOMAIN) . '</option>';
-        echo '<option value="today"' . selected($selected_status, 'today', false) . '>' . __('Today\'s Events', PLUGIN_TEXT_DOMAIN) . '</option>';
-        echo '<option value="past"' . selected($selected_status, 'past', false) . '>' . __('Past Events', PLUGIN_TEXT_DOMAIN) . '</option>';
+        foreach ($options as $value => $label) {
+            printf(
+                '<option value="%s"%s>%s</option>',
+                esc_attr($value),
+                selected($selected_status, $value, false),
+                esc_html($label)
+            );
+        }
         echo '</select>';
     }
 
@@ -314,19 +332,23 @@ class Simple_Events_Admin_Columns {
     public function handle_status_filter($query) {
         global $pagenow, $typenow;
 
-        if ($pagenow === 'edit.php' && $typenow === 'simple-events' && isset($_GET['event_status']) && !empty($_GET['event_status'])) {
-            $status = $_GET['event_status'];
-            $today = date('Ymd');
+        if ($pagenow !== 'edit.php' || $typenow !== 'simple-events' || empty($_GET['event_status'])) {
+            return;
+        }
 
-            $meta_query = $this->get_status_meta_query($status, $today);
+        $status = sanitize_text_field(wp_unslash($_GET['event_status']));
+        if (!in_array($status, array('upcoming', 'today', 'past'), true)) {
+            return;
+        }
 
-            if (!empty($meta_query)) {
-                $query->set('meta_query', $meta_query);
-                $query->set('meta_key', 'event_date');
-                $query->set('orderby', 'meta_value');
-                $query->set('meta_type', 'DATE');
-                $query->set('order', $status === 'past' ? 'DESC' : 'ASC');
-            }
+        $meta_query = $this->get_status_meta_query($status, date('Ymd'));
+
+        if (!empty($meta_query)) {
+            $query->set('meta_query', $meta_query);
+            $query->set('meta_key', 'event_date');
+            $query->set('orderby', 'meta_value');
+            $query->set('meta_type', 'DATE');
+            $query->set('order', $status === 'past' ? 'DESC' : 'ASC');
         }
     }
 

@@ -39,37 +39,41 @@ class Simple_Events_Ajax {
      */
     public function load_more_events() {
         if (!$this->verify_nonce()) {
-            wp_send_json_error('Security check failed', 403);
-            return;
+            wp_send_json_error(
+                array('message' => __('Security check failed.', PLUGIN_TEXT_DOMAIN)),
+                403
+            );
         }
 
         $request_data = $this->sanitize_request_data();
         if (!$request_data) {
-            wp_send_json_error('Invalid request data', 400);
-            return;
+            wp_send_json_error(
+                array('message' => __('Invalid request data.', PLUGIN_TEXT_DOMAIN)),
+                400
+            );
         }
 
-        $args = $this->build_query_args($request_data);
+        $args  = $this->build_query_args($request_data);
         $query = new WP_Query($args);
 
         if (!$query->have_posts()) {
-            echo 'NO_MORE_EVENTS';
-            wp_die();
+            wp_send_json_success(array(
+                'html'     => '',
+                'has_more' => false,
+            ));
         }
 
         ob_start();
         $this->render_events($query, $request_data['display_options']);
-        $output = ob_get_clean();
-
+        $html = ob_get_clean();
         wp_reset_postdata();
 
-        if (empty($output) || trim($output) === '') {
-            echo 'NO_MORE_EVENTS';
-        } else {
-            echo $output;
-        }
+        $html = (string) $html;
 
-        wp_die();
+        wp_send_json_success(array(
+            'html'     => $html,
+            'has_more' => trim($html) !== '',
+        ));
     }
 
     /**
@@ -78,7 +82,11 @@ class Simple_Events_Ajax {
      * @return bool
      */
     private function verify_nonce() {
-        return isset($_POST['nonce']) && wp_verify_nonce($_POST['nonce'], 'load_more_events_nonce');
+        if (!isset($_POST['nonce'])) {
+            return false;
+        }
+        $nonce = sanitize_text_field(wp_unslash($_POST['nonce']));
+        return (bool) wp_verify_nonce($nonce, SIMPLE_EVENTS_NONCE_ACTION);
     }
 
     /**
@@ -201,40 +209,7 @@ class Simple_Events_Ajax {
      * @param array $post_data Event data
      */
     private function render_fallback_card($post_data) {
-        ?>
-        <article class="simple-events-calendar__post simple-events-fallback">
-            <div class="simple-events-calendar__post__description">
-                <h3 class="simple-events-calendar__post__title">
-                    <a href="<?php echo esc_url($post_data['permalink']); ?>">
-                        <?php echo esc_html($post_data['title']); ?>
-                    </a>
-                </h3>
-                <div class="simple-events-calendar__post__meta">
-                    <span class="simple-events-calendar__post__date">
-                        <?php echo esc_html($post_data['date']); ?>
-                    </span>
-                    <?php if ($post_data['show_time'] && !empty($post_data['start_time'])): ?>
-                        <span class="simple-events-calendar__post__time">
-                            | <?php echo esc_html($post_data['start_time']); ?>
-                            <?php if (!empty($post_data['end_time'])): ?>
-                                - <?php echo esc_html($post_data['end_time']); ?>
-                            <?php endif; ?>
-                        </span>
-                    <?php endif; ?>
-                </div>
-                <?php if ($post_data['show_location'] && !empty($post_data['location'])): ?>
-                    <div class="simple-events-calendar__post__location">
-                        <span><?php echo esc_html($post_data['location']); ?></span>
-                    </div>
-                <?php endif; ?>
-                <?php if ($post_data['show_excerpt'] && !empty($post_data['excerpt'])): ?>
-                    <div class="simple-events-calendar__post__excerpt">
-                        <p><?php echo esc_html($post_data['excerpt']); ?></p>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </article>
-        <?php
+        simple_events_render_fallback_card($post_data);
     }
 
     /**
@@ -265,7 +240,7 @@ class Simple_Events_Ajax {
      * @return string Nonce
      */
     public static function get_nonce() {
-        return wp_create_nonce('load_more_events_nonce');
+        return wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION);
     }
 
     /**

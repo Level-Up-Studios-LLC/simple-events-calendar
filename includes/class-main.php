@@ -18,11 +18,11 @@ if (!defined('ABSPATH')) {
 class Simple_Events_Calendar {
 
     /**
-     * Plugin version
+     * Plugin version (set from PLUGIN_VERSION in constructor)
      *
      * @var string
      */
-    public $version = '3.0.0';
+    public $version = '';
 
     /**
      * Plugin instance
@@ -60,6 +60,13 @@ class Simple_Events_Calendar {
     public $admin_columns;
 
     /**
+     * Guard to prevent init() from running twice
+     *
+     * @var bool
+     */
+    private $initialized = false;
+
+    /**
      * Get plugin instance
      *
      * @return Simple_Events_Calendar
@@ -75,6 +82,7 @@ class Simple_Events_Calendar {
      * Constructor
      */
     private function __construct() {
+        $this->version = defined('PLUGIN_VERSION') ? PLUGIN_VERSION : '0.0.0';
         $this->init_hooks();
     }
 
@@ -85,6 +93,7 @@ class Simple_Events_Calendar {
         add_action('plugins_loaded', array($this, 'init'), 20);
         add_action('acf/init', array($this, 'init'));
         add_action('admin_init', array($this, 'admin_init'));
+        add_action('init', array($this, 'load_textdomain'));
 
         // Activation/Deactivation hooks
         register_activation_hook(SIMPLE_EVENTS_PLUGIN_FILE, array($this, 'activation_check'));
@@ -94,15 +103,21 @@ class Simple_Events_Calendar {
 
     /**
      * Initialize plugin
+     *
+     * Hooked on both `plugins_loaded` (priority 20) and `acf/init`, so it can
+     * run twice. Guarded to only run once.
      */
     public function init() {
-        // Load text domain for translations
-        $this->load_textdomain();
+        if ($this->initialized) {
+            return;
+        }
 
         // Runtime dependency check
         if (!$this->runtime_dependency_check()) {
             return;
         }
+
+        $this->initialized = true;
 
         // Load components
         $this->load_components();
@@ -315,19 +330,24 @@ class Simple_Events_Calendar {
         $query->set('meta_type', 'DATE');
         $query->set('suppress_filters', false);
 
-        $meta_query = array(
-            array(
-                'key'       => 'event_date',
-                'compare'   => '>=',
-                'value'     => $today,
-                'type'      => 'DATE'
-            )
+        $date_clause = array(
+            'key'     => 'event_date',
+            'compare' => '>=',
+            'value'   => $today,
+            'type'    => 'DATE',
         );
 
         $existing_meta_query = $query->get('meta_query');
-        if (!empty($existing_meta_query)) {
-            $meta_query['relation'] = 'AND';
-            $meta_query = array_merge(array('relation' => 'AND'), $existing_meta_query, $meta_query);
+
+        if (!empty($existing_meta_query) && is_array($existing_meta_query)) {
+            // Nest rather than merge, so existing relation/clauses are preserved intact.
+            $meta_query = array(
+                'relation' => 'AND',
+                $existing_meta_query,
+                $date_clause,
+            );
+        } else {
+            $meta_query = array($date_clause);
         }
 
         $query->set('meta_query', $meta_query);
@@ -382,7 +402,7 @@ class Simple_Events_Calendar {
             'ajax_params',
             array(
                 'ajaxurl' => admin_url('admin-ajax.php'),
-                'nonce'   => wp_create_nonce('load_more_events_nonce'),
+                'nonce'   => wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION),
                 'initial_offset' => 6,
                 'load_increment' => 6
             )

@@ -93,6 +93,7 @@ jQuery(document).ready(function ($) {
     $.ajax({
       type: 'POST',
       url: ajax_params.ajaxurl,
+      dataType: 'json',
       data: {
         action: 'load_more_events',
         nonce: ajax_params.nonce,
@@ -113,46 +114,42 @@ jQuery(document).ready(function ($) {
   }
 
   /**
-   * Handle successful AJAX response
+   * Handle successful AJAX response.
+   * Server returns wp_send_json_success({ html, has_more }).
    */
-  function handleLoadSuccess(data) {
-    // Reset retry count on success
+  function handleLoadSuccess(response) {
     state.retryCount = 0;
 
-    // Check if we received the special "no more events" response
-    if (data && data.trim() === 'NO_MORE_EVENTS') {
+    if (!response || response.success !== true || !response.data) {
       state.noMoreEvents = true;
       showNoMoreEventsMessage();
       return;
     }
 
-    // Check if we received valid data
-    if (!data || data.trim() === '' || data.trim() === 'No events found' || data.indexOf('No more events') !== -1) {
+    const payload = response.data;
+    const html = typeof payload.html === 'string' ? payload.html : '';
+    const hasMore = payload.has_more !== false && html.trim() !== '';
+
+    if (!hasMore) {
       state.noMoreEvents = true;
       showNoMoreEventsMessage();
       return;
     }
 
-    // Parse and validate the response
-    const $newEvents = $(data);
+    const $newEvents = $(html);
     if ($newEvents.length === 0) {
       state.noMoreEvents = true;
       showNoMoreEventsMessage();
       return;
     }
 
-    // Add fade-in animation for new events
     $newEvents.hide();
     state.container.append($newEvents);
     $newEvents.fadeIn(600);
 
-    // Update offset for next load
     state.offset += config.loadIncrement;
 
-    // Remove any existing error messages
     $('#simple-events-error').remove();
-
-    // Remove the scroll hint since we've loaded more events
     $('.simple-events-load-more-info').fadeOut();
   }
 
@@ -166,13 +163,17 @@ jQuery(document).ready(function ($) {
       responseText: xhr.responseText
     });
 
-    // Increment retry count
     state.retryCount++;
 
-    // Determine error message based on error type
+    const serverMessage = xhr && xhr.responseJSON && xhr.responseJSON.data
+      ? xhr.responseJSON.data.message
+      : '';
+
     let errorMessage = 'Unable to load more events. ';
 
-    if (status === 'timeout') {
+    if (serverMessage) {
+      errorMessage += serverMessage;
+    } else if (status === 'timeout') {
       errorMessage += 'The request timed out.';
     } else if (status === 'parsererror') {
       errorMessage += 'Invalid response from server.';

@@ -60,7 +60,11 @@ class Simple_Events_Shortcode
 
         $sanitized_atts = $this->sanitize_attributes($atts);
 
-        $cache_key = 'simple_events_shortcode_' . md5(serialize($sanitized_atts));
+        // Include plugin version + login state so cache is naturally invalidated
+        // on upgrade, and admin-visible variations don't leak into anon output.
+        $cache_key = 'simple_events_shortcode_' . md5(
+            serialize($sanitized_atts) . '|' . PLUGIN_VERSION . '|' . (is_user_logged_in() ? '1' : '0')
+        );
         $cached_result = get_transient($cache_key);
 
         if (!is_admin() && $cached_result !== false) {
@@ -195,8 +199,6 @@ class Simple_Events_Shortcode
         }
 
         echo '</div>';
-
-        $this->render_load_more_hint($query, $atts);
     }
 
     /**
@@ -237,62 +239,11 @@ class Simple_Events_Shortcode
      * Render fallback event card
      *
      * @param array $post_data Event data
-     * @param array $atts Display options
+     * @param array $atts Display options (unused; flags already on $post_data)
      */
     private function render_fallback_card($post_data, $atts)
     {
-?>
-        <article class="simple-events-calendar__post simple-events-fallback">
-            <div class="simple-events-calendar__post__description">
-                <h3 class="simple-events-calendar__post__title">
-                    <a href="<?php echo esc_url($post_data['permalink']); ?>">
-                        <?php echo esc_html($post_data['title']); ?>
-                    </a>
-                </h3>
-                <div class="simple-events-calendar__post__meta">
-                    <span class="simple-events-calendar__post__date">
-                        <?php echo esc_html($post_data['date']); ?>
-                    </span>
-                    <?php if ($atts['show_time'] && !empty($post_data['start_time'])): ?>
-                        <span class="simple-events-calendar__post__time">
-                            | <?php echo esc_html($post_data['start_time']); ?>
-                            <?php if (!empty($post_data['end_time'])): ?>
-                                - <?php echo esc_html($post_data['end_time']); ?>
-                            <?php endif; ?>
-                        </span>
-                    <?php endif; ?>
-                </div>
-                <?php if ($atts['show_location'] && !empty($post_data['location'])): ?>
-                    <div class="simple-events-calendar__post__location">
-                        <span><?php echo esc_html($post_data['location']); ?></span>
-                    </div>
-                <?php endif; ?>
-                <?php if ($atts['show_excerpt'] && !empty($post_data['excerpt'])): ?>
-                    <div class="simple-events-calendar__post__excerpt">
-                        <p><?php echo esc_html($post_data['excerpt']); ?></p>
-                    </div>
-                <?php endif; ?>
-                <?php if ($atts['show_footer']): ?>
-                    <div class="simple-events-calendar__post__footer">
-                        <a href="<?php echo esc_url($post_data['permalink']); ?>" class="simple-events-calendar__read-more">
-                            <?php _e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
-                        </a>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </article>
-<?php
-    }
-
-    /**
-     * Render load more hint
-     *
-     * @param WP_Query $query The query object
-     * @param array $atts Sanitized attributes
-     */
-    private function render_load_more_hint($query, $atts)
-    {
-        // Removed hint message - events load automatically on scroll
+        simple_events_render_fallback_card($post_data);
     }
 
     /**
@@ -372,7 +323,7 @@ class Simple_Events_Shortcode
                 'simple_events_shortcode_params',
                 array(
                     'ajaxurl' => admin_url('admin-ajax.php'),
-                    'nonce'   => wp_create_nonce('load_more_events_nonce'),
+                    'nonce'   => wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION),
                     'loading_text' => __('Loading more events...', PLUGIN_TEXT_DOMAIN),
                     'error_text'   => __('Error loading events. Please try again.', PLUGIN_TEXT_DOMAIN),
                     'no_more_text' => __('No more events to load.', PLUGIN_TEXT_DOMAIN)

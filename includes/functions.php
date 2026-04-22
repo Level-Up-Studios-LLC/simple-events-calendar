@@ -13,6 +13,72 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Render the fallback event card used when the template file is missing.
+ *
+ * Shared between the shortcode and AJAX handlers so both produce identical
+ * markup. Expects $post_data keys: title, permalink, date, start_time,
+ * end_time, location, excerpt, show_time, show_excerpt, show_location,
+ * show_footer. Boolean flags may be booleans or the strings 'yes'/'true'.
+ *
+ * @param array $post_data Event data.
+ * @return void
+ */
+function simple_events_render_fallback_card($post_data) {
+    $as_bool = static function ($value) {
+        if (is_bool($value)) {
+            return $value;
+        }
+        return in_array(strtolower((string) $value), array('yes', 'true', '1'), true);
+    };
+
+    $show_time     = $as_bool($post_data['show_time'] ?? false);
+    $show_excerpt  = $as_bool($post_data['show_excerpt'] ?? false);
+    $show_location = $as_bool($post_data['show_location'] ?? false);
+    $show_footer   = $as_bool($post_data['show_footer'] ?? false);
+    ?>
+    <article class="simple-events-calendar__post simple-events-fallback">
+        <div class="simple-events-calendar__post__description">
+            <h3 class="simple-events-calendar__post__title">
+                <a href="<?php echo esc_url($post_data['permalink']); ?>">
+                    <?php echo esc_html($post_data['title']); ?>
+                </a>
+            </h3>
+            <div class="simple-events-calendar__post__meta">
+                <span class="simple-events-calendar__post__date">
+                    <?php echo esc_html($post_data['date']); ?>
+                </span>
+                <?php if ($show_time && !empty($post_data['start_time'])) : ?>
+                    <span class="simple-events-calendar__post__time">
+                        | <?php echo esc_html($post_data['start_time']); ?>
+                        <?php if (!empty($post_data['end_time'])) : ?>
+                            - <?php echo esc_html($post_data['end_time']); ?>
+                        <?php endif; ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+            <?php if ($show_location && !empty($post_data['location'])) : ?>
+                <div class="simple-events-calendar__post__location">
+                    <span><?php echo esc_html($post_data['location']); ?></span>
+                </div>
+            <?php endif; ?>
+            <?php if ($show_excerpt && !empty($post_data['excerpt'])) : ?>
+                <div class="simple-events-calendar__post__excerpt">
+                    <p><?php echo esc_html($post_data['excerpt']); ?></p>
+                </div>
+            <?php endif; ?>
+            <?php if ($show_footer) : ?>
+                <div class="simple-events-calendar__post__footer">
+                    <a href="<?php echo esc_url($post_data['permalink']); ?>" class="simple-events-calendar__read-more">
+                        <?php esc_html_e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </article>
+    <?php
+}
+
+/**
  * Check if ACF is available and functional
  *
  * @return bool True if ACF is available
