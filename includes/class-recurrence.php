@@ -30,6 +30,15 @@ class Simple_Events_Recurrence
     const NONCE_ACTION_SCOPE = 'sec_recur_edit_scope';
     const NONCE_FIELD_SCOPE  = 'sec_recur_edit_scope_nonce';
 
+    /**
+     * Snapshots of OLD post/meta values captured at post_updated time,
+     * keyed by post_id. Used to compute the change diff on child saves
+     * after ACF has overwritten the meta at save_post priority 10.
+     *
+     * @var array
+     */
+    private static $pre_save_snapshots = array();
+
     public function __construct()
     {
         $this->init_hooks();
@@ -37,6 +46,7 @@ class Simple_Events_Recurrence
 
     private function init_hooks()
     {
+        add_action('post_updated', array($this, 'snapshot_pre_save'), 10, 3);
         // save_post_{type} fires before save_post, but ACF hooks save_post at
         // priority 10 — so we hook the general save_post action at 30 to read
         // meta values that ACF has already persisted, then filter on post_type.
@@ -75,6 +85,32 @@ class Simple_Events_Recurrence
     // Hook handlers
     // ---------------------------------------------------------------------
 
+    public function snapshot_pre_save($post_id, $post_after, $post_before)
+    {
+        unset($post_after);
+
+        if (self::is_generating()) {
+            return;
+        }
+        if (!$post_before || $post_before->post_type !== 'simple-events') {
+            return;
+        }
+        if (!get_post_meta($post_id, self::META_PARENT, true)) {
+            return;
+        }
+
+        self::$pre_save_snapshots[(int) $post_id] = array(
+            'post_title'       => (string) $post_before->post_title,
+            'post_content'     => (string) $post_before->post_content,
+            'post_excerpt'     => (string) $post_before->post_excerpt,
+            '_thumbnail_id'    => (string) get_post_meta($post_id, '_thumbnail_id', true),
+            'event_date'       => (string) get_post_meta($post_id, 'event_date', true),
+            'event_start_time' => (string) get_post_meta($post_id, 'event_start_time', true),
+            'event_end_time'   => (string) get_post_meta($post_id, 'event_end_time', true),
+            'event_location'   => (string) get_post_meta($post_id, 'event_location', true),
+        );
+    }
+
     public function handle_save_post($post_id, $post, $update)
     {
         unset($update);
@@ -97,7 +133,7 @@ class Simple_Events_Recurrence
 
         $parent_id = (int) get_post_meta($post_id, self::META_PARENT, true);
         if ($parent_id) {
-            // Child save — edit-scope handling lands in the next commit.
+            $this->handle_child_save((int) $post_id, $parent_id);
             return;
         }
 
@@ -139,8 +175,62 @@ class Simple_Events_Recurrence
         }
     }
 
-    public function register_edit_scope_metabox()
+    public function register_edit_scope_metabox($post)
     {
+        if (!$post || !get_post_meta($post->ID, self::META_PARENT, true)) {
+            return;
+        }
+
+        add_meta_box(
+            'sec_recur_edit_scope',
+            __('Series Edit Scope', PLUGIN_TEXT_DOMAIN),
+            array($this, 'render_edit_scope_metabox'),
+            'simple-events',
+            'side',
+            'high'
+        );
+    }
+
+    public function render_edit_scope_metabox($post)
+    {
+        $parent_id = (int) get_post_meta($post->ID, self::META_PARENT, true);
+        $index     = (int) get_post_meta($post->ID, self::META_INDEX, true);
+
+        wp_nonce_field(self::NONCE_ACTION_SCOPE, self::NONCE_FIELD_SCOPE);
+
+        $options = array(
+            'only'   => __('Only this occurrence', PLUGIN_TEXT_DOMAIN),
+            'future' => __('This and future occurrences', PLUGIN_TEXT_DOMAIN),
+            'series' => __('Entire series', PLUGIN_TEXT_DOMAIN),
+        );
+
+        $parent_edit_url = get_edit_post_link($parent_id);
+
+        echo '<p>';
+        printf(
+            /* translators: %d is the occurrence number within the series */
+            esc_html__('This event is occurrence #%d in a recurring series.', PLUGIN_TEXT_DOMAIN),
+            (int) $index
+        );
+        if ($parent_edit_url) {
+            echo ' <a href="' . esc_url($parent_edit_url) . '">' . esc_html__('Edit parent', PLUGIN_TEXT_DOMAIN) . '</a>';
+        }
+        echo '</p>';
+
+        echo '<p><label for="sec_edit_scope"><strong>' . esc_html__('Apply changes to:', PLUGIN_TEXT_DOMAIN) . '</strong></label></p>';
+        echo '<select name="sec_edit_scope" id="sec_edit_scope" class="widefat">';
+        foreach ($options as $value => $label) {
+            printf(
+                '<option value="%s">%s</option>',
+                esc_attr($value),
+                esc_html($label)
+            );
+        }
+        echo '</select>';
+
+        echo '<p class="description">';
+        esc_html_e('Only this occurrence: changes stay here. This and future: changes propagate to later siblings (date excluded). Entire series: propagates to the parent and every sibling, and a date change shifts the whole series.', PLUGIN_TEXT_DOMAIN);
+        echo '</p>';
     }
 
     public function cron_extend_horizon()
@@ -154,6 +244,238 @@ class Simple_Events_Recurrence
 
     public function render_admin_notices()
     {
+    }
+
+    // ---------------------------------------------------------------------
+    // Child save handling
+    // ---------------------------------------------------------------------
+
+    private function handle_child_save($child_id, $parent_id)
+    {
+        if (!isset($_POST[self::NONCE_FIELD_SCOPE])) {
+            return;
+        }
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST[self::NONCE_FIELD_SCOPE])), self::NONCE_ACTION_SCOPE)) {
+            return;
+        }
+        if (!current_user_can('edit_post', $child_id)) {
+            return;
+        }
+
+        $scope = isset($_POST['sec_edit_scope'])
+            ? sanitize_text_field(wp_unslash($_POST['sec_edit_scope']))
+            : 'only';
+        if (!in_array($scope, array('only', 'future', 'series'), true)) {
+            $scope = 'only';
+        }
+
+        $changed = $this->compute_changed_fields($child_id);
+        if (empty($changed)) {
+            return;
+        }
+
+        switch ($scope) {
+            case 'only':
+                $this->apply_only_scope($child_id, $changed);
+                break;
+            case 'future':
+                $this->apply_future_scope($child_id, $parent_id, $changed);
+                break;
+            case 'series':
+                $this->apply_series_scope($child_id, $parent_id, $changed);
+                break;
+        }
+    }
+
+    private function compute_changed_fields($child_id)
+    {
+        if (!isset(self::$pre_save_snapshots[$child_id])) {
+            return array();
+        }
+        $snapshot = self::$pre_save_snapshots[$child_id];
+
+        $current = array(
+            'post_title'       => (string) get_post_field('post_title', $child_id),
+            'post_content'     => (string) get_post_field('post_content', $child_id),
+            'post_excerpt'     => (string) get_post_field('post_excerpt', $child_id),
+            '_thumbnail_id'    => (string) get_post_meta($child_id, '_thumbnail_id', true),
+            'event_date'       => (string) get_post_meta($child_id, 'event_date', true),
+            'event_start_time' => (string) get_post_meta($child_id, 'event_start_time', true),
+            'event_end_time'   => (string) get_post_meta($child_id, 'event_end_time', true),
+            'event_location'   => (string) get_post_meta($child_id, 'event_location', true),
+        );
+
+        $changed = array();
+        foreach ($current as $key => $value) {
+            if (!array_key_exists($key, $snapshot)) {
+                continue;
+            }
+            if ($value !== (string) $snapshot[$key]) {
+                $changed[$key] = $value;
+            }
+        }
+
+        return $changed;
+    }
+
+    private function apply_only_scope($child_id, array $changed)
+    {
+        $existing = get_post_meta($child_id, self::META_OVERRIDES, true);
+        $existing = is_array($existing) ? $existing : array();
+        $merged   = array_values(array_unique(array_merge($existing, array_keys($changed))));
+        update_post_meta($child_id, self::META_OVERRIDES, $merged);
+    }
+
+    private function apply_future_scope($child_id, $parent_id, array $changed)
+    {
+        $this_index = (int) get_post_meta($child_id, self::META_INDEX, true);
+        if (!$this_index) {
+            return;
+        }
+
+        // Mark all changed keys as overrides on this child, so a later
+        // "series" edit won't silently blow them away.
+        $this->apply_only_scope($child_id, $changed);
+
+        // event_date is not propagated under "future" scope — date changes
+        // affect only the edited occurrence. Use "series" to shift everything.
+        $propagate = $changed;
+        unset($propagate['event_date']);
+        if (empty($propagate)) {
+            return;
+        }
+
+        $children = $this->get_existing_children($parent_id);
+        foreach ($children as $idx => $sibling) {
+            if ($idx <= $this_index) {
+                continue;
+            }
+
+            $sibling_overrides = get_post_meta($sibling->ID, self::META_OVERRIDES, true);
+            $sibling_overrides = is_array($sibling_overrides) ? $sibling_overrides : array();
+
+            foreach ($propagate as $key => $value) {
+                if (in_array($key, $sibling_overrides, true)) {
+                    continue;
+                }
+                $this->write_field_to_post($sibling->ID, $key, $value);
+                $sibling_overrides[] = $key;
+            }
+
+            $sibling_overrides = array_values(array_unique($sibling_overrides));
+            update_post_meta($sibling->ID, self::META_OVERRIDES, $sibling_overrides);
+        }
+    }
+
+    private function apply_series_scope($child_id, $parent_id, array $changed)
+    {
+        // event_date changes are interpreted as a series-wide shift: compute
+        // delta and move the parent's anchor date. The regenerate at the end
+        // will then re-key every unmodified child to its new date.
+        if (isset($changed['event_date'])) {
+            $this->shift_series_by_child_date_delta($child_id, $parent_id, $changed['event_date']);
+            unset($changed['event_date']);
+        }
+
+        // Propagate the remaining (non-date) changes to the parent and any
+        // siblings that haven't overridden the same key locally.
+        foreach ($changed as $key => $value) {
+            $this->write_field_to_post($parent_id, $key, $value);
+        }
+
+        $children = $this->get_existing_children($parent_id);
+        foreach ($children as $sibling) {
+            if ((int) $sibling->ID === (int) $child_id) {
+                continue;
+            }
+            $sibling_overrides = get_post_meta($sibling->ID, self::META_OVERRIDES, true);
+            $sibling_overrides = is_array($sibling_overrides) ? $sibling_overrides : array();
+            foreach ($changed as $key => $value) {
+                if (in_array($key, $sibling_overrides, true)) {
+                    continue;
+                }
+                $this->write_field_to_post($sibling->ID, $key, $value);
+            }
+        }
+
+        // The child whose edit triggered this scope now matches the rest of
+        // the series for any propagated key — clear those keys from its
+        // override list so future series-scope edits can update them again.
+        $this_overrides = get_post_meta($child_id, self::META_OVERRIDES, true);
+        if (is_array($this_overrides) && !empty($this_overrides)) {
+            $remaining = array_values(array_diff($this_overrides, array_keys($changed)));
+            if (empty($remaining)) {
+                delete_post_meta($child_id, self::META_OVERRIDES);
+            } else {
+                update_post_meta($child_id, self::META_OVERRIDES, $remaining);
+            }
+        }
+
+        $this->regenerate_series($parent_id, 'cascade');
+    }
+
+    private function shift_series_by_child_date_delta($child_id, $parent_id, $new_child_date)
+    {
+        if (!isset(self::$pre_save_snapshots[$child_id]['event_date'])) {
+            return;
+        }
+        $old_child_date = (string) self::$pre_save_snapshots[$child_id]['event_date'];
+        if (strlen($old_child_date) !== 8 || strlen($new_child_date) !== 8) {
+            return;
+        }
+
+        $tz     = wp_timezone();
+        $old_dt = DateTimeImmutable::createFromFormat('!Ymd', $old_child_date, $tz);
+        $new_dt = DateTimeImmutable::createFromFormat('!Ymd', $new_child_date, $tz);
+        if (!$old_dt instanceof DateTimeImmutable || !$new_dt instanceof DateTimeImmutable) {
+            return;
+        }
+
+        $delta_days = (int) $old_dt->diff($new_dt)->format('%r%a');
+        if ($delta_days === 0) {
+            return;
+        }
+
+        $parent_old_ymd = (string) get_post_meta($parent_id, 'event_date', true);
+        $parent_old_dt  = DateTimeImmutable::createFromFormat('!Ymd', $parent_old_ymd, $tz);
+        if (!$parent_old_dt instanceof DateTimeImmutable) {
+            return;
+        }
+
+        try {
+            $modifier      = ($delta_days >= 0 ? '+' : '') . $delta_days . ' days';
+            $parent_new_dt = $parent_old_dt->modify($modifier);
+        } catch (Exception $e) {
+            return;
+        }
+        if (!$parent_new_dt instanceof DateTimeImmutable) {
+            return;
+        }
+
+        update_post_meta($parent_id, 'event_date', $parent_new_dt->format('Ymd'));
+    }
+
+    private function write_field_to_post($post_id, $key, $value)
+    {
+        if (in_array($key, array('post_title', 'post_content', 'post_excerpt'), true)) {
+            global $wpdb;
+            // Direct posts-table write: wp_update_post would re-fire save_post
+            // (and ACF's field-save handler) on every propagation target,
+            // overwriting their meta with $_POST values from the OTHER post
+            // being edited. Cache is invalidated explicitly below.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $wpdb->update(
+                $wpdb->posts,
+                array($key => $value),
+                array('ID' => (int) $post_id),
+                array('%s'),
+                array('%d')
+            );
+            clean_post_cache((int) $post_id);
+            return;
+        }
+
+        update_post_meta($post_id, $key, $value);
     }
 
     // ---------------------------------------------------------------------
@@ -268,8 +590,7 @@ class Simple_Events_Recurrence
         $max_occurrences    = max(1, (int) apply_filters('sec_recur_max_occurrences', 1000));
         $max_horizon_months = max(1, (int) apply_filters('sec_recur_max_horizon_months', 60));
 
-        $tz = wp_timezone();
-
+        $tz    = wp_timezone();
         $start = DateTimeImmutable::createFromFormat('!Ymd', $start_ymd, $tz);
         if (!$start instanceof DateTimeImmutable) {
             return array();
@@ -416,11 +737,11 @@ class Simple_Events_Recurrence
         $parent_status = $parent ? $parent->post_status : 'publish';
         $copyable      = $this->get_copyable_field_keys();
 
-        $created    = 0;
-        $updated    = 0;
-        $deleted    = 0;
-        $detached   = 0;
-        $last_date  = '';
+        $created   = 0;
+        $updated   = 0;
+        $deleted   = 0;
+        $detached  = 0;
+        $last_date = '';
 
         foreach ($computed_dates as $index => $ymd) {
             if ($index === 0) {
