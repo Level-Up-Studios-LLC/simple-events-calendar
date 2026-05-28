@@ -3,7 +3,7 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Simple Events Calendar 4.3.0\n"
+"Project-Id-Version: Simple Events Calendar 4.4.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/issues\n"
 "POT-Creation-Date: 2024-09-22 00:00:00+00:00\n"
 "MIME-Version: 1.0\n"

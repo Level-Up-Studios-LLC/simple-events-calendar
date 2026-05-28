@@ -5,7 +5,7 @@ Tags: events, calendar, acf, advanced custom fields, shortcode, responsive
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 4.3.1
+Stable tag: 4.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,6 +102,22 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 4. Shortcode parameters and usage examples
 
 == Changelog ==
+
+= 4.4.0 (2026-05-28) =
+
+**Added**
+* **Recurring events**: events can now repeat every N days / weeks / months / years from the event edit screen
+* End options: after a number of occurrences, on a specific date, or never (with a rolling 24-month horizon refilled daily by WP-Cron, capped at 60 months)
+* Per-occurrence editing with a sidebar "Series Edit Scope" metabox: changes can apply to this occurrence only, this and future occurrences, or the entire series; per-field overrides keep individually-edited fields safe from series-wide updates
+* Each occurrence is stored as a real `simple-events` post, so the shortcode, archive, AJAX loader, and admin filters work with recurring events out of the box
+* New "Series" admin column on the events list table
+* First public extensibility filters: `sec_recur_max_occurrences`, `sec_recur_max_horizon_months`, `sec_recur_sync_batch_size`, `sec_recur_horizon_refill_threshold_months`, `sec_recur_horizon_extend_months`, `sec_recur_copyable_field_keys`
+
+**Behavioral notes**
+* Disabling recurrence on a saved series deletes unmodified occurrences and detaches modified ones as standalone events
+* Trashing or restoring a parent cascades to its children
+* Large series generate up to 50 occurrences synchronously and finish in the background; an admin notice on the parent edit screen reports progress
+* DST-safe and month-end-safe date arithmetic (Jan 31 → Feb 28 → Mar 31; Feb 29 → Feb 28 in non-leap years)
 
 = 4.3.1 (2026-04-22) =
 
