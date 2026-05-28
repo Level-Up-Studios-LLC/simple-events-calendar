@@ -60,6 +60,13 @@ class Simple_Events_Calendar {
     public $admin_columns;
 
     /**
+     * Recurrence engine
+     *
+     * @var Simple_Events_Recurrence
+     */
+    public $recurrence;
+
+    /**
      * Guard to prevent init() from running twice
      *
      * @var bool
@@ -157,12 +164,14 @@ class Simple_Events_Calendar {
         require_once PLUGIN_DIR . '/includes/class-shortcode.php';
         require_once PLUGIN_DIR . '/includes/class-ajax.php';
         require_once PLUGIN_DIR . '/includes/class-admin-columns.php';
+        require_once PLUGIN_DIR . '/includes/class-recurrence.php';
 
         // Initialize component classes
         $this->post_type = new Simple_Events_Post_Type();
         $this->shortcode = new Simple_Events_Shortcode();
         $this->ajax = new Simple_Events_Ajax();
         $this->admin_columns = new Simple_Events_Admin_Columns();
+        $this->recurrence = new Simple_Events_Recurrence();
 
         // Load required components
         require_once PLUGIN_DIR . '/includes/acf-json.php';
@@ -221,6 +230,11 @@ class Simple_Events_Calendar {
 
         $this->create_acf_json_directory();
         $this->init();
+
+        if (class_exists('Simple_Events_Recurrence')) {
+            Simple_Events_Recurrence::schedule_cron();
+        }
+
         flush_rewrite_rules();
         wp_cache_flush();
     }
@@ -229,6 +243,10 @@ class Simple_Events_Calendar {
      * Plugin deactivation
      */
     public function deactivation() {
+        // Inlined to avoid loading class-recurrence.php on the deactivation
+        // path; deactivation can run before init() has loaded components.
+        wp_clear_scheduled_hook('sec_recur_extend_horizon');
+        wp_clear_scheduled_hook('sec_recur_continue_generation');
         flush_rewrite_rules();
     }
 
