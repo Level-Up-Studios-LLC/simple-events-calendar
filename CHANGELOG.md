@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Per-occurrence editing: when editing a child event, a sidebar **Series Edit Scope** metabox offers *only this occurrence*, *this and future occurrences*, or *entire series*. Edits are tracked per-field via `_sec_field_overrides` so a series-wide change of (e.g.) start time doesn't blow away a previously-customized title.
 * New admin **Series** column on the events list table indicates parents (`Weekly series (+N)`) and children (`Occurrence #N (parent)`).
 * New helper functions in `includes/functions.php`: `simple_events_is_series_parent()`, `simple_events_is_series_child()`, `simple_events_get_series_parent_id()`.
-* New public filters (the plugin's first extensibility hooks): `sec_recur_max_occurrences` (1000), `sec_recur_max_horizon_months` (60), `sec_recur_sync_batch_size` (50), `sec_recur_horizon_refill_threshold_months` (6), `sec_recur_horizon_extend_months` (12), `sec_recur_copyable_field_keys`.
+* New public filters (the plugin's first extensibility hooks): `sec_recur_max_occurrences` (1000), `sec_recur_max_horizon_months` (60), `sec_recur_sync_batch_size` (50), `sec_recur_horizon_refill_threshold_months` (6), `sec_recur_horizon_extend_months` (18), `sec_recur_copyable_field_keys`.
 
 ### Storage model
 

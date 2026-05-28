@@ -324,3 +324,150 @@ msgstr ""
 #: template-parts/content-event-card.php:162
 msgid "Learn More"
 msgstr ""
+
+# -----------------------------------------------------------------------------
+# v4.4.0: Recurring events. Line references are approximate — regenerate with
+# `wp i18n make-pot . languages/simple-events.pot` before release for accurate
+# source references.
+# -----------------------------------------------------------------------------
+
+#: includes/acf-settings-page.php
+msgid "This event repeats"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Disabling recurrence on a saved series deletes future unmodified occurrences. Children with per-occurrence edits become standalone events."
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Repeat Every"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Day(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Week(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Month(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Year(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Frequency"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Never"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "After a number of occurrences"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "On a specific date"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Ends"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Number of Occurrences"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Total occurrences including the first event."
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "End Date"
+msgstr ""
+
+#: includes/acf-settings-page.php
+msgid "Final date on which a recurrence may fall."
+msgstr ""
+
+#: includes/class-recurrence.php
+msgid "Series Edit Scope"
+msgstr ""
+
+#: includes/class-recurrence.php
+msgid "Only this occurrence"
+msgstr ""
+
+#: includes/class-recurrence.php
+msgid "This and future occurrences"
+msgstr ""
+
+#: includes/class-recurrence.php
+msgid "Entire series"
+msgstr ""
+
+#: includes/class-recurrence.php
+#. translators: %d is the occurrence number within the series
+msgid "This event is occurrence #%d in a recurring series."
+msgstr ""
+
+#: includes/class-recurrence.php
+msgid "Edit parent"
+msgstr ""
+
+#: includes/class-recurrence.php
+msgid "Apply changes to:"
+msgstr ""
+
+#: includes/class-recurrence.php
+msgid "Only this occurrence: changes stay here. This and future: changes propagate to later siblings (date excluded). Entire series: propagates to the parent and every sibling, and a date change shifts the whole series."
+msgstr ""
+
+#: includes/class-recurrence.php
+#. translators: 1: number of occurrences deleted, 2: number detached as standalone events
+msgid "Recurrence disabled. %1$d unmodified occurrence(s) deleted; %2$d modified occurrence(s) detached as standalone events."
+msgstr ""
+
+#: includes/class-recurrence.php
+#. translators: %d is the number of occurrences created in the foreground pass
+msgid "Created %d occurrence(s) so far; the remaining occurrences will be generated in the background within a few minutes."
+msgstr ""
+
+#: includes/class-admin-columns.php
+msgid "Series"
+msgstr ""
+
+#: includes/class-admin-columns.php
+#. translators: %d is the occurrence number within the series
+msgid "Occurrence #%d"
+msgstr ""
+
+#: includes/class-admin-columns.php
+msgid "parent"
+msgstr ""
+
+#: includes/class-admin-columns.php
+#. translators: 1: frequency label (Daily/Weekly/etc), 2: number of child occurrences
+msgid "%1$s series (+%2$d)"
+msgstr ""
+
+#: includes/class-admin-columns.php
+msgid "Daily"
+msgstr ""
+
+#: includes/class-admin-columns.php
+msgid "Weekly"
+msgstr ""
+
+#: includes/class-admin-columns.php
+msgid "Monthly"
+msgstr ""
+
+#: includes/class-admin-columns.php
+msgid "Yearly"
+msgstr ""

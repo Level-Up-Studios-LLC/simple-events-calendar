@@ -135,21 +135,10 @@ class Simple_Events_Admin_Columns {
             return;
         }
 
-        $children_count = (int) (new WP_Query(array(
-            'post_type'      => 'simple-events',
-            'post_status'    => array('publish', 'pending', 'draft', 'future', 'private'),
-            'posts_per_page' => 1,
-            'meta_query'     => array(
-                array(
-                    'key'     => Simple_Events_Recurrence::META_PARENT,
-                    'value'   => (int) $post_id,
-                    'compare' => '=',
-                    'type'    => 'NUMERIC',
-                ),
-            ),
-            'fields'         => 'ids',
-        )))->found_posts;
-        wp_reset_postdata();
+        // Cached count maintained by Simple_Events_Recurrence::recount_children()
+        // after every series mutation, so the list table doesn't run an N+1
+        // query for every parent row.
+        $children_count = (int) get_post_meta($post_id, Simple_Events_Recurrence::META_CHILD_COUNT, true);
 
         $labels = array(
             'daily'   => __('Daily', PLUGIN_TEXT_DOMAIN),

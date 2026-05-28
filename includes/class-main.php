@@ -245,8 +245,11 @@ class Simple_Events_Calendar {
     public function deactivation() {
         // Inlined to avoid loading class-recurrence.php on the deactivation
         // path; deactivation can run before init() has loaded components.
-        wp_clear_scheduled_hook('sec_recur_extend_horizon');
-        wp_clear_scheduled_hook('sec_recur_continue_generation');
+        // wp_unschedule_hook (not wp_clear_scheduled_hook) — the continuation
+        // events are scheduled with per-parent args, and wp_clear_scheduled_hook
+        // with no-arg call only matches no-arg events.
+        wp_unschedule_hook('sec_recur_extend_horizon');
+        wp_unschedule_hook('sec_recur_continue_generation');
         flush_rewrite_rules();
     }
 

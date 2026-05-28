@@ -23,6 +23,8 @@ class Simple_Events_Recurrence
     const META_RULE_UNTIL    = '_sec_recur_until';
     const META_RULE_HORIZON  = '_sec_recur_horizon';
     const META_RULE_SKIPPED  = '_sec_recur_skipped_indexes';
+    const META_CASCADED_TRASH = '_sec_recur_cascaded_trash';
+    const META_CHILD_COUNT    = '_sec_recur_child_count';
 
     const CRON_EXTEND_HOOK   = 'sec_recur_extend_horizon';
     const CRON_CONTINUE_HOOK = 'sec_recur_continue_generation';
@@ -70,8 +72,11 @@ class Simple_Events_Recurrence
 
     public static function unschedule_cron()
     {
-        wp_clear_scheduled_hook(self::CRON_EXTEND_HOOK);
-        wp_clear_scheduled_hook(self::CRON_CONTINUE_HOOK);
+        // wp_unschedule_hook (not wp_clear_scheduled_hook) — the continuation
+        // events are scheduled with per-parent args, and wp_clear_scheduled_hook
+        // only matches events whose args exactly equal the (empty) array passed.
+        wp_unschedule_hook(self::CRON_EXTEND_HOOK);
+        wp_unschedule_hook(self::CRON_CONTINUE_HOOK);
     }
 
     public function maybe_reschedule_cron()
@@ -164,6 +169,7 @@ class Simple_Events_Recurrence
             // regeneration on the parent doesn't recreate it. Trashing alone
             // doesn't mark skipped — the user can still restore from trash.
             $this->record_skipped_index($parent_id, (int) get_post_meta($post_id, self::META_INDEX, true));
+            $this->recount_children($parent_id);
             return;
         }
 
@@ -185,9 +191,13 @@ class Simple_Events_Recurrence
             return;
         }
 
-        if (get_post_meta($post_id, self::META_PARENT, true)) {
-            // Child being trashed individually: do nothing. The series meta
-            // stays intact so the child can be restored back into the series.
+        $parent_of_child = (int) get_post_meta($post_id, self::META_PARENT, true);
+        if ($parent_of_child) {
+            // Child being trashed individually: do nothing to the series
+            // meta — keep the child restorable back into the series. But the
+            // live (non-trash) child count just changed, so refresh the
+            // parent's cached count so the admin Series column stays right.
+            $this->recount_children($parent_of_child);
             return;
         }
 
@@ -207,23 +217,34 @@ class Simple_Events_Recurrence
             return;
         }
 
-        if (get_post_meta($post_id, self::META_PARENT, true)) {
-            // Individually restoring a child: nothing to cascade.
+        $parent_of_child = (int) get_post_meta($post_id, self::META_PARENT, true);
+        if ($parent_of_child) {
+            // Individually restoring a child — no cascade, but the live
+            // (non-trash) count just went up.
+            $this->recount_children($parent_of_child);
             return;
         }
 
         // Parent restored from trash — untrash any of its children that were
-        // cascade-trashed alongside it.
+        // cascade-trashed alongside it. Identified by the
+        // META_CASCADED_TRASH marker set in cascade_children('trash'), so
+        // children the user had individually trashed before the parent
+        // operation are NOT inadvertently restored.
         $children = get_posts(array(
             'post_type'      => 'simple-events',
             'post_status'    => 'trash',
             'posts_per_page' => -1,
             'meta_query'     => array(
+                'relation' => 'AND',
                 array(
                     'key'     => self::META_PARENT,
                     'value'   => (int) $post_id,
                     'compare' => '=',
                     'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => self::META_CASCADED_TRASH,
+                    'compare' => 'EXISTS',
                 ),
             ),
             'no_found_rows'  => true,
@@ -231,6 +252,7 @@ class Simple_Events_Recurrence
         ));
 
         if (empty($children)) {
+            $this->recount_children((int) $post_id);
             return;
         }
 
@@ -238,9 +260,11 @@ class Simple_Events_Recurrence
         try {
             foreach ($children as $child_id) {
                 wp_untrash_post((int) $child_id);
+                delete_post_meta((int) $child_id, self::META_CASCADED_TRASH);
             }
         } finally {
             self::unlock_generation();
+            $this->recount_children((int) $post_id);
         }
     }
 
@@ -257,6 +281,42 @@ class Simple_Events_Recurrence
         $skipped[] = $index;
         sort($skipped);
         update_post_meta($parent_id, self::META_RULE_SKIPPED, $skipped);
+    }
+
+    /**
+     * Refresh the cached child count on a parent. Called whenever a series
+     * mutation (regen / cascade / trash / delete / toggle-off) might have
+     * changed the live (non-trash) child count. The admin Series column reads
+     * this meta instead of running a per-row count query.
+     *
+     * @param int $parent_id
+     */
+    private function recount_children($parent_id)
+    {
+        $parent_id = (int) $parent_id;
+        if (!$parent_id) {
+            return;
+        }
+
+        $query = new WP_Query(array(
+            'post_type'      => 'simple-events',
+            'post_status'    => array('publish', 'pending', 'draft', 'future', 'private'),
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                array(
+                    'key'     => self::META_PARENT,
+                    'value'   => $parent_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+            'fields'         => 'ids',
+            'no_found_rows'  => false,
+        ));
+        $count = (int) $query->found_posts;
+        wp_reset_postdata();
+
+        update_post_meta($parent_id, self::META_CHILD_COUNT, $count);
     }
 
     private function cascade_children($parent_id, array $statuses, $action)
@@ -297,6 +357,10 @@ class Simple_Events_Recurrence
                 }
 
                 if ($action === 'trash') {
+                    // Mark before trashing so handle_untrash can distinguish
+                    // cascade-trashed children from ones the user trashed
+                    // individually before the parent.
+                    update_post_meta($child->ID, self::META_CASCADED_TRASH, 1);
                     wp_trash_post($child->ID);
                 } else {
                     wp_delete_post($child->ID, true);
@@ -305,6 +369,7 @@ class Simple_Events_Recurrence
         } finally {
             wp_reset_postdata();
             self::unlock_generation();
+            $this->recount_children((int) $parent_id);
         }
     }
 
@@ -336,6 +401,7 @@ class Simple_Events_Recurrence
             delete_post_meta($parent_id, self::META_RULE_UNTIL);
             delete_post_meta($parent_id, self::META_RULE_HORIZON);
             delete_post_meta($parent_id, self::META_RULE_SKIPPED);
+            delete_post_meta($parent_id, self::META_CHILD_COUNT);
         } finally {
             self::unlock_generation();
         }
@@ -426,7 +492,7 @@ class Simple_Events_Recurrence
         }
 
         $threshold_months = max(1, (int) apply_filters('sec_recur_horizon_refill_threshold_months', 6));
-        $extend_months    = max(1, (int) apply_filters('sec_recur_horizon_extend_months', 12));
+        $extend_months    = max(1, (int) apply_filters('sec_recur_horizon_extend_months', 18));
         $max_months       = max(1, (int) apply_filters('sec_recur_max_horizon_months', 60));
 
         $tz    = wp_timezone();
@@ -686,6 +752,13 @@ class Simple_Events_Recurrence
 
     private function apply_series_scope($child_id, $parent_id, array $changed)
     {
+        // Capture the full set of keys the user just edited BEFORE we strip
+        // event_date out, so the override-cleanup below also clears
+        // event_date from this child's overrides — otherwise a prior
+        // "only this occurrence" date override would leak past the
+        // series-wide shift and future regens would skip the child's date.
+        $keys_to_clear = array_keys($changed);
+
         // event_date changes are interpreted as a series-wide shift: compute
         // delta and move the parent's anchor date. The regenerate at the end
         // will then re-key every unmodified child to its new date.
@@ -716,11 +789,13 @@ class Simple_Events_Recurrence
         }
 
         // The child whose edit triggered this scope now matches the rest of
-        // the series for any propagated key — clear those keys from its
-        // override list so future series-scope edits can update them again.
+        // the series for any propagated key — clear those keys (including
+        // event_date when it was part of the edit, via $keys_to_clear) from
+        // its override list so future series-scope edits can update them
+        // again.
         $this_overrides = get_post_meta($child_id, self::META_OVERRIDES, true);
         if (is_array($this_overrides) && !empty($this_overrides)) {
-            $remaining = array_values(array_diff($this_overrides, array_keys($changed)));
+            $remaining = array_values(array_diff($this_overrides, $keys_to_clear));
             if (empty($remaining)) {
                 delete_post_meta($child_id, self::META_OVERRIDES);
             } else {
@@ -839,10 +914,12 @@ class Simple_Events_Recurrence
 
             $stored_horizon = (string) get_post_meta($parent_id, self::META_RULE_HORIZON, true);
             $computed       = $this->compute_occurrence_dates($start_ymd, $rule, $stored_horizon);
-            if (empty($computed)) {
-                return;
-            }
 
+            // An empty $computed (e.g., the user set until earlier than the
+            // event_date, or the start string didn't parse) still has to run
+            // through diff_and_apply — otherwise any children created by a
+            // previous rule remain orphaned in queries while the user thinks
+            // the save succeeded.
             $existing = $this->get_existing_children($parent_id);
             $result   = $this->diff_and_apply($parent_id, $computed, $existing);
 
@@ -874,6 +951,7 @@ class Simple_Events_Recurrence
             remove_filter('wp_revisions_to_keep', $revisions_filter, 10);
             self::unlock_generation();
             delete_transient($lock_key);
+            $this->recount_children($parent_id);
         }
     }
 
@@ -961,7 +1039,7 @@ class Simple_Events_Recurrence
                 // ~18-month range every time the parent gets re-saved.
                 $stop_date = $stored_horizon > $hard_cap_ymd ? $hard_cap_ymd : $stored_horizon;
             } else {
-                $months = (int) apply_filters('sec_recur_horizon_extend_months', 12)
+                $months = (int) apply_filters('sec_recur_horizon_extend_months', 18)
                     + (int) apply_filters('sec_recur_horizon_refill_threshold_months', 6);
                 $months = max(1, min($months, $max_horizon_months));
 
@@ -1032,7 +1110,7 @@ class Simple_Events_Recurrence
             $new_year  -= 1;
         }
 
-        $last_day = (int) date('t', mktime(0, 0, 0, $new_month, 1, $new_year));
+        $last_day = (int) $start->setDate($new_year, $new_month, 1)->format('t');
         $new_day  = min($day, $last_day);
 
         return $start->setDate($new_year, $new_month, $new_day);
@@ -1047,7 +1125,7 @@ class Simple_Events_Recurrence
         $new_year = $year + $years;
 
         if ($month === 2 && $day === 29) {
-            $last_day = (int) date('t', mktime(0, 0, 0, 2, 1, $new_year));
+            $last_day = (int) $start->setDate($new_year, 2, 1)->format('t');
             $day      = min($day, $last_day);
         }
 
