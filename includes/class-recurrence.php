@@ -439,16 +439,25 @@ class Simple_Events_Recurrence
         $deleted  = 0;
         $detached = 0;
 
+        $today_ymd = current_time('Ymd');
+
         try {
             $children = $this->get_existing_children($parent_id);
             foreach ($children as $child) {
-                $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
-                $is_trash  = $child->post_status === 'trash';
+                $overrides   = get_post_meta($child->ID, self::META_OVERRIDES, true);
+                $is_trash    = $child->post_status === 'trash';
+                $is_modified = is_array($overrides) && !empty($overrides);
 
-                if ($is_trash || (is_array($overrides) && !empty($overrides))) {
-                    // Detach trashed-or-modified children rather than
-                    // destroy them. For trashed posts, force-delete would be
-                    // destructive and skip the user's "in trash" decision.
+                // Past occurrences are preserved as standalone events so
+                // history isn't destroyed by disabling the rule. Trashed
+                // and per-occurrence-edited children are likewise
+                // detached. Only FUTURE unmodified live children get
+                // force-deleted, matching the warning shown on the
+                // "This event repeats" toggle.
+                $child_date = (string) get_post_meta($child->ID, 'event_date', true);
+                $is_past    = strlen($child_date) === 8 && $child_date < $today_ymd;
+
+                if ($is_trash || $is_modified || $is_past) {
                     delete_post_meta($child->ID, self::META_PARENT);
                     delete_post_meta($child->ID, self::META_INDEX);
                     delete_post_meta($child->ID, self::META_OVERRIDES);
@@ -476,8 +485,8 @@ class Simple_Events_Recurrence
         $this->enqueue_admin_notice(
             $parent_id,
             sprintf(
-                /* translators: 1: number of occurrences deleted, 2: number detached as standalone events */
-                __('Recurrence disabled. %1$d unmodified occurrence(s) deleted; %2$d modified occurrence(s) detached as standalone events.', PLUGIN_TEXT_DOMAIN),
+                /* translators: 1: future unmodified occurrences deleted, 2: past / modified / trashed occurrences kept as standalone events */
+                __('Recurrence disabled. %1$d future unmodified occurrence(s) deleted; %2$d occurrence(s) (past, edited, or trashed) kept as standalone events.', PLUGIN_TEXT_DOMAIN),
                 $deleted,
                 $detached
             ),
@@ -1065,15 +1074,30 @@ class Simple_Events_Recurrence
             return;
         }
 
+        // Atomic acquire via the options table. add_option uses INSERT
+        // IGNORE under the hood and returns true only for the request that
+        // actually inserted the row, so two concurrent saves can't both
+        // claim the lock the way a get_transient+set_transient pair would.
         $lock_key = 'sec_recur_lock_' . $parent_id;
-        if (get_transient($lock_key)) {
+        $lock_ttl = MINUTE_IN_SECONDS;
+        $now      = time();
+        $acquired = (bool) add_option($lock_key, (string) $now, '', 'no');
+        if (!$acquired) {
+            $existing = (int) get_option($lock_key, 0);
+            if ($existing > 0 && ($now - $existing) > $lock_ttl) {
+                // Stale lock from a request that died mid-flight. Clear and
+                // race once more — at worst we lose to another live caller.
+                delete_option($lock_key);
+                $acquired = (bool) add_option($lock_key, (string) $now, '', 'no');
+            }
+        }
+        if (!$acquired) {
             simple_events_debug_log('Recurrence lock held; deferring regeneration to background', array('parent_id' => $parent_id));
             if (!wp_next_scheduled(self::CRON_CONTINUE_HOOK, array($parent_id, 0))) {
                 wp_schedule_single_event(time() + 90, self::CRON_CONTINUE_HOOK, array($parent_id, 0));
             }
             return;
         }
-        set_transient($lock_key, 1, MINUTE_IN_SECONDS);
 
         self::lock_generation($parent_id);
 
@@ -1144,7 +1168,7 @@ class Simple_Events_Recurrence
         } finally {
             remove_filter('wp_revisions_to_keep', $revisions_filter, 10);
             self::unlock_generation();
-            delete_transient($lock_key);
+            delete_option($lock_key);
             $this->recount_children($parent_id);
         }
     }
@@ -1535,6 +1559,24 @@ class Simple_Events_Recurrence
         $child_id = wp_insert_post($insert_data, true);
         if (is_wp_error($child_id) || !$child_id) {
             return 0;
+        }
+
+        // wp_insert_post runs inside the parent's save_post chain, so ACF's
+        // save_post handler fires for the new child WITH the parent's
+        // $_POST['acf'] payload and writes every recurrence field
+        // (event_repeats=1, frequency, count/until, ...) onto the child.
+        // Strip those keys + their ACF sibling refs so each generated
+        // occurrence is a leaf, not a phantom series-parent.
+        foreach (array(
+            'event_repeats',
+            'event_repeat_frequency',
+            'event_repeat_interval',
+            'event_repeat_end_type',
+            'event_repeat_count',
+            'event_repeat_until',
+        ) as $recur_key) {
+            delete_post_meta($child_id, $recur_key);
+            delete_post_meta($child_id, '_' . $recur_key);
         }
 
         if (in_array('_thumbnail_id', $copyable, true)) {

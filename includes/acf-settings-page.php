@@ -429,7 +429,11 @@ function get_recurrence_fields()
     $until = create_date_field('event_repeat_until');
     $until['label']             = __('End Date', PLUGIN_TEXT_DOMAIN);
     $until['instructions']      = __('Final date on which a recurrence may fall.', PLUGIN_TEXT_DOMAIN);
-    $until['required']          = 0;
+    // Required at the ACF level so submitting "End: On a specific date"
+    // without a date is blocked. ACF only validates fields whose
+    // conditional logic currently shows them, so this won't trip when the
+    // user picks Never or After N occurrences.
+    $until['required']          = 1;
     $until['wrapper']['width']  = '50';
     $until['conditional_logic'] = [
         [
