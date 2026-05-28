@@ -421,6 +421,104 @@ class Simple_Events_Recurrence
 
     public function cron_extend_horizon()
     {
+        if (self::is_generating()) {
+            return;
+        }
+
+        $threshold_months = max(1, (int) apply_filters('sec_recur_horizon_refill_threshold_months', 6));
+        $extend_months    = max(1, (int) apply_filters('sec_recur_horizon_extend_months', 12));
+        $max_months       = max(1, (int) apply_filters('sec_recur_max_horizon_months', 60));
+
+        $tz    = wp_timezone();
+        $today = new DateTimeImmutable('today', $tz);
+
+        try {
+            $threshold_dt = $today->add(new DateInterval('P' . $threshold_months . 'M'));
+        } catch (Exception $e) {
+            return;
+        }
+        $threshold_ymd = $threshold_dt->format('Ymd');
+
+        $never_series = get_posts(array(
+            'post_type'      => 'simple-events',
+            'post_status'    => array('publish', 'pending', 'draft', 'future', 'private'),
+            'posts_per_page' => -1,
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'     => self::META_RULE_END_TYPE,
+                    'value'   => 'never',
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => self::META_RULE_HORIZON,
+                    'compare' => 'EXISTS',
+                ),
+            ),
+            'no_found_rows'  => true,
+            'fields'         => 'ids',
+        ));
+
+        if (empty($never_series)) {
+            return;
+        }
+
+        foreach ($never_series as $parent_id) {
+            $parent_id = (int) $parent_id;
+
+            $horizon = (string) get_post_meta($parent_id, self::META_RULE_HORIZON, true);
+            if (strlen($horizon) !== 8) {
+                continue;
+            }
+            if ($horizon > $threshold_ymd) {
+                // Plenty of runway left, no refill needed.
+                continue;
+            }
+
+            $start_ymd = (string) get_post_meta($parent_id, 'event_date', true);
+            if (strlen($start_ymd) !== 8) {
+                continue;
+            }
+            $start_dt = DateTimeImmutable::createFromFormat('!Ymd', $start_ymd, $tz);
+            if (!$start_dt instanceof DateTimeImmutable) {
+                continue;
+            }
+
+            try {
+                $hard_cap_ymd = $start_dt->add(new DateInterval('P' . $max_months . 'M'))->format('Ymd');
+            } catch (Exception $e) {
+                continue;
+            }
+
+            if ($horizon >= $hard_cap_ymd) {
+                // Already at the per-series hard cap; nothing more to extend.
+                continue;
+            }
+
+            try {
+                $current_horizon_dt = DateTimeImmutable::createFromFormat('!Ymd', $horizon, $tz);
+                if (!$current_horizon_dt instanceof DateTimeImmutable) {
+                    continue;
+                }
+                $new_horizon_dt = $current_horizon_dt->add(new DateInterval('P' . $extend_months . 'M'));
+            } catch (Exception $e) {
+                continue;
+            }
+
+            $new_horizon = $new_horizon_dt->format('Ymd');
+            if ($new_horizon > $hard_cap_ymd) {
+                $new_horizon = $hard_cap_ymd;
+            }
+            if ($new_horizon <= $horizon) {
+                continue;
+            }
+
+            update_post_meta($parent_id, self::META_RULE_HORIZON, $new_horizon);
+
+            if (!wp_next_scheduled(self::CRON_CONTINUE_HOOK, array($parent_id, 0))) {
+                wp_schedule_single_event(time() + 5, self::CRON_CONTINUE_HOOK, array($parent_id, 0));
+            }
+        }
     }
 
     public function continue_background_generation($parent_id, $next_index)
@@ -739,7 +837,8 @@ class Simple_Events_Recurrence
                 return;
             }
 
-            $computed = $this->compute_occurrence_dates($start_ymd, $rule);
+            $stored_horizon = (string) get_post_meta($parent_id, self::META_RULE_HORIZON, true);
+            $computed       = $this->compute_occurrence_dates($start_ymd, $rule, $stored_horizon);
             if (empty($computed)) {
                 return;
             }
@@ -829,7 +928,7 @@ class Simple_Events_Recurrence
         );
     }
 
-    private function compute_occurrence_dates($start_ymd, array $rule)
+    private function compute_occurrence_dates($start_ymd, array $rule, $stored_horizon = '')
     {
         $max_occurrences    = max(1, (int) apply_filters('sec_recur_max_occurrences', 1000));
         $max_horizon_months = max(1, (int) apply_filters('sec_recur_max_horizon_months', 60));
@@ -848,21 +947,34 @@ class Simple_Events_Recurrence
             $stop_date  = $rule['until'];
         } else {
             $stop_count = $max_occurrences;
-            $months     = (int) apply_filters('sec_recur_horizon_extend_months', 12)
-                + (int) apply_filters('sec_recur_horizon_refill_threshold_months', 6);
-            $months     = max(1, min($months, $max_horizon_months));
 
             try {
                 $hard_cap_dt = $start->add(new DateInterval('P' . $max_horizon_months . 'M'));
-                $horizon_dt  = $start->add(new DateInterval('P' . $months . 'M'));
             } catch (Exception $e) {
                 return array();
             }
+            $hard_cap_ymd = $hard_cap_dt->format('Ymd');
 
-            if ($horizon_dt > $hard_cap_dt) {
-                $horizon_dt = $hard_cap_dt;
+            if (strlen($stored_horizon) === 8) {
+                // Subsequent passes (incl. cron-extended) use the persisted
+                // horizon so the series doesn't shrink back to the initial
+                // ~18-month range every time the parent gets re-saved.
+                $stop_date = $stored_horizon > $hard_cap_ymd ? $hard_cap_ymd : $stored_horizon;
+            } else {
+                $months = (int) apply_filters('sec_recur_horizon_extend_months', 12)
+                    + (int) apply_filters('sec_recur_horizon_refill_threshold_months', 6);
+                $months = max(1, min($months, $max_horizon_months));
+
+                try {
+                    $horizon_dt = $start->add(new DateInterval('P' . $months . 'M'));
+                } catch (Exception $e) {
+                    return array();
+                }
+                if ($horizon_dt > $hard_cap_dt) {
+                    $horizon_dt = $hard_cap_dt;
+                }
+                $stop_date = $horizon_dt->format('Ymd');
             }
-            $stop_date = $horizon_dt->format('Ymd');
         }
 
         $dates = array();
