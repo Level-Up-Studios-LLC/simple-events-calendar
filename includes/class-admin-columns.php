@@ -53,6 +53,7 @@ class Simple_Events_Admin_Columns {
             'event_time' => __('Time', PLUGIN_TEXT_DOMAIN),
             'event_location' => __('Location', PLUGIN_TEXT_DOMAIN),
             'taxonomy-simple-events-cat' => __('Categories', PLUGIN_TEXT_DOMAIN),
+            'event_series' => __('Series', PLUGIN_TEXT_DOMAIN),
             'date' => isset($columns['date']) ? $columns['date'] : __('Published', PLUGIN_TEXT_DOMAIN)
         );
     }
@@ -92,7 +93,80 @@ class Simple_Events_Admin_Columns {
             case 'taxonomy-simple-events-cat':
                 $this->render_categories_column($post_id);
                 break;
+
+            case 'event_series':
+                $this->render_series_column($post_id);
+                break;
         }
+    }
+
+    /**
+     * Render series column: identifies parents vs child occurrences.
+     *
+     * @param int $post_id Post ID
+     */
+    private function render_series_column($post_id) {
+        if (!class_exists('Simple_Events_Recurrence')) {
+            echo '<span class="simple-events-missing-data">—</span>';
+            return;
+        }
+
+        $parent_id = (int) get_post_meta($post_id, Simple_Events_Recurrence::META_PARENT, true);
+        if ($parent_id) {
+            $index      = (int) get_post_meta($post_id, Simple_Events_Recurrence::META_INDEX, true);
+            $parent_url = get_edit_post_link($parent_id);
+
+            echo '<span class="simple-events-series simple-events-series-child">';
+            printf(
+                /* translators: %d is the occurrence number within the series */
+                esc_html__('Occurrence #%d', PLUGIN_TEXT_DOMAIN),
+                $index
+            );
+            if ($parent_url) {
+                echo ' (<a href="' . esc_url($parent_url) . '">' . esc_html__('parent', PLUGIN_TEXT_DOMAIN) . '</a>)';
+            }
+            echo '</span>';
+            return;
+        }
+
+        $freq = (string) get_post_meta($post_id, Simple_Events_Recurrence::META_RULE_FREQ, true);
+        if (!$freq) {
+            echo '<span class="simple-events-missing-data">—</span>';
+            return;
+        }
+
+        $children_count = (int) (new WP_Query(array(
+            'post_type'      => 'simple-events',
+            'post_status'    => array('publish', 'pending', 'draft', 'future', 'private'),
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                array(
+                    'key'     => Simple_Events_Recurrence::META_PARENT,
+                    'value'   => (int) $post_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+            'fields'         => 'ids',
+        )))->found_posts;
+        wp_reset_postdata();
+
+        $labels = array(
+            'daily'   => __('Daily', PLUGIN_TEXT_DOMAIN),
+            'weekly'  => __('Weekly', PLUGIN_TEXT_DOMAIN),
+            'monthly' => __('Monthly', PLUGIN_TEXT_DOMAIN),
+            'yearly'  => __('Yearly', PLUGIN_TEXT_DOMAIN),
+        );
+        $label = isset($labels[$freq]) ? $labels[$freq] : ucfirst($freq);
+
+        echo '<span class="simple-events-series simple-events-series-parent">';
+        printf(
+            /* translators: 1: frequency label (Daily/Weekly/etc), 2: number of child occurrences */
+            esc_html__('%1$s series (+%2$d)', PLUGIN_TEXT_DOMAIN),
+            esc_html($label),
+            (int) $children_count
+        );
+        echo '</span>';
     }
 
     /**
@@ -420,6 +494,20 @@ class Simple_Events_Admin_Columns {
 
                 .wp-list-table .column-event_location {
                     width: 150px;
+                }
+
+                .wp-list-table .column-event_series {
+                    width: 160px;
+                }
+
+                .simple-events-series-parent {
+                    color: #2271b1;
+                    font-weight: 500;
+                }
+
+                .simple-events-series-child {
+                    color: #50575e;
+                    font-size: 12px;
                 }
 
                 .simple-events-admin-thumbnail img {
