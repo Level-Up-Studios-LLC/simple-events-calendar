@@ -114,7 +114,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * First public extensibility filters: `sec_recur_max_occurrences`, `sec_recur_max_horizon_months`, `sec_recur_sync_batch_size`, `sec_recur_horizon_refill_threshold_months`, `sec_recur_horizon_extend_months`, `sec_recur_copyable_field_keys`
 
 **Behavioral notes**
-* Disabling recurrence on a saved series deletes unmodified occurrences and detaches modified ones as standalone events
+* Disabling recurrence on a saved series only force-deletes FUTURE unmodified occurrences; past, edited, or trashed occurrences are detached and kept as standalone events so history isn't destroyed
 * Trashing or restoring a parent cascades to its children
 * Large series generate up to 50 occurrences synchronously and finish in the background; an admin notice on the parent edit screen reports progress
 * DST-safe and month-end-safe date arithmetic (Jan 31 → Feb 28 → Mar 31; Feb 29 → Feb 28 in non-leap years)

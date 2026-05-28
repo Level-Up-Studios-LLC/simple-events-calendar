@@ -23,12 +23,12 @@ Each occurrence is a real `simple-events` post with its own `event_date`, so the
 
 ### Behavioral notes
 
-* **Disabling recurrence** on a saved series deletes all unmodified children and detaches modified ones (clearing their series meta so they remain as standalone events). An admin notice surfaces the counts on the next edit-screen load.
+* **Disabling recurrence** on a saved series only force-deletes FUTURE unmodified live children. Past, edited (per-occurrence override), or trashed children get detached (series meta cleared) and survive as standalone events, so history isn't destroyed. An admin notice surfaces the counts on the next edit-screen load.
 * **Trashing a parent** cascade-trashes its unmodified children and detaches modified ones; **restoring a parent from trash** restores those cascade-trashed children.
 * **Force-deleting a parent** cascade-deletes unmodified children (including any sitting in trash) and detaches modified ones. **Force-deleting a child** records its index in `_sec_recur_skipped_indexes` on the parent so the next regeneration won't recreate it.
 * **Large series** (more than `sec_recur_sync_batch_size`) are generated in the foreground up to the limit, then continued in 5-second-spaced batches via `wp_schedule_single_event('sec_recur_continue_generation')`. An admin notice on the parent edit screen reports progress.
 * **DST and month-end math**: date arithmetic uses `DateTimeImmutable` + `wp_timezone()` so daily/weekly intervals don't drift across DST transitions. Monthly recurrences are anchored to the parent's day-of-month and clamp to the last day of the target month when the original day doesn't exist there (Jan 31 → Feb 28 → Mar 31). Feb 29 yearly recurrences clamp to Feb 28 in non-leap years.
-* **Concurrency**: a per-parent transient lock (`sec_recur_lock_<parent_id>`) plus a `$GLOBALS['sec_generating_series']` recursion guard prevent concurrent regenerations from double-creating occurrences and prevent each cascaded child's save / delete from re-entering the parent's handler.
+* **Concurrency**: a per-parent **atomic option-row lock** (`sec_recur_lock_<parent_id>` acquired via `add_option(..., '', 'no')` so the options-table INSERT IGNORE provides atomicity across concurrent requests) plus a `$GLOBALS['sec_generating_series']` recursion guard prevent concurrent regenerations from double-creating occurrences and prevent each cascaded child's save / delete from re-entering the parent's handler. A stale-lock check (older than 60 s) clears and re-acquires once to recover from processes that died mid-flight.
 
 ### Changed
 

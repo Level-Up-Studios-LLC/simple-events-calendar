@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-28T17:31:46+00:00\n"
+"POT-Creation-Date: 2026-05-28T19:10:17+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 
@@ -420,48 +420,48 @@ msgstr ""
 msgid "Event categories list navigation"
 msgstr ""
 
-#. translators: 1: number of occurrences deleted, 2: number detached as standalone events
-#: includes/class-recurrence.php:413
+#. translators: 1: future unmodified occurrences deleted, 2: past / modified / trashed occurrences kept as standalone events
+#: includes/class-recurrence.php:489
 #, php-format
-msgid "Recurrence disabled. %1$d unmodified occurrence(s) deleted; %2$d modified occurrence(s) detached as standalone events."
+msgid "Recurrence disabled. %1$d future unmodified occurrence(s) deleted; %2$d occurrence(s) (past, edited, or trashed) kept as standalone events."
 msgstr ""
 
-#: includes/class-recurrence.php:438
+#: includes/class-recurrence.php:514
 msgid "Series Edit Scope"
 msgstr ""
 
-#: includes/class-recurrence.php:454
+#: includes/class-recurrence.php:530
 msgid "Only this occurrence"
 msgstr ""
 
-#: includes/class-recurrence.php:455
+#: includes/class-recurrence.php:531
 msgid "This and future occurrences"
 msgstr ""
 
-#: includes/class-recurrence.php:456
+#: includes/class-recurrence.php:532
 msgid "Entire series"
 msgstr ""
 
 #. translators: %d is the occurrence number within the series
-#: includes/class-recurrence.php:464
+#: includes/class-recurrence.php:540
 #, php-format
 msgid "This event is occurrence #%d in a recurring series."
 msgstr ""
 
-#: includes/class-recurrence.php:468
+#: includes/class-recurrence.php:544
 msgid "Edit parent"
 msgstr ""
 
-#: includes/class-recurrence.php:472
+#: includes/class-recurrence.php:548
 msgid "Apply changes to:"
 msgstr ""
 
-#: includes/class-recurrence.php:484
+#: includes/class-recurrence.php:560
 msgid "Only this occurrence: changes stay here. This and future: changes propagate to later siblings (date excluded). Entire series: propagates to the parent and every sibling, and a date change shifts the whole series."
 msgstr ""
 
 #. translators: %d is the number of occurrences created in the foreground pass
-#: includes/class-recurrence.php:970
+#: includes/class-recurrence.php:1188
 #, php-format
 msgid "Created %d occurrence(s) so far; the remaining occurrences will be generated in the background within a few minutes."
 msgstr ""
