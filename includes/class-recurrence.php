@@ -25,6 +25,7 @@ class Simple_Events_Recurrence
     const META_RULE_SKIPPED  = '_sec_recur_skipped_indexes';
     const META_CASCADED_TRASH = '_sec_recur_cascaded_trash';
     const META_CHILD_COUNT    = '_sec_recur_child_count';
+    const META_FUTURE_SEGMENTS = '_sec_recur_future_segments';
 
     const CRON_EXTEND_HOOK   = 'sec_recur_extend_horizon';
     const CRON_CONTINUE_HOOK = 'sec_recur_continue_generation';
@@ -41,6 +42,15 @@ class Simple_Events_Recurrence
      */
     private static $pre_save_snapshots = array();
 
+    /**
+     * Map of child_id => parent_id captured in before_delete_post so we can
+     * recount on the parent after deleted_post fires (by which time
+     * get_post_meta on the child returns nothing because the post is gone).
+     *
+     * @var array
+     */
+    private static $pending_delete_parents = array();
+
     public function __construct()
     {
         $this->init_hooks();
@@ -54,7 +64,9 @@ class Simple_Events_Recurrence
         // meta values that ACF has already persisted, then filter on post_type.
         add_action('save_post', array($this, 'handle_save_post'), 30, 3);
         add_action('before_delete_post', array($this, 'handle_before_delete'));
+        add_action('deleted_post', array($this, 'handle_deleted_post'));
         add_action('wp_trash_post', array($this, 'handle_trash'));
+        add_action('trashed_post', array($this, 'handle_trashed_post'));
         add_action('untrashed_post', array($this, 'handle_untrash'));
         add_action('add_meta_boxes_simple-events', array($this, 'register_edit_scope_metabox'));
         add_action(self::CRON_EXTEND_HOOK, array($this, 'cron_extend_horizon'));
@@ -165,11 +177,13 @@ class Simple_Events_Recurrence
 
         $parent_id = (int) get_post_meta($post_id, self::META_PARENT, true);
         if ($parent_id) {
-            // Force-deleting a child: record its index as skipped so the next
-            // regeneration on the parent doesn't recreate it. Trashing alone
-            // doesn't mark skipped — the user can still restore from trash.
+            // Force-deleting a child: record its index as skipped (must be
+            // done pre-delete because META_INDEX is gone after the post is
+            // removed). The cached child-count refresh is deferred to
+            // handle_deleted_post so it runs AFTER the row is actually
+            // removed — recount here would still count this post as live.
             $this->record_skipped_index($parent_id, (int) get_post_meta($post_id, self::META_INDEX, true));
-            $this->recount_children($parent_id);
+            self::$pending_delete_parents[(int) $post_id] = $parent_id;
             return;
         }
 
@@ -194,10 +208,10 @@ class Simple_Events_Recurrence
         $parent_of_child = (int) get_post_meta($post_id, self::META_PARENT, true);
         if ($parent_of_child) {
             // Child being trashed individually: do nothing to the series
-            // meta — keep the child restorable back into the series. But the
-            // live (non-trash) child count just changed, so refresh the
-            // parent's cached count so the admin Series column stays right.
-            $this->recount_children($parent_of_child);
+            // meta — keep the child restorable back into the series. The
+            // cached child-count refresh is deferred to handle_trashed_post
+            // so it runs AFTER the status flips to 'trash' — recount here
+            // would still count this post as live.
             return;
         }
 
@@ -265,6 +279,52 @@ class Simple_Events_Recurrence
         } finally {
             self::unlock_generation();
             $this->recount_children((int) $post_id);
+        }
+    }
+
+    /**
+     * Runs AFTER an individual child is trashed — at this point the post
+     * status has flipped to 'trash' so a recount excludes the just-trashed
+     * child. Skipped during our own cascade (lock_generation set).
+     *
+     * @param int $post_id
+     */
+    public function handle_trashed_post($post_id)
+    {
+        if (self::is_generating()) {
+            return;
+        }
+        if (get_post_type($post_id) !== 'simple-events') {
+            return;
+        }
+
+        $parent_id = (int) get_post_meta($post_id, self::META_PARENT, true);
+        if ($parent_id) {
+            $this->recount_children($parent_id);
+        }
+    }
+
+    /**
+     * Runs AFTER WP removes the post row. By this point get_post_meta on
+     * the deleted ID returns nothing, so we look up the parent ID from the
+     * map captured in handle_before_delete.
+     *
+     * @param int $post_id
+     */
+    public function handle_deleted_post($post_id)
+    {
+        if (self::is_generating()) {
+            return;
+        }
+        $post_id = (int) $post_id;
+        if (!isset(self::$pending_delete_parents[$post_id])) {
+            return;
+        }
+        $parent_id = (int) self::$pending_delete_parents[$post_id];
+        unset(self::$pending_delete_parents[$post_id]);
+
+        if ($parent_id) {
+            $this->recount_children($parent_id);
         }
     }
 
@@ -383,10 +443,16 @@ class Simple_Events_Recurrence
             $children = $this->get_existing_children($parent_id);
             foreach ($children as $child) {
                 $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
-                if (is_array($overrides) && !empty($overrides)) {
+                $is_trash  = $child->post_status === 'trash';
+
+                if ($is_trash || (is_array($overrides) && !empty($overrides))) {
+                    // Detach trashed-or-modified children rather than
+                    // destroy them. For trashed posts, force-delete would be
+                    // destructive and skip the user's "in trash" decision.
                     delete_post_meta($child->ID, self::META_PARENT);
                     delete_post_meta($child->ID, self::META_INDEX);
                     delete_post_meta($child->ID, self::META_OVERRIDES);
+                    delete_post_meta($child->ID, self::META_CASCADED_TRASH);
                     $detached++;
                 } else {
                     wp_delete_post($child->ID, true);
@@ -402,6 +468,7 @@ class Simple_Events_Recurrence
             delete_post_meta($parent_id, self::META_RULE_HORIZON);
             delete_post_meta($parent_id, self::META_RULE_SKIPPED);
             delete_post_meta($parent_id, self::META_CHILD_COUNT);
+            delete_post_meta($parent_id, self::META_FUTURE_SEGMENTS);
         } finally {
             self::unlock_generation();
         }
@@ -728,9 +795,20 @@ class Simple_Events_Recurrence
             return;
         }
 
+        // Persist the propagation as a "segment" on the parent so that
+        // children created LATER (via async continuation, horizon
+        // extension, or count increase) also pick up the future-scoped
+        // edit. Without this, only the already-existing siblings updated
+        // below would carry the change, and newly-generated occurrences
+        // would silently revert to the parent's untouched values.
+        $this->append_future_segment($parent_id, $this_index, $propagate);
+
         $children = $this->get_existing_children($parent_id);
         foreach ($children as $idx => $sibling) {
             if ($idx <= $this_index) {
+                continue;
+            }
+            if ($sibling->post_status === 'trash') {
                 continue;
             }
 
@@ -747,6 +825,107 @@ class Simple_Events_Recurrence
 
             $sibling_overrides = array_values(array_unique($sibling_overrides));
             update_post_meta($sibling->ID, self::META_OVERRIDES, $sibling_overrides);
+        }
+    }
+
+    /**
+     * Append a future-scope segment to the parent's META_FUTURE_SEGMENTS
+     * record so newly-generated children at index >= from_index inherit
+     * the edited field values.
+     *
+     * @param int   $parent_id
+     * @param int   $from_index
+     * @param array $fields associative key => value
+     */
+    private function append_future_segment($parent_id, $from_index, array $fields)
+    {
+        if ($from_index <= 0 || empty($fields)) {
+            return;
+        }
+
+        $segments = get_post_meta($parent_id, self::META_FUTURE_SEGMENTS, true);
+        $segments = is_array($segments) ? $segments : array();
+        $segments[] = array(
+            'from_index' => (int) $from_index,
+            'fields'     => $fields,
+        );
+        update_post_meta($parent_id, self::META_FUTURE_SEGMENTS, $segments);
+    }
+
+    /**
+     * Compute the effective overlay of fields for a given occurrence index
+     * by replaying all segments whose from_index <= $index in order (later
+     * segments win on key collision).
+     *
+     * @param int $parent_id
+     * @param int $index
+     * @return array<string,mixed>
+     */
+    private function get_segment_overlay_for_index($parent_id, $index)
+    {
+        $segments = get_post_meta($parent_id, self::META_FUTURE_SEGMENTS, true);
+        if (!is_array($segments) || empty($segments)) {
+            return array();
+        }
+
+        $overlay = array();
+        foreach ($segments as $seg) {
+            if (!isset($seg['from_index'], $seg['fields'])) {
+                continue;
+            }
+            if (!is_array($seg['fields'])) {
+                continue;
+            }
+            if ((int) $seg['from_index'] > $index) {
+                continue;
+            }
+            $overlay = array_merge($overlay, $seg['fields']);
+        }
+
+        return $overlay;
+    }
+
+    /**
+     * After a series-scope edit propagates a set of keys series-wide,
+     * remove those keys from every existing future segment. Otherwise the
+     * series-scope value would be overridden by a stale segment when new
+     * children are created at indexes inside that segment's range.
+     *
+     * @param int   $parent_id
+     * @param array $keys keys just propagated under "series" scope
+     */
+    private function strip_future_segment_keys($parent_id, array $keys)
+    {
+        if (empty($keys)) {
+            return;
+        }
+
+        $segments = get_post_meta($parent_id, self::META_FUTURE_SEGMENTS, true);
+        if (!is_array($segments) || empty($segments)) {
+            return;
+        }
+
+        $cleaned = array();
+        foreach ($segments as $seg) {
+            if (!isset($seg['from_index'], $seg['fields']) || !is_array($seg['fields'])) {
+                continue;
+            }
+            $remaining_fields = $seg['fields'];
+            foreach ($keys as $key) {
+                unset($remaining_fields[$key]);
+            }
+            if (!empty($remaining_fields)) {
+                $cleaned[] = array(
+                    'from_index' => (int) $seg['from_index'],
+                    'fields'     => $remaining_fields,
+                );
+            }
+        }
+
+        if (empty($cleaned)) {
+            delete_post_meta($parent_id, self::META_FUTURE_SEGMENTS);
+        } else {
+            update_post_meta($parent_id, self::META_FUTURE_SEGMENTS, $cleaned);
         }
     }
 
@@ -802,6 +981,11 @@ class Simple_Events_Recurrence
                 update_post_meta($child_id, self::META_OVERRIDES, $remaining);
             }
         }
+
+        // Series-wide values for these keys now win — strip them from any
+        // existing future-scope segments so newly-generated children pick
+        // up the parent's value instead of an older future-scoped overlay.
+        $this->strip_future_segment_keys($parent_id, $keys_to_clear);
 
         $this->regenerate_series($parent_id, 'cascade');
     }
@@ -923,8 +1107,18 @@ class Simple_Events_Recurrence
             $existing = $this->get_existing_children($parent_id);
             $result   = $this->diff_and_apply($parent_id, $computed, $existing);
 
-            if ($rule['end_type'] === 'never' && !empty($result['last_date'])) {
-                update_post_meta($parent_id, self::META_RULE_HORIZON, $result['last_date']);
+            if ($rule['end_type'] === 'never' && !empty($computed)) {
+                // The target horizon is the LAST date that compute returned
+                // — i.e. the planned stop_date. $result['last_date'] is the
+                // date of the last child actually CREATED in this pass and
+                // gets truncated to ~sync_batch_size for large series, so
+                // persisting it would shrink the horizon to the first batch
+                // and the continuation would stop right there.
+                $target_horizon = (string) end($computed);
+                $current_stored = (string) get_post_meta($parent_id, self::META_RULE_HORIZON, true);
+                if ($target_horizon !== '' && (strlen($current_stored) !== 8 || $target_horizon > $current_stored)) {
+                    update_post_meta($parent_id, self::META_RULE_HORIZON, $target_horizon);
+                }
             } else {
                 delete_post_meta($parent_id, self::META_RULE_HORIZON);
             }
@@ -1136,7 +1330,11 @@ class Simple_Events_Recurrence
     {
         $query = new WP_Query(array(
             'post_type'        => 'simple-events',
-            'post_status'      => 'any',
+            // 'any' excludes 'trash' by WP convention, but we need trashed
+            // children too — otherwise a child the user individually trashed
+            // would be invisible to the diff pass, treated as a missing
+            // index, and a duplicate live child created at the same index.
+            'post_status'      => array('publish', 'pending', 'draft', 'future', 'private', 'trash'),
             'posts_per_page'   => -1,
             'meta_query'       => array(
                 array(
@@ -1172,6 +1370,10 @@ class Simple_Events_Recurrence
         $copyable      = $this->get_copyable_field_keys();
         $sync_limit    = max(1, (int) apply_filters('sec_recur_sync_batch_size', 50));
 
+        // Snapshot the parent's current copyable values once so each
+        // existing-child diff below doesn't re-read them per child.
+        $parent_values = $parent ? $this->snapshot_parent_field_values($parent_id, $parent) : array();
+
         $created        = 0;
         $updated        = 0;
         $deleted        = 0;
@@ -1190,7 +1392,19 @@ class Simple_Events_Recurrence
             }
 
             if (isset($existing_children[$index])) {
-                $child     = $existing_children[$index];
+                $child = $existing_children[$index];
+
+                // A child the user individually trashed: leave its meta and
+                // date alone so a future untrash restores it to whatever
+                // state the user trashed it in. Importantly, just consume
+                // the index so we don't create a duplicate replacement at
+                // this slot below.
+                if ($child->post_status === 'trash') {
+                    $last_date = $ymd;
+                    unset($existing_children[$index]);
+                    continue;
+                }
+
                 $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
                 $overrides = is_array($overrides) ? $overrides : array();
 
@@ -1198,6 +1412,16 @@ class Simple_Events_Recurrence
                     update_post_meta($child->ID, 'event_date', $ymd);
                     $updated++;
                 }
+
+                // Also sync each copyable field from the parent's current
+                // values when the child hasn't locally overridden it —
+                // otherwise edits to the parent's title / content /
+                // excerpt / thumbnail / time / location stay invisible on
+                // already-generated children.
+                if ($this->propagate_parent_fields_to_child($child->ID, $parent_values, $copyable, $overrides)) {
+                    $updated++;
+                }
+
                 $last_date = $ymd;
                 unset($existing_children[$index]);
                 continue;
@@ -1208,7 +1432,17 @@ class Simple_Events_Recurrence
                 break;
             }
 
-            $child_id = $this->create_child($parent_id, $parent, $parent_status, $index, $ymd, $copyable);
+            $segment_overlay = $this->get_segment_overlay_for_index($parent_id, $index);
+            $child_id = $this->create_child(
+                $parent_id,
+                $parent,
+                $parent_status,
+                $index,
+                $ymd,
+                $copyable,
+                $parent_values,
+                $segment_overlay
+            );
             if ($child_id) {
                 $created++;
                 $last_date = $ymd;
@@ -1221,6 +1455,19 @@ class Simple_Events_Recurrence
         // later continuation pass to touch them.
         if (!$more_remaining) {
             foreach ($existing_children as $child) {
+                if ($child->post_status === 'trash') {
+                    // Already trashed children that are now out of range:
+                    // detach so they don't reattach if the user restores
+                    // them later, but never force-delete (the user moved
+                    // them to trash deliberately).
+                    delete_post_meta($child->ID, self::META_PARENT);
+                    delete_post_meta($child->ID, self::META_INDEX);
+                    delete_post_meta($child->ID, self::META_OVERRIDES);
+                    delete_post_meta($child->ID, self::META_CASCADED_TRASH);
+                    $detached++;
+                    continue;
+                }
+
                 $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
                 if (is_array($overrides) && !empty($overrides)) {
                     delete_post_meta($child->ID, self::META_PARENT);
@@ -1244,10 +1491,30 @@ class Simple_Events_Recurrence
         );
     }
 
-    private function create_child($parent_id, $parent, $parent_status, $index, $ymd, array $copyable)
-    {
+    private function create_child(
+        $parent_id,
+        $parent,
+        $parent_status,
+        $index,
+        $ymd,
+        array $copyable,
+        array $parent_values = array(),
+        array $segment_overlay = array()
+    ) {
         if (!$parent) {
             return 0;
+        }
+
+        // Resolve effective copyable values: parent's current snapshot
+        // overlaid with any future-scope segments matching this index. The
+        // overlaid keys also become local overrides on the new child so a
+        // later "series" edit respects the explicit future-scoped intent.
+        if (empty($parent_values)) {
+            $parent_values = $this->snapshot_parent_field_values($parent_id, $parent);
+        }
+        $effective = $parent_values;
+        foreach ($segment_overlay as $k => $v) {
+            $effective[$k] = $v;
         }
 
         $insert_data = array(
@@ -1256,13 +1523,13 @@ class Simple_Events_Recurrence
             'post_author' => $parent->post_author,
         );
         if (in_array('post_title', $copyable, true)) {
-            $insert_data['post_title'] = $parent->post_title;
+            $insert_data['post_title'] = isset($effective['post_title']) ? $effective['post_title'] : $parent->post_title;
         }
         if (in_array('post_content', $copyable, true)) {
-            $insert_data['post_content'] = $parent->post_content;
+            $insert_data['post_content'] = isset($effective['post_content']) ? $effective['post_content'] : $parent->post_content;
         }
         if (in_array('post_excerpt', $copyable, true)) {
-            $insert_data['post_excerpt'] = $parent->post_excerpt;
+            $insert_data['post_excerpt'] = isset($effective['post_excerpt']) ? $effective['post_excerpt'] : $parent->post_excerpt;
         }
 
         $child_id = wp_insert_post($insert_data, true);
@@ -1271,7 +1538,9 @@ class Simple_Events_Recurrence
         }
 
         if (in_array('_thumbnail_id', $copyable, true)) {
-            $thumbnail_id = get_post_meta($parent_id, '_thumbnail_id', true);
+            $thumbnail_id = isset($effective['_thumbnail_id'])
+                ? $effective['_thumbnail_id']
+                : get_post_meta($parent_id, '_thumbnail_id', true);
             if ($thumbnail_id) {
                 update_post_meta($child_id, '_thumbnail_id', $thumbnail_id);
             }
@@ -1281,7 +1550,9 @@ class Simple_Events_Recurrence
             if (!in_array($acf_key, $copyable, true)) {
                 continue;
             }
-            $value = get_post_meta($parent_id, $acf_key, true);
+            $value = isset($effective[$acf_key])
+                ? $effective[$acf_key]
+                : get_post_meta($parent_id, $acf_key, true);
             update_post_meta($child_id, $acf_key, $value);
 
             $field_key_ref = get_post_meta($parent_id, '_' . $acf_key, true);
@@ -1304,7 +1575,79 @@ class Simple_Events_Recurrence
         update_post_meta($child_id, self::META_PARENT, (int) $parent_id);
         update_post_meta($child_id, self::META_INDEX, (int) $index);
 
+        // Mark every overlay key as a local override so that a later
+        // "Entire series" edit respects the explicit future-scoped value
+        // instead of blowing it away. Without this, the segment-applied
+        // value would survive ONLY until the next series-scope edit.
+        if (!empty($segment_overlay)) {
+            update_post_meta($child_id, self::META_OVERRIDES, array_values(array_keys($segment_overlay)));
+        }
+
         return $child_id;
+    }
+
+    /**
+     * Build a current snapshot of the parent's copyable field values, used
+     * both to seed new children and to propagate parent edits to existing
+     * children during regeneration.
+     *
+     * @param int     $parent_id
+     * @param WP_Post $parent
+     * @return array<string,string>
+     */
+    private function snapshot_parent_field_values($parent_id, $parent)
+    {
+        return array(
+            'post_title'       => (string) $parent->post_title,
+            'post_content'     => (string) $parent->post_content,
+            'post_excerpt'     => (string) $parent->post_excerpt,
+            '_thumbnail_id'    => (string) get_post_meta($parent_id, '_thumbnail_id', true),
+            'event_start_time' => (string) get_post_meta($parent_id, 'event_start_time', true),
+            'event_end_time'   => (string) get_post_meta($parent_id, 'event_end_time', true),
+            'event_location'   => (string) get_post_meta($parent_id, 'event_location', true),
+        );
+    }
+
+    /**
+     * For an existing child, copy each copyable field from the parent's
+     * snapshotted values UNLESS the child has overridden that field
+     * locally. Returns true if anything changed.
+     *
+     * @param int   $child_id
+     * @param array $parent_values
+     * @param array $copyable
+     * @param array $overrides
+     * @return bool
+     */
+    private function propagate_parent_fields_to_child($child_id, array $parent_values, array $copyable, array $overrides)
+    {
+        $changed = false;
+
+        foreach ($copyable as $key) {
+            if (!array_key_exists($key, $parent_values)) {
+                continue;
+            }
+            if (in_array($key, $overrides, true)) {
+                continue;
+            }
+
+            $parent_value = $parent_values[$key];
+
+            if (in_array($key, array('post_title', 'post_content', 'post_excerpt'), true)) {
+                $current = (string) get_post_field($key, $child_id);
+            } else {
+                $current = (string) get_post_meta($child_id, $key, true);
+            }
+
+            if ($current === $parent_value) {
+                continue;
+            }
+
+            $this->write_field_to_post($child_id, $key, $parent_value);
+            $changed = true;
+        }
+
+        return $changed;
     }
 
     private function get_copyable_field_keys()
