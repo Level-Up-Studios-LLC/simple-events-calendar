@@ -425,7 +425,8 @@ class Simple_Events_Recurrence
 
     public function continue_background_generation($parent_id, $next_index)
     {
-        unset($parent_id, $next_index);
+        unset($next_index);
+        $this->regenerate_series((int) $parent_id, 'background_batch');
     }
 
     public function render_admin_notices()
@@ -702,8 +703,6 @@ class Simple_Events_Recurrence
 
     public function regenerate_series($parent_id, $context)
     {
-        unset($context);
-
         $parent_id = (int) $parent_id;
         if (!$parent_id) {
             return;
@@ -711,7 +710,10 @@ class Simple_Events_Recurrence
 
         $lock_key = 'sec_recur_lock_' . $parent_id;
         if (get_transient($lock_key)) {
-            simple_events_debug_log('Recurrence lock held; skipping regeneration', array('parent_id' => $parent_id));
+            simple_events_debug_log('Recurrence lock held; deferring regeneration to background', array('parent_id' => $parent_id));
+            if (!wp_next_scheduled(self::CRON_CONTINUE_HOOK, array($parent_id, 0))) {
+                wp_schedule_single_event(time() + 90, self::CRON_CONTINUE_HOOK, array($parent_id, 0));
+            }
             return;
         }
         set_transient($lock_key, 1, MINUTE_IN_SECONDS);
@@ -765,10 +767,34 @@ class Simple_Events_Recurrence
             } else {
                 delete_post_meta($parent_id, self::META_RULE_UNTIL);
             }
+
+            if (!empty($result['more_remaining'])) {
+                $this->schedule_continuation($parent_id, (int) $result['created'], (string) $context);
+            }
         } finally {
             remove_filter('wp_revisions_to_keep', $revisions_filter, 10);
             self::unlock_generation();
             delete_transient($lock_key);
+        }
+    }
+
+    private function schedule_continuation($parent_id, $created_this_pass, $context)
+    {
+        if (wp_next_scheduled(self::CRON_CONTINUE_HOOK, array($parent_id, 0))) {
+            return;
+        }
+        wp_schedule_single_event(time() + 5, self::CRON_CONTINUE_HOOK, array($parent_id, 0));
+
+        if ($context === 'parent_save' || $context === 'cascade') {
+            $this->enqueue_admin_notice(
+                $parent_id,
+                sprintf(
+                    /* translators: %d is the number of occurrences created in the foreground pass */
+                    __('Created %d occurrence(s) so far; the remaining occurrences will be generated in the background within a few minutes.', PLUGIN_TEXT_DOMAIN),
+                    $created_this_pass
+                ),
+                'info'
+            );
         }
     }
 
@@ -954,12 +980,14 @@ class Simple_Events_Recurrence
         $parent        = get_post($parent_id);
         $parent_status = $parent ? $parent->post_status : 'publish';
         $copyable      = $this->get_copyable_field_keys();
+        $sync_limit    = max(1, (int) apply_filters('sec_recur_sync_batch_size', 50));
 
-        $created   = 0;
-        $updated   = 0;
-        $deleted   = 0;
-        $detached  = 0;
-        $last_date = '';
+        $created        = 0;
+        $updated        = 0;
+        $deleted        = 0;
+        $detached       = 0;
+        $last_date      = '';
+        $more_remaining = false;
 
         foreach ($computed_dates as $index => $ymd) {
             if ($index === 0) {
@@ -982,34 +1010,47 @@ class Simple_Events_Recurrence
                 }
                 $last_date = $ymd;
                 unset($existing_children[$index]);
-            } else {
-                $child_id = $this->create_child($parent_id, $parent, $parent_status, $index, $ymd, $copyable);
-                if ($child_id) {
-                    $created++;
-                    $last_date = $ymd;
+                continue;
+            }
+
+            if ($created >= $sync_limit) {
+                $more_remaining = true;
+                break;
+            }
+
+            $child_id = $this->create_child($parent_id, $parent, $parent_status, $index, $ymd, $copyable);
+            if ($child_id) {
+                $created++;
+                $last_date = $ymd;
+            }
+        }
+
+        // Deletion / detachment of out-of-range children only runs on a
+        // completing pass — on partial passes (more_remaining = true) the
+        // remaining $existing_children may still be in range, waiting for a
+        // later continuation pass to touch them.
+        if (!$more_remaining) {
+            foreach ($existing_children as $child) {
+                $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
+                if (is_array($overrides) && !empty($overrides)) {
+                    delete_post_meta($child->ID, self::META_PARENT);
+                    delete_post_meta($child->ID, self::META_INDEX);
+                    delete_post_meta($child->ID, self::META_OVERRIDES);
+                    $detached++;
+                } else {
+                    wp_delete_post($child->ID, true);
+                    $deleted++;
                 }
             }
         }
 
-        foreach ($existing_children as $child) {
-            $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
-            if (is_array($overrides) && !empty($overrides)) {
-                delete_post_meta($child->ID, self::META_PARENT);
-                delete_post_meta($child->ID, self::META_INDEX);
-                delete_post_meta($child->ID, self::META_OVERRIDES);
-                $detached++;
-            } else {
-                wp_delete_post($child->ID, true);
-                $deleted++;
-            }
-        }
-
         return array(
-            'created'   => $created,
-            'updated'   => $updated,
-            'deleted'   => $deleted,
-            'detached'  => $detached,
-            'last_date' => $last_date,
+            'created'        => $created,
+            'updated'        => $updated,
+            'deleted'        => $deleted,
+            'detached'       => $detached,
+            'last_date'      => $last_date,
+            'more_remaining' => $more_remaining,
         );
     }
 
