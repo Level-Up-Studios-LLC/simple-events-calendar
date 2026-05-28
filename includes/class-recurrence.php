@@ -138,7 +138,11 @@ class Simple_Events_Recurrence
         }
 
         if ((int) get_post_meta($post_id, 'event_repeats', true) !== 1) {
-            // Toggle-off handling lands in a later commit.
+            // event_repeats just went from on -> off. Detect by the lingering
+            // rule snapshot meta we wrote during the last regenerate_series.
+            if (get_post_meta($post_id, self::META_RULE_FREQ, true)) {
+                $this->handle_toggle_off((int) $post_id);
+            }
             return;
         }
 
@@ -153,6 +157,23 @@ class Simple_Events_Recurrence
         if (get_post_type($post_id) !== 'simple-events') {
             return;
         }
+
+        $parent_id = (int) get_post_meta($post_id, self::META_PARENT, true);
+        if ($parent_id) {
+            // Force-deleting a child: record its index as skipped so the next
+            // regeneration on the parent doesn't recreate it. Trashing alone
+            // doesn't mark skipped — the user can still restore from trash.
+            $this->record_skipped_index($parent_id, (int) get_post_meta($post_id, self::META_INDEX, true));
+            return;
+        }
+
+        // Parent being force-deleted — cascade. Includes trashed children in
+        // case the parent was trashed first and is now being purged.
+        $this->cascade_children(
+            (int) $post_id,
+            array('publish', 'pending', 'draft', 'future', 'private', 'trash'),
+            'delete'
+        );
     }
 
     public function handle_trash($post_id)
@@ -163,6 +184,18 @@ class Simple_Events_Recurrence
         if (get_post_type($post_id) !== 'simple-events') {
             return;
         }
+
+        if (get_post_meta($post_id, self::META_PARENT, true)) {
+            // Child being trashed individually: do nothing. The series meta
+            // stays intact so the child can be restored back into the series.
+            return;
+        }
+
+        $this->cascade_children(
+            (int) $post_id,
+            array('publish', 'pending', 'draft', 'future', 'private'),
+            'trash'
+        );
     }
 
     public function handle_untrash($post_id)
@@ -173,6 +206,159 @@ class Simple_Events_Recurrence
         if (get_post_type($post_id) !== 'simple-events') {
             return;
         }
+
+        if (get_post_meta($post_id, self::META_PARENT, true)) {
+            // Individually restoring a child: nothing to cascade.
+            return;
+        }
+
+        // Parent restored from trash — untrash any of its children that were
+        // cascade-trashed alongside it.
+        $children = get_posts(array(
+            'post_type'      => 'simple-events',
+            'post_status'    => 'trash',
+            'posts_per_page' => -1,
+            'meta_query'     => array(
+                array(
+                    'key'     => self::META_PARENT,
+                    'value'   => (int) $post_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+            'no_found_rows'  => true,
+            'fields'         => 'ids',
+        ));
+
+        if (empty($children)) {
+            return;
+        }
+
+        self::lock_generation((int) $post_id);
+        try {
+            foreach ($children as $child_id) {
+                wp_untrash_post((int) $child_id);
+            }
+        } finally {
+            self::unlock_generation();
+        }
+    }
+
+    private function record_skipped_index($parent_id, $index)
+    {
+        if ($index <= 0) {
+            return;
+        }
+        $skipped = get_post_meta($parent_id, self::META_RULE_SKIPPED, true);
+        $skipped = is_array($skipped) ? array_map('intval', $skipped) : array();
+        if (in_array($index, $skipped, true)) {
+            return;
+        }
+        $skipped[] = $index;
+        sort($skipped);
+        update_post_meta($parent_id, self::META_RULE_SKIPPED, $skipped);
+    }
+
+    private function cascade_children($parent_id, array $statuses, $action)
+    {
+        $query = new WP_Query(array(
+            'post_type'      => 'simple-events',
+            'post_status'    => $statuses,
+            'posts_per_page' => -1,
+            'meta_query'     => array(
+                array(
+                    'key'     => self::META_PARENT,
+                    'value'   => (int) $parent_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+            'no_found_rows'  => true,
+            'suppress_filters' => false,
+        ));
+
+        if (empty($query->posts)) {
+            wp_reset_postdata();
+            return;
+        }
+
+        self::lock_generation($parent_id);
+        try {
+            foreach ($query->posts as $child) {
+                $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
+                $has_overrides = is_array($overrides) && !empty($overrides);
+
+                if ($has_overrides) {
+                    // Don't destroy user-edited data — detach into a standalone event.
+                    delete_post_meta($child->ID, self::META_PARENT);
+                    delete_post_meta($child->ID, self::META_INDEX);
+                    delete_post_meta($child->ID, self::META_OVERRIDES);
+                    continue;
+                }
+
+                if ($action === 'trash') {
+                    wp_trash_post($child->ID);
+                } else {
+                    wp_delete_post($child->ID, true);
+                }
+            }
+        } finally {
+            wp_reset_postdata();
+            self::unlock_generation();
+        }
+    }
+
+    private function handle_toggle_off($parent_id)
+    {
+        self::lock_generation($parent_id);
+        $deleted  = 0;
+        $detached = 0;
+
+        try {
+            $children = $this->get_existing_children($parent_id);
+            foreach ($children as $child) {
+                $overrides = get_post_meta($child->ID, self::META_OVERRIDES, true);
+                if (is_array($overrides) && !empty($overrides)) {
+                    delete_post_meta($child->ID, self::META_PARENT);
+                    delete_post_meta($child->ID, self::META_INDEX);
+                    delete_post_meta($child->ID, self::META_OVERRIDES);
+                    $detached++;
+                } else {
+                    wp_delete_post($child->ID, true);
+                    $deleted++;
+                }
+            }
+
+            delete_post_meta($parent_id, self::META_RULE_FREQ);
+            delete_post_meta($parent_id, self::META_RULE_INTERVAL);
+            delete_post_meta($parent_id, self::META_RULE_END_TYPE);
+            delete_post_meta($parent_id, self::META_RULE_COUNT);
+            delete_post_meta($parent_id, self::META_RULE_UNTIL);
+            delete_post_meta($parent_id, self::META_RULE_HORIZON);
+            delete_post_meta($parent_id, self::META_RULE_SKIPPED);
+        } finally {
+            self::unlock_generation();
+        }
+
+        $this->enqueue_admin_notice(
+            $parent_id,
+            sprintf(
+                /* translators: 1: number of occurrences deleted, 2: number detached as standalone events */
+                __('Recurrence disabled. %1$d unmodified occurrence(s) deleted; %2$d modified occurrence(s) detached as standalone events.', PLUGIN_TEXT_DOMAIN),
+                $deleted,
+                $detached
+            ),
+            'warning'
+        );
+    }
+
+    private function enqueue_admin_notice($post_id, $message, $type = 'info')
+    {
+        $key     = 'sec_recur_notice_' . (int) $post_id;
+        $notices = get_transient($key);
+        $notices = is_array($notices) ? $notices : array();
+        $notices[] = array('message' => $message, 'type' => $type);
+        set_transient($key, $notices, HOUR_IN_SECONDS);
     }
 
     public function register_edit_scope_metabox($post)
@@ -244,6 +430,38 @@ class Simple_Events_Recurrence
 
     public function render_admin_notices()
     {
+        if (!is_admin() || !function_exists('get_current_screen')) {
+            return;
+        }
+        $screen = get_current_screen();
+        if (!$screen || $screen->base !== 'post' || $screen->post_type !== 'simple-events') {
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display lookup, no state change.
+        $post_id = isset($_GET['post']) ? (int) wp_unslash($_GET['post']) : 0;
+        if (!$post_id) {
+            return;
+        }
+
+        $key     = 'sec_recur_notice_' . $post_id;
+        $notices = get_transient($key);
+        if (!is_array($notices) || empty($notices)) {
+            return;
+        }
+        delete_transient($key);
+
+        foreach ($notices as $notice) {
+            $type = isset($notice['type']) && in_array($notice['type'], array('success', 'warning', 'error', 'info'), true)
+                ? $notice['type']
+                : 'info';
+            $message = isset($notice['message']) ? (string) $notice['message'] : '';
+            printf(
+                '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
+                esc_attr($type),
+                esc_html($message)
+            );
+        }
     }
 
     // ---------------------------------------------------------------------
