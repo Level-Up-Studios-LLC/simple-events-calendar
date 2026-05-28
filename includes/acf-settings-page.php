@@ -42,16 +42,15 @@ function register_event_details_fields()
         // Title of the field group
         'title' => 'Event Details',
         // Array of fields for the field group
-        'fields' => [
-            // Create a date field for the event date
-            create_date_field('event_date'),
-            // Create a time field for the event start time
-            create_time_field('event_start_time'),
-            // Create a time field for the event end time
-            create_time_field('event_end_time'),
-            // Create a text field for the event location
-            create_text_field('event_location'),
-        ],
+        'fields' => array_merge(
+            [
+                create_date_field('event_date'),
+                create_time_field('event_start_time'),
+                create_time_field('event_end_time'),
+                create_text_field('event_location'),
+            ],
+            get_recurrence_fields()
+        ),
         // Specify the location of the field group
         'location' => [
             // Create a post type location for the simple-events post type
@@ -236,6 +235,210 @@ function create_post_type_location($postType)
             'value' => $postType,
         ],
     ];
+}
+
+/**
+ * Create a true/false field array for ACF.
+ *
+ * @param string $name         Field name.
+ * @param string $label        Optional. Overrides the auto-generated label.
+ * @param string $instructions Optional. Help text shown under the field label.
+ * @param int    $default      Optional. Default value (0 or 1).
+ * @return array
+ */
+function create_true_false_field($name, $label = '', $instructions = '', $default = 0)
+{
+    $field_key   = 'field_' . sanitize_title($name);
+    $field_label = !empty($label) ? $label : ucwords(str_replace('_', ' ', $name));
+
+    return [
+        'key'              => $field_key,
+        'label'            => $field_label,
+        'name'             => $name,
+        'type'             => 'true_false',
+        'instructions'     => $instructions,
+        'required'         => 0,
+        'conditional_logic' => 0,
+        'wrapper'          => ['width' => '', 'class' => '', 'id' => ''],
+        'message'          => '',
+        'default_value'    => (int) $default,
+        'ui'               => 1,
+        'ui_on_text'       => '',
+        'ui_off_text'      => '',
+    ];
+}
+
+/**
+ * Create a select field array for ACF.
+ *
+ * @param string $name         Field name.
+ * @param array  $choices      Associative array of value => label.
+ * @param string $label        Optional. Overrides the auto-generated label.
+ * @param string $instructions Optional. Help text.
+ * @param string $default      Optional. Default selected value (key from $choices).
+ * @param string $width        Optional. Wrapper width (percent).
+ * @return array
+ */
+function create_select_field($name, $choices, $label = '', $instructions = '', $default = '', $width = '')
+{
+    $field_key   = 'field_' . sanitize_title($name);
+    $field_label = !empty($label) ? $label : ucwords(str_replace('_', ' ', $name));
+
+    return [
+        'key'              => $field_key,
+        'label'            => $field_label,
+        'name'             => $name,
+        'type'             => 'select',
+        'instructions'     => $instructions,
+        'required'         => 0,
+        'conditional_logic' => 0,
+        'wrapper'          => ['width' => $width, 'class' => '', 'id' => ''],
+        'choices'          => $choices,
+        'default_value'    => $default,
+        'allow_null'       => 0,
+        'multiple'         => 0,
+        'ui'               => 0,
+        'ajax'             => 0,
+        'return_format'    => 'value',
+        'placeholder'      => '',
+    ];
+}
+
+/**
+ * Create a number field array for ACF.
+ *
+ * @param string $name         Field name.
+ * @param string $label        Optional. Overrides the auto-generated label.
+ * @param string $instructions Optional. Help text.
+ * @param int    $default      Optional. Default value.
+ * @param int    $min          Optional. Minimum allowed value.
+ * @param string $max          Optional. Maximum allowed value (empty for none).
+ * @param string $width        Optional. Wrapper width (percent).
+ * @return array
+ */
+function create_number_field($name, $label = '', $instructions = '', $default = 1, $min = 1, $max = '', $width = '')
+{
+    $field_key   = 'field_' . sanitize_title($name);
+    $field_label = !empty($label) ? $label : ucwords(str_replace('_', ' ', $name));
+
+    return [
+        'key'              => $field_key,
+        'label'            => $field_label,
+        'name'             => $name,
+        'type'             => 'number',
+        'instructions'     => $instructions,
+        'required'         => 0,
+        'conditional_logic' => 0,
+        'wrapper'          => ['width' => $width, 'class' => '', 'id' => ''],
+        'default_value'    => $default,
+        'placeholder'      => '',
+        'prepend'          => '',
+        'append'           => '',
+        'min'              => $min,
+        'max'              => $max,
+        'step'             => 1,
+    ];
+}
+
+/**
+ * Build the recurrence-related field definitions for the Event Details group.
+ *
+ * Conditional logic only references already-registered fields by key. Toggling
+ * `event_repeats` off after a save deletes future unmodified occurrences and
+ * detaches modified ones — handled in Simple_Events_Recurrence on save_post.
+ *
+ * @return array
+ */
+function get_recurrence_fields()
+{
+    $repeats = create_true_false_field(
+        'event_repeats',
+        __('This event repeats', PLUGIN_TEXT_DOMAIN),
+        __('Disabling recurrence on a saved series deletes future unmodified occurrences. Children with per-occurrence edits become standalone events.', PLUGIN_TEXT_DOMAIN),
+        0
+    );
+
+    $interval = create_number_field(
+        'event_repeat_interval',
+        __('Repeat Every', PLUGIN_TEXT_DOMAIN),
+        '',
+        1,
+        1,
+        '',
+        '25'
+    );
+    $interval['conditional_logic'] = [
+        [
+            ['field' => 'field_event_repeats', 'operator' => '==', 'value' => '1'],
+        ],
+    ];
+
+    $frequency = create_select_field(
+        'event_repeat_frequency',
+        [
+            'daily'   => __('Day(s)', PLUGIN_TEXT_DOMAIN),
+            'weekly'  => __('Week(s)', PLUGIN_TEXT_DOMAIN),
+            'monthly' => __('Month(s)', PLUGIN_TEXT_DOMAIN),
+            'yearly'  => __('Year(s)', PLUGIN_TEXT_DOMAIN),
+        ],
+        __('Frequency', PLUGIN_TEXT_DOMAIN),
+        '',
+        'weekly',
+        '25'
+    );
+    $frequency['conditional_logic'] = [
+        [
+            ['field' => 'field_event_repeats', 'operator' => '==', 'value' => '1'],
+        ],
+    ];
+
+    $end_type = create_select_field(
+        'event_repeat_end_type',
+        [
+            'never' => __('Never', PLUGIN_TEXT_DOMAIN),
+            'count' => __('After a number of occurrences', PLUGIN_TEXT_DOMAIN),
+            'until' => __('On a specific date', PLUGIN_TEXT_DOMAIN),
+        ],
+        __('Ends', PLUGIN_TEXT_DOMAIN),
+        '',
+        'count',
+        '50'
+    );
+    $end_type['conditional_logic'] = [
+        [
+            ['field' => 'field_event_repeats', 'operator' => '==', 'value' => '1'],
+        ],
+    ];
+
+    $count = create_number_field(
+        'event_repeat_count',
+        __('Number of Occurrences', PLUGIN_TEXT_DOMAIN),
+        __('Total occurrences including the first event.', PLUGIN_TEXT_DOMAIN),
+        10,
+        1,
+        '',
+        '50'
+    );
+    $count['conditional_logic'] = [
+        [
+            ['field' => 'field_event_repeats', 'operator' => '==', 'value' => '1'],
+            ['field' => 'field_event_repeat_end_type', 'operator' => '==', 'value' => 'count'],
+        ],
+    ];
+
+    $until = create_date_field('event_repeat_until');
+    $until['label']             = __('End Date', PLUGIN_TEXT_DOMAIN);
+    $until['instructions']      = __('Final date on which a recurrence may fall.', PLUGIN_TEXT_DOMAIN);
+    $until['required']          = 0;
+    $until['wrapper']['width']  = '50';
+    $until['conditional_logic'] = [
+        [
+            ['field' => 'field_event_repeats', 'operator' => '==', 'value' => '1'],
+            ['field' => 'field_event_repeat_end_type', 'operator' => '==', 'value' => 'until'],
+        ],
+    ];
+
+    return [$repeats, $frequency, $interval, $end_type, $count, $until];
 }
 
 /**
