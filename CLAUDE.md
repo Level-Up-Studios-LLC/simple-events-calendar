@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Simple Events Calendar is a WordPress plugin (v4.3.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode and post-type archives. It **requires** Advanced Custom Fields (Free or Pro) — the plugin deactivates itself if ACF is missing.
+Simple Events Calendar is a WordPress plugin (v4.3.1) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode and post-type archives. It **requires** Advanced Custom Fields (Free or Pro) — the plugin deactivates itself if ACF is missing.
 
 - PHP 7.4+, WordPress 6.0+
 - Text domain: `simple_events`
@@ -30,7 +30,7 @@ npm run zip           # produces simple-events-calendar.zip (uses python)
 
 PHP code style is enforced via **phpcs.xml** (WordPress Coding Standards). Run with phpcs/phpcbf locally if installed — the ruleset prefixes are `simple_events`, `Simple_Events`, `PLUGIN_`, `SIMPLE_EVENTS_`.
 
-`npm run dist` and `npm run zip` rely on Windows `robocopy` and a Python one-liner — they will not work as-is on macOS/Linux.
+`npm run dist` and `npm run zip` mix POSIX (`rm -rf`, `mkdir`) with Windows `robocopy` and a Python one-liner — they're meant to run in **Git Bash on Windows** and will not work as-is in cmd/PowerShell or on macOS/Linux.
 
 ## Architecture
 
@@ -51,24 +51,41 @@ PHP code style is enforced via **phpcs.xml** (WordPress Coding Standards). Run w
 All component instances hang off the main singleton (`$plugin->post_type`, `->shortcode`, `->ajax`, `->admin_columns`) — reach them via `simple_events_calendar()` rather than constructing new ones.
 
 ### CPT and archive query
-The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. `modify_archive_query()` in `class-main.php` hooks `pre_get_posts` on the front-end main query and forces:
+The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. **Front-end rewrite slugs differ from internal names**: posts live under `/events/...` and taxonomy archives under `/event-category/...` (see `class-post-type.php`). REST bases are `simple-events` and `simple-events-categories`.
+
+`modify_archive_query()` in `class-main.php` hooks `pre_get_posts` on the front-end main query and forces:
 - `orderby = meta_value`, `meta_key = event_date`, `meta_type = DATE`, `order = ASC`
 - a `meta_query` filter that hides events where `event_date < current_time('Ymd')`
+- If a `meta_query` already exists, it is **nested under an `AND` relation** rather than merged — preserve this pattern when adding more filters.
 
 Any new archive-facing query must go through the same pattern (ACF `event_date` meta, `Ymd` format) or it will not sort/filter consistently with the rest of the plugin.
 
 ### Asset enqueue gating
 `enqueue_scripts()` only enqueues CSS/JS when the current request is a `simple-events` archive/single/taxonomy, a post containing the `[sec_events]` shortcode, or a text widget. Test that this gate still holds when adding new rendering paths — silently enqueueing everywhere is a regression.
 
-`wp_localize_script` exposes `ajax_params` (`ajaxurl`, `nonce`, `initial_offset = 6`, `load_increment = 6`) to the infinite-scroll JS. The nonce action string lives in the `SIMPLE_EVENTS_NONCE_ACTION` constant (defined in the main plugin file) — use it everywhere, never hardcode the string. Changing any of these keys requires updating `assets/js/simple-events.js` in lockstep.
+`wp_localize_script` exposes `ajax_params` (`ajaxurl`, `nonce`, `initial_offset = 6`, `load_increment = 6`) to the infinite-scroll JS. The nonce action string lives in the `SIMPLE_EVENTS_NONCE_ACTION` constant (defined in the main plugin file as `'load_more_events_nonce'`) — use it everywhere, never hardcode the string. Changing any of these keys requires updating `assets/js/simple-events.js` in lockstep.
 
-The AJAX handler returns `wp_send_json_success({ html, has_more })` on success and `wp_send_json_error({ message }, status)` on failure. The JS consumes `response.data.html` / `response.data.has_more`. Don't regress this to bare-string responses.
+The AJAX handler is registered under the `load_more_events` action (priv + nopriv), returns `wp_send_json_success({ html, has_more })` on success and `wp_send_json_error({ message }, status)` on failure. The JS consumes `response.data.html` / `response.data.has_more`. Don't regress this to bare-string responses. The handler **hardcodes `posts_per_page` to 6** and caps `offset` at 10000 (see `class-ajax.php`) — these are independent of the shortcode's `posts_per_page` attribute and the `load_increment` localized to JS, so changing the page size requires touching all three sites.
 
-### Shortcode caching
-`Simple_Events_Shortcode::render_shortcode()` caches rendered output in a transient keyed by the MD5 of sanitized attributes for 15 minutes. Cache is invalidated via `save_post`, `delete_post`, and `transition_post_status` hooks. When changing what the shortcode outputs (e.g., new data sources), audit whether existing cached output could become stale, and extend the invalidation hooks if so.
+### Shortcode and its caching
+`[sec_events]` accepts these attributes (all optional, defaults shown):
+`posts_per_page=6` (clamped 1–50), `category=""` (taxonomy slug), `show_past="no"`, `order="ASC"`, `orderby="event_date"`, `show_time="yes"`, `show_excerpt="yes"`, `show_location="yes"`, `show_footer="yes"`.
+
+`Simple_Events_Shortcode::render_shortcode()` caches rendered output in a transient for 15 minutes, keyed on `md5(serialize($sanitized_atts) . '|' . PLUGIN_VERSION . '|' . is_user_logged_in())`. The version segment auto-invalidates the cache on plugin upgrade; the login-state segment prevents admin-only variations from leaking to anonymous visitors. **Empty-state output (containing `simple-events-no-events`) is intentionally not cached**, so adding new "no results" markup must keep that class to avoid pinning empty results.
+
+Cache is invalidated via `save_post`, `delete_post`, and `transition_post_status` — but **only when the post being changed is a `simple-events` post**. If new logic causes the shortcode output to depend on other post types/terms/options, extend the invalidation hooks accordingly.
 
 ### ACF dependency
-The plugin relies on ACF field group `event_details` (fields: `event_date`, `event_start_time`, `event_end_time`, `event_location`). Field definitions live in `includes/acf-settings-page.php` and are synced to `includes/acf-json/` via ACF's local JSON mechanism (wired up in `includes/acf-json.php`). When modifying fields, edit them in WP admin and let ACF sync to JSON — don't hand-edit the JSON.
+The plugin relies on ACF field group `group_event_details` (fields: `event_date` date, `event_start_time` time, `event_end_time` time, `event_location` text). Field definitions live in `includes/acf-settings-page.php` (PHP-registered via `register_event_details_fields()` on `acf/init`) and are synced to `includes/acf-json/` via ACF's local JSON mechanism (wired up in `includes/acf-json.php`). The `acf-json/` directory is not committed — it's created at activation by `create_acf_json_directory()` / `simple_events_create_acf_json_dir()`. When modifying fields, edit them in WP admin and let ACF sync to JSON — don't hand-edit the JSON.
+
+### Admin columns and filters
+`Simple_Events_Admin_Columns` adds Thumbnail / Event Date / Time / Location / Categories columns to the `simple-events` list table, plus two filter dropdowns: a category filter (uses the taxonomy query var `simple-events-cat`) and a status filter (custom query var `event_status` with values `upcoming`, `today`, `past`). When adding new admin filters, follow the same `parse_query` + meta_query pattern.
+
+### Uninstall is destructive
+`Simple_Events_Calendar::uninstall()` (registered via `register_uninstall_hook`) **deletes every `simple-events` post, every `simple-events-cat` term, and every `_transient_simple_events_*` row** on plugin uninstall. There is no opt-out. Any data the plugin should preserve must live outside that post type/taxonomy/transient prefix.
+
+### Templates and SEO markup
+Both the shortcode and AJAX paths render each event through `template-parts/content-event-card.php` (with `simple_events_render_fallback_card()` in `includes/functions.php` as a fallback). The card emits **schema.org Event JSON-LD** inline; if you add new event metadata that should affect search results, update the `$event_schema` block in the template.
 
 ### Build pipeline
 - `src/css/simple-events.scss` is the source; `assets/css/simple-events.css` is generated output. **Never edit `assets/css/simple-events.css` directly** — it will be overwritten by the next build.
