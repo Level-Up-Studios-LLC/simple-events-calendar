@@ -39,6 +39,7 @@ class Simple_Events_Settings {
         add_action('admin_menu', array($this, 'add_menu'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_post_simple_events_clear_cache', array($this, 'handle_clear_cache'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
 
         // Wire the recurrence-limit settings into the public filters.
         add_filter('sec_recur_max_occurrences', array($this, 'filter_max_occurrences'));
@@ -85,9 +86,17 @@ class Simple_Events_Settings {
         $input    = is_array($input) ? $input : array();
         $clean    = array();
 
-        // Date format: allow a non-empty PHP format string, else default.
-        $date_format = isset($input['date_format']) ? trim((string) $input['date_format']) : '';
-        $clean['date_format'] = ('' !== $date_format) ? sanitize_text_field($date_format) : $defaults['date_format'];
+        // Date format: a known preset, or a custom PHP format when "custom" is chosen.
+        $allowed_presets = array('l, F j, Y', 'F j, Y', 'm/d/Y', 'M j, Y');
+        $preset = isset($input['date_format_preset']) ? (string) $input['date_format_preset'] : '';
+        if ('custom' === $preset) {
+            $custom = isset($input['date_format_custom']) ? trim((string) $input['date_format_custom']) : '';
+            $clean['date_format'] = ('' !== $custom) ? sanitize_text_field($custom) : $defaults['date_format'];
+        } elseif (in_array($preset, $allowed_presets, true)) {
+            $clean['date_format'] = $preset;
+        } else {
+            $clean['date_format'] = $defaults['date_format'];
+        }
 
         // Time format: 12 or 24.
         $clean['time_format'] = (isset($input['time_format']) && '24' === (string) $input['time_format']) ? '24' : '12';
@@ -168,6 +177,26 @@ class Simple_Events_Settings {
     }
 
     /**
+     * Enqueue the settings-page script (date-format preset toggle + preview).
+     *
+     * @param string $hook Current admin page hook suffix.
+     */
+    public function enqueue_assets($hook) {
+        // Submenu pages under a CPT use the "<post_type>_page_<slug>" hook form.
+        if ('simple-events_page_' . self::PAGE !== $hook) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'simple-events-settings',
+            PLUGIN_ASSETS . '/js/simple-events-settings.js',
+            array(),
+            PLUGIN_VERSION,
+            true
+        );
+    }
+
+    /**
      * Render the settings page.
      */
     public function render_page() {
@@ -194,25 +223,38 @@ class Simple_Events_Settings {
                     <tr>
                         <th scope="row"><?php echo esc_html__('Date format', 'simple_events'); ?></th>
                         <td>
-                            <input type="text" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[date_format]" value="<?php echo esc_attr($settings['date_format']); ?>" />
+                            <?php
+                            $presets = array(
+                                'l, F j, Y' => __('Weekday, Month Day, Year', 'simple_events'),
+                                'F j, Y'    => __('Month Day, Year', 'simple_events'),
+                                'm/d/Y'     => __('MM/DD/YYYY', 'simple_events'),
+                                'M j, Y'    => __('Abbreviated Month Day, Year', 'simple_events'),
+                            );
+                            $current  = (string) $settings['date_format'];
+                            $is_preset = array_key_exists($current, $presets);
+                            ?>
+                            <select id="sec-date-format-preset" name="<?php echo esc_attr(self::OPTION); ?>[date_format_preset]">
+                                <?php foreach ($presets as $fmt => $label) : ?>
+                                    <option value="<?php echo esc_attr($fmt); ?>" <?php selected($is_preset && $current === $fmt); ?>>
+                                        <?php echo esc_html($label . ' — ' . wp_date($fmt)); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                                <option value="custom" <?php selected(!$is_preset); ?>><?php echo esc_html__('Custom…', 'simple_events'); ?></option>
+                            </select>
+                            <span id="sec-date-format-custom-wrap" style="<?php echo esc_attr($is_preset ? 'display:none;' : ''); ?>">
+                                <input type="text" id="sec-date-format-custom" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[date_format_custom]" value="<?php echo esc_attr(!$is_preset ? $current : ''); ?>" placeholder="l, F j, Y" />
+                            </span>
                             <p class="description">
-                                <?php echo esc_html__('PHP date format used on the front end.', 'simple_events'); ?>
                                 <?php
                                 printf(
                                     /* translators: %s: example formatted date */
                                     esc_html__('Preview: %s', 'simple_events'),
-                                    '<strong>' . esc_html(wp_date($settings['date_format'])) . '</strong>'
+                                    '<strong id="sec-date-format-preview">' . esc_html(wp_date($current)) . '</strong>'
                                 );
                                 ?>
                                 <br />
-                                <?php
-                                $presets = array('l, F j, Y', 'F j, Y', 'm/d/Y', 'Y-m-d', 'D, M j');
-                                $examples = array();
-                                foreach ($presets as $preset) {
-                                    $examples[] = esc_html($preset) . ' &rarr; ' . esc_html(wp_date($preset));
-                                }
-                                echo wp_kses_post(implode(' &nbsp;|&nbsp; ', $examples));
-                                ?>
+                                <?php echo esc_html__('Choose a preset, or pick "Custom…" to enter a PHP date format.', 'simple_events'); ?>
+                                <a href="https://wordpress.org/documentation/article/customize-date-and-time-format/" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Format reference', 'simple_events'); ?></a>
                             </p>
                         </td>
                     </tr>
