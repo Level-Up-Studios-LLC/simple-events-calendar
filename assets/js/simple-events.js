@@ -68,7 +68,9 @@ jQuery(document).ready(function ($) {
     }
 
     function removeMessages() {
-      $container.nextAll('.simple-events-error, .simple-events-end').remove();
+      // Scope to this calendar's own messages — stop at the next calendar so
+      // we never remove messages belonging to another calendar on the page.
+      $container.nextUntil('.simple-events-calendar', '.simple-events-error, .simple-events-end').remove();
     }
 
     function showError(message) {
@@ -86,7 +88,7 @@ jQuery(document).ready(function ($) {
     }
 
     function showEnd() {
-      if (!$container.next('.simple-events-end').length) {
+      if (!$container.nextUntil('.simple-events-calendar', '.simple-events-end').length) {
         var $end = $('<div class="simple-events-end"><p></p></div>');
         $end.find('p').text(ajax_params.no_more_text || 'No more events to load.');
         $container.after($end);

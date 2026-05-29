@@ -99,21 +99,62 @@ class Simple_Events_Elementor {
     /**
      * Resolve the event ID to render for in a widget/tag.
      *
-     * Falls back to the current loop/queried post, then to an explicit
-     * preview-event selection (used inside the Elementor editor).
+     * On the front end this is the current event in the loop / the queried
+     * event. In the Elementor editor/preview the loop post is the template
+     * being edited (not an event), so the explicit preview-event selection is
+     * preferred. When the current context isn't an event at all, the preview
+     * selection is used as a fallback.
      *
      * @param int $preview_id Optional explicit preview ID.
      * @return int
      */
     public static function resolve_event_id($preview_id = 0) {
-        $id = get_the_ID();
-        if (!$id) {
-            $id = get_queried_object_id();
+        $preview_id = (int) $preview_id;
+
+        // In the Elementor editor/preview, prefer the selected preview event.
+        if ($preview_id && self::is_elementor_edit_mode()) {
+            return $preview_id;
         }
-        if (!$id && $preview_id) {
-            $id = (int) $preview_id;
+
+        // Prefer a real event in the current context (single view / loop).
+        $id = (int) get_the_ID();
+        if ($id && 'simple-events' === get_post_type($id)) {
+            return $id;
         }
-        return (int) $id;
+
+        $queried = (int) get_queried_object_id();
+        if ($queried && 'simple-events' === get_post_type($queried)) {
+            return $queried;
+        }
+
+        // Context isn't an event — fall back to the explicit selection.
+        if ($preview_id) {
+            return $preview_id;
+        }
+
+        return $id ? $id : $queried;
+    }
+
+    /**
+     * Whether Elementor is currently in editor or preview mode.
+     *
+     * @return bool
+     */
+    private static function is_elementor_edit_mode() {
+        if (!class_exists('\Elementor\Plugin')) {
+            return false;
+        }
+        $instance = \Elementor\Plugin::$instance;
+        if (!$instance) {
+            return false;
+        }
+        if (isset($instance->editor) && method_exists($instance->editor, 'is_edit_mode') && $instance->editor->is_edit_mode()) {
+            return true;
+        }
+        if (isset($instance->preview) && method_exists($instance->preview, 'is_preview_mode') && $instance->preview->is_preview_mode()) {
+            return true;
+        }
+        return false;
     }
 
     /**

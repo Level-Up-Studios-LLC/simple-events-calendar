@@ -407,8 +407,8 @@ class Simple_Events_Calendar {
      */
     public function action_links($links) {
         $plugin_links = array(
-            '<a href="' . admin_url('edit.php?post_type=simple-events') . '">' . esc_html__('Events', 'simple_events') . '</a>',
-            '<a href="' . admin_url('edit.php?post_type=simple-events&page=' . Simple_Events_Settings::PAGE) . '">' . esc_html__('Settings', 'simple_events') . '</a>',
+            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events')) . '">' . esc_html__('Events', 'simple_events') . '</a>',
+            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events&page=' . Simple_Events_Settings::PAGE)) . '">' . esc_html__('Settings', 'simple_events') . '</a>',
         );
 
         return array_merge($plugin_links, $links);

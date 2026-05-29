@@ -184,7 +184,8 @@ class Simple_Events_Renderer {
 
         $words = isset($args['words']) ? absint($args['words']) : 30;
         if ($words > 0) {
-            $excerpt = wp_trim_words($excerpt, $words, '&hellip;');
+            // Literal ellipsis (not the &hellip; entity) so it survives esc_html().
+            $excerpt = wp_trim_words($excerpt, $words, '…');
         }
 
         return '<div' . self::class_attr('sec-event-excerpt', isset($args['class']) ? $args['class'] : '') . '><p>' . esc_html($excerpt) . '</p></div>';
