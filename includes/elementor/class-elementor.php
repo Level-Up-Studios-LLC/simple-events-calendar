@@ -165,7 +165,7 @@ class Simple_Events_Elementor {
             return self::$event_options_cache;
         }
 
-        $options = array('' => __('— Current event —', 'simple_events'));
+        $options = array('' => __('— Select an event —', 'simple_events'));
         $events = get_posts(array(
             'post_type'        => 'simple-events',
             'post_status'      => 'publish',
