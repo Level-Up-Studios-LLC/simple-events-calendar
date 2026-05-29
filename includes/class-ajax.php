@@ -141,7 +141,7 @@ class Simple_Events_Ajax {
             'meta_key'        => 'event_date',
             'meta_type'       => 'DATE',
             'no_found_rows'   => true,
-            'update_post_meta_cache' => false,
+            'update_post_meta_cache' => true,
             'update_post_term_cache' => false,
             'suppress_filters' => false,
         );

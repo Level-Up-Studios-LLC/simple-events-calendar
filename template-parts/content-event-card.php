@@ -135,8 +135,8 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
 
         <!-- Event location if available -->
         <?php
-        // Use the value already prepared by the caller to avoid an extra
-        // per-card meta query (post meta cache is disabled on these queries).
+        // Use the value already prepared by the caller rather than re-querying
+        // meta here, so all card data flows through the prepared $post_data.
         $location = isset($post_data['location']) ? $post_data['location'] : '';
         if ($location && $show_location) :
         ?>
