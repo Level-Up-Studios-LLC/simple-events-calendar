@@ -32,6 +32,7 @@ class Simple_Events_Shortcode
     private function init_hooks()
     {
         add_shortcode('sec_events', array($this, 'render_shortcode'));
+        add_shortcode('sec_event', array($this, 'render_single_shortcode'));
         add_action('save_post', array($this, 'clear_cache'));
         add_action('delete_post', array($this, 'clear_cache'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
@@ -315,12 +316,59 @@ class Simple_Events_Shortcode
     }
 
     /**
+     * Render a single event by ID: [sec_event id="123" layout="card|list"].
+     *
+     * @param array $atts Shortcode attributes.
+     * @return string
+     */
+    public function render_single_shortcode($atts)
+    {
+        $settings = simple_events_get_settings();
+        $atts = shortcode_atts(array(
+            'id'            => 0,
+            'layout'        => 'card',
+            'show_time'     => $settings['show_time'],
+            'show_excerpt'  => $settings['show_excerpt'],
+            'show_location' => $settings['show_location'],
+            'show_footer'   => $settings['show_footer'],
+        ), $atts, 'sec_event');
+
+        $post_id = absint($atts['id']);
+        if (!$post_id) {
+            if (current_user_can('edit_posts')) {
+                return '<p class="simple-events-notice">' . esc_html__('[sec_event] requires an "id" attribute, e.g. [sec_event id="123"].', 'simple_events') . '</p>';
+            }
+            return '';
+        }
+
+        $layout = ('list' === strtolower((string) $atts['layout'])) ? 'list' : 'card';
+        $flags = array(
+            'show_time'     => 'no' !== (string) $atts['show_time'],
+            'show_excerpt'  => 'no' !== (string) $atts['show_excerpt'],
+            'show_location' => 'no' !== (string) $atts['show_location'],
+            'show_footer'   => 'no' !== (string) $atts['show_footer'],
+        );
+
+        $html = simple_events_render_single_event($post_id, $flags, $layout);
+        if ('' === $html) {
+            return '';
+        }
+
+        // Enqueued here during the_content when the shortcode actually renders;
+        // WordPress prints late-enqueued styles in the footer, which is fine for
+        // the card. Pages can also pre-enqueue it in <head> (see enqueue_scripts()).
+        wp_enqueue_style('simple-events-style');
+        return $html;
+    }
+
+    /**
      * Enqueue shortcode-specific scripts
      */
     public function enqueue_scripts()
     {
         global $post;
         if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'sec_events')) {
+            wp_enqueue_style('simple-events-style');
             wp_enqueue_script(
                 'simple-events-shortcode',
                 PLUGIN_ASSETS . '/js/simple-events-shortcode.js',
@@ -340,6 +388,12 @@ class Simple_Events_Shortcode
                     'no_more_text' => __('No more events to load.', PLUGIN_TEXT_DOMAIN)
                 )
             );
+        }
+
+        // A page using only [sec_event] (single event) still needs the stylesheet
+        // in <head>; it does not need the infinite-scroll script.
+        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'sec_event')) {
+            wp_enqueue_style('simple-events-style');
         }
     }
 }

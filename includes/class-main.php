@@ -154,6 +154,7 @@ class Simple_Events_Calendar {
         add_action('init', array($this, 'ensure_public_access'));
 
         // Enqueue scripts and styles
+        add_action('wp_enqueue_scripts', array($this, 'register_assets'), 1);
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
 
         // Add action links
@@ -358,6 +359,21 @@ class Simple_Events_Calendar {
     }
 
     /**
+     * Register (but do not enqueue) the front-end stylesheet so shortcodes and
+     * Elementor widgets can enqueue it on demand on non-event pages.
+     */
+    public function register_assets() {
+        if (!wp_style_is('simple-events-style', 'registered')) {
+            wp_register_style(
+                'simple-events-style',
+                PLUGIN_ASSETS . '/css/simple-events.css',
+                array(),
+                $this->version
+            );
+        }
+    }
+
+    /**
      * Enqueue scripts and styles
      */
     public function enqueue_scripts() {
@@ -382,12 +398,7 @@ class Simple_Events_Calendar {
             return;
         }
 
-        wp_enqueue_style(
-            'simple-events-style',
-            PLUGIN_ASSETS . '/css/simple-events.css',
-            array(),
-            $this->version
-        );
+        wp_enqueue_style('simple-events-style');
 
         wp_enqueue_script(
             'simple-events-script',
