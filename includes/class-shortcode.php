@@ -188,12 +188,13 @@ class Simple_Events_Shortcode
     private function render_events_container($query, $atts)
     {
         $data_attrs = sprintf(
-            'data-show-time="%s" data-show-excerpt="%s" data-show-location="%s" data-show-footer="%s" data-show-past="%s" data-category="%s" data-offset="%d"',
+            'data-show-time="%s" data-show-excerpt="%s" data-show-location="%s" data-show-footer="%s" data-show-past="%s" data-order="%s" data-category="%s" data-offset="%d"',
             $atts['show_time'] ? 'true' : 'false',
             $atts['show_excerpt'] ? 'true' : 'false',
             $atts['show_location'] ? 'true' : 'false',
             $atts['show_footer'] ? 'true' : 'false',
             $atts['show_past'] ? 'true' : 'false',
+            esc_attr($atts['order']),
             esc_attr($atts['category']),
             (int) $query->post_count
         );

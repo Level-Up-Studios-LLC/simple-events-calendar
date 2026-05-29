@@ -103,11 +103,17 @@ class Simple_Events_Meta_Box {
         $end         = (string) get_post_meta($post->ID, 'event_end_time', true);      // g:i a
         $location    = (string) get_post_meta($post->ID, 'event_location', true);
 
+        // Recurrence rule. New events get sensible defaults (weekly / after
+        // 10 occurrences) so the UI is pre-filled rather than uninitialized;
+        // existing events keep their stored values.
         $repeats     = (int) get_post_meta($post->ID, 'event_repeats', true) === 1;
         $interval    = max(1, (int) get_post_meta($post->ID, 'event_repeat_interval', true));
         $frequency   = (string) get_post_meta($post->ID, 'event_repeat_frequency', true);
+        $frequency   = in_array($frequency, array('daily', 'weekly', 'monthly', 'yearly'), true) ? $frequency : 'weekly';
         $end_type    = (string) get_post_meta($post->ID, 'event_repeat_end_type', true);
-        $count       = max(1, (int) get_post_meta($post->ID, 'event_repeat_count', true));
+        $end_type    = in_array($end_type, array('never', 'count', 'until'), true) ? $end_type : 'count';
+        $count_raw   = get_post_meta($post->ID, 'event_repeat_count', true);
+        $count       = ('' !== $count_raw) ? max(1, (int) $count_raw) : 10;
         $until       = (string) get_post_meta($post->ID, 'event_repeat_until', true);  // Ymd
 
         // Convert stored formats to HTML5 input formats.
@@ -190,7 +196,7 @@ class Simple_Events_Meta_Box {
                                 printf(
                                     '<option value="%s" %s>%s</option>',
                                     esc_attr($value),
-                                    selected($end_type ?: 'never', $value, false),
+                                    selected($end_type, $value, false),
                                     esc_html($label)
                                 );
                             }

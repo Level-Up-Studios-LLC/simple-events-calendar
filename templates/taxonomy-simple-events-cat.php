@@ -38,6 +38,7 @@ $sec_slug     = ($sec_term && isset($sec_term->slug)) ? $sec_term->slug : '';
             data-archive="true"
             data-category="<?php echo esc_attr($sec_slug); ?>"
             data-show-past="false"
+            data-order="ASC"
             data-show-time="<?php echo 'yes' === $sec_settings['show_time'] ? 'true' : 'false'; ?>"
             data-show-excerpt="<?php echo 'yes' === $sec_settings['show_excerpt'] ? 'true' : 'false'; ?>"
             data-show-location="<?php echo 'yes' === $sec_settings['show_location'] ? 'true' : 'false'; ?>"

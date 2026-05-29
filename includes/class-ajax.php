@@ -108,10 +108,16 @@ class Simple_Events_Ajax {
             'show_footer'   => isset($_POST['show_footer']) ? ($_POST['show_footer'] === 'true') : true
         );
 
+        $order = isset($_POST['order']) ? strtoupper(sanitize_text_field(wp_unslash($_POST['order']))) : 'ASC';
+        if (!in_array($order, array('ASC', 'DESC'), true)) {
+            $order = 'ASC';
+        }
+
         return array(
             'offset'          => $offset,
             'category'        => isset($_POST['category']) ? sanitize_text_field(wp_unslash($_POST['category'])) : '',
             'show_past'       => isset($_POST['show_past']) && $_POST['show_past'] === 'true',
+            'order'           => $order,
             'display_options' => $display_options
         );
     }
@@ -131,7 +137,7 @@ class Simple_Events_Ajax {
             'posts_per_page'  => $per_page,
             'offset'          => $request_data['offset'],
             'orderby'         => 'meta_value',
-            'order'           => 'ASC',
+            'order'           => isset($request_data['order']) ? $request_data['order'] : 'ASC',
             'meta_key'        => 'event_date',
             'meta_type'       => 'DATE',
             'no_found_rows'   => true,

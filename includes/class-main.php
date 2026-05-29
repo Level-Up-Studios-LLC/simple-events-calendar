@@ -382,7 +382,10 @@ class Simple_Events_Calendar {
                 'ajaxurl' => admin_url('admin-ajax.php'),
                 'nonce'   => wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION),
                 'initial_offset' => $increment,
-                'load_increment' => $increment
+                'load_increment' => $increment,
+                'loading_text'   => __('Loading more events...', 'simple_events'),
+                'retry_text'     => __('Try Again', 'simple_events'),
+                'no_more_text'   => __('No more events to load.', 'simple_events'),
             )
         );
     }

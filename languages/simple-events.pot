@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-29T16:55:10+00:00\n"
+"POT-Creation-Date: 2026-05-29T17:30:30+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 
@@ -39,7 +39,7 @@ msgid "https://www.levelupstudios.com/"
 msgstr ""
 
 #: includes/class-admin-columns.php:50
-#: includes/elementor/dynamic-tags.php:118
+#: includes/elementor/dynamic-tags.php:121
 #: includes/elementor/widgets.php:166
 msgid "Event Title"
 msgstr ""
@@ -52,8 +52,8 @@ msgstr ""
 #: includes/class-admin-columns.php:52
 #: includes/class-admin-columns.php:572
 #: includes/class-admin-columns.php:595
-#: includes/class-meta-box.php:124
-#: includes/elementor/dynamic-tags.php:80
+#: includes/class-meta-box.php:130
+#: includes/elementor/dynamic-tags.php:83
 #: includes/elementor/widgets.php:236
 msgid "Event Date"
 msgstr ""
@@ -65,7 +65,7 @@ msgstr ""
 
 #: includes/class-admin-columns.php:54
 #: includes/class-admin-columns.php:605
-#: includes/class-meta-box.php:139
+#: includes/class-meta-box.php:145
 msgid "Location"
 msgstr ""
 
@@ -154,27 +154,33 @@ msgstr ""
 msgid "Invalid request data."
 msgstr ""
 
-#: includes/class-ajax.php:280
-#: includes/class-shortcode.php:341
+#: includes/class-ajax.php:286
+#: includes/class-main.php:386
+#: includes/class-shortcode.php:342
 msgid "Loading more events..."
 msgstr ""
 
-#: includes/class-ajax.php:281
-#: includes/class-shortcode.php:342
+#: includes/class-ajax.php:287
+#: includes/class-shortcode.php:343
 msgid "Error loading events. Please try again."
 msgstr ""
 
-#: includes/class-ajax.php:282
-#: includes/class-shortcode.php:343
+#: includes/class-ajax.php:288
+#: includes/class-main.php:388
+#: includes/class-shortcode.php:344
 msgid "No more events to load."
 msgstr ""
 
-#: includes/class-main.php:398
+#: includes/class-main.php:387
+msgid "Try Again"
+msgstr ""
+
+#: includes/class-main.php:401
 #: includes/class-post-type.php:68
 msgid "Events"
 msgstr ""
 
-#: includes/class-main.php:399
+#: includes/class-main.php:402
 #: includes/class-settings.php:55
 msgid "Settings"
 msgstr ""
@@ -183,80 +189,80 @@ msgstr ""
 msgid "Event Details"
 msgstr ""
 
-#: includes/class-meta-box.php:124
+#: includes/class-meta-box.php:130
 msgid "required"
 msgstr ""
 
-#: includes/class-meta-box.php:129
+#: includes/class-meta-box.php:135
 msgid "Start Time"
 msgstr ""
 
-#: includes/class-meta-box.php:131
+#: includes/class-meta-box.php:137
 msgid "End Time"
 msgstr ""
 
-#: includes/class-meta-box.php:131
-#: includes/class-meta-box.php:139
+#: includes/class-meta-box.php:137
+#: includes/class-meta-box.php:145
 msgid "optional"
 msgstr ""
 
-#: includes/class-meta-box.php:140
+#: includes/class-meta-box.php:146
 msgid "e.g., Conference Room A, 123 Main St, or Online"
 msgstr ""
 
-#: includes/class-meta-box.php:146
+#: includes/class-meta-box.php:152
 msgid "This event is part of a recurring series. Recurrence settings are managed on the series parent."
 msgstr ""
 
-#: includes/class-meta-box.php:151
+#: includes/class-meta-box.php:157
 msgid "This is a recurring event"
 msgstr ""
 
-#: includes/class-meta-box.php:157
+#: includes/class-meta-box.php:163
 msgid "Repeats"
 msgstr ""
 
-#: includes/class-meta-box.php:158
+#: includes/class-meta-box.php:164
 msgid "Every"
 msgstr ""
 
-#: includes/class-meta-box.php:163
+#: includes/class-meta-box.php:169
 msgid "day(s)"
 msgstr ""
 
-#: includes/class-meta-box.php:164
+#: includes/class-meta-box.php:170
 msgid "week(s)"
 msgstr ""
 
-#: includes/class-meta-box.php:165
+#: includes/class-meta-box.php:171
 msgid "month(s)"
 msgstr ""
 
-#: includes/class-meta-box.php:166
+#: includes/class-meta-box.php:172
 msgid "year(s)"
 msgstr ""
 
-#: includes/class-meta-box.php:181
+#: includes/class-meta-box.php:187
 msgid "Ends"
 msgstr ""
 
-#: includes/class-meta-box.php:185
+#: includes/class-meta-box.php:191
 msgid "Never"
 msgstr ""
 
-#: includes/class-meta-box.php:186
+#: includes/class-meta-box.php:192
 msgid "After a number of occurrences"
 msgstr ""
 
-#: includes/class-meta-box.php:187
+#: includes/class-meta-box.php:193
 msgid "On a date"
 msgstr ""
 
-#: includes/class-meta-box.php:202
+#: includes/class-meta-box.php:208
 msgid "Number of occurrences"
 msgstr ""
 
-#: includes/class-meta-box.php:207
+#: includes/class-meta-box.php:213
 msgid "Repeat until"
 msgstr ""
 
@@ -381,7 +387,7 @@ msgid "Event Category"
 msgstr ""
 
 #: includes/class-post-type.php:146
-#: includes/elementor/dynamic-tags.php:140
+#: includes/elementor/dynamic-tags.php:143
 #: includes/elementor/widgets.php:327
 msgid "Event Categories"
 msgstr ""
@@ -607,78 +613,82 @@ msgstr ""
 msgid "Heading"
 msgstr ""
 
-#: includes/class-settings.php:283
-msgid "Message"
-msgstr ""
-
-#: includes/class-settings.php:286
-msgid "Leave blank to use the context-aware default message."
-msgstr ""
-
-#: includes/class-settings.php:291
-msgid "SEO"
-msgstr ""
-
-#: includes/class-settings.php:294
-msgid "schema.org JSON-LD"
-msgstr ""
-
-#: includes/class-settings.php:295
-msgid "Output Event structured data on cards and single event pages"
-msgstr ""
-
-#: includes/class-settings.php:299
-msgid "Recurrence limits"
-msgstr ""
-
-#: includes/class-settings.php:302
-msgid "Max occurrences per series"
-msgstr ""
-
-#: includes/class-settings.php:306
-msgid "Max horizon (months) for \"never\" series"
-msgstr ""
-
-#: includes/class-settings.php:311
-msgid "Cache"
-msgstr ""
-
-#: includes/class-settings.php:314
-msgid "Cache lifetime (minutes)"
-msgstr ""
-
-#: includes/class-settings.php:323
-msgid "Maintenance"
-msgstr ""
-
-#: includes/class-settings.php:327
-msgid "Clear cache now"
-msgstr ""
-
-#: includes/class-settings.php:328
-msgid "Clears all cached event listings immediately."
-msgstr ""
-
-#: includes/class-shortcode.php:264
-#: includes/functions.php:162
-#: templates/archive-simple-events.php:47
-#: templates/taxonomy-simple-events-cat.php:56
+#: includes/class-settings.php:280
+#: includes/class-shortcode.php:265
+#: templates/archive-simple-events.php:48
+#: templates/taxonomy-simple-events-cat.php:57
 msgid "No Events Found"
 msgstr ""
 
+#: includes/class-settings.php:281
+msgid "Leave blank to use the default."
+msgstr ""
+
+#: includes/class-settings.php:285
+msgid "Message"
+msgstr ""
+
+#: includes/class-settings.php:288
+msgid "Leave blank to use the context-aware default message."
+msgstr ""
+
+#: includes/class-settings.php:293
+msgid "SEO"
+msgstr ""
+
+#: includes/class-settings.php:296
+msgid "schema.org JSON-LD"
+msgstr ""
+
+#: includes/class-settings.php:297
+msgid "Output Event structured data on cards and single event pages"
+msgstr ""
+
+#: includes/class-settings.php:301
+msgid "Recurrence limits"
+msgstr ""
+
+#: includes/class-settings.php:304
+msgid "Max occurrences per series"
+msgstr ""
+
+#: includes/class-settings.php:308
+msgid "Max horizon (months) for \"never\" series"
+msgstr ""
+
+#: includes/class-settings.php:313
+msgid "Cache"
+msgstr ""
+
+#: includes/class-settings.php:316
+msgid "Cache lifetime (minutes)"
+msgstr ""
+
+#: includes/class-settings.php:325
+msgid "Maintenance"
+msgstr ""
+
+#: includes/class-settings.php:329
+msgid "Clear cache now"
+msgstr ""
+
+#: includes/class-settings.php:330
+msgid "Clears all cached event listings immediately."
+msgstr ""
+
 #. translators: %s: category slug
-#: includes/class-shortcode.php:275
+#: includes/class-shortcode.php:276
 #, php-format
 msgid "No events found in the \"%s\" category."
 msgstr ""
 
-#: includes/class-shortcode.php:277
-#: templates/archive-simple-events.php:48
-#: templates/taxonomy-simple-events-cat.php:57
+#: includes/class-shortcode.php:278
+#: templates/archive-simple-events.php:49
+#: templates/taxonomy-simple-events-cat.php:58
 msgid "No upcoming events scheduled. Check back soon!"
 msgstr ""
 
-#: includes/class-shortcode.php:279
+#: includes/class-shortcode.php:280
 msgid "No events have been created yet."
 msgstr ""
 
@@ -691,22 +701,22 @@ msgstr ""
 msgid "— Current event —"
 msgstr ""
 
-#: includes/elementor/dynamic-tags.php:91
+#: includes/elementor/dynamic-tags.php:94
 #: includes/elementor/widgets.php:260
 msgid "Event Time"
 msgstr ""
 
-#: includes/elementor/dynamic-tags.php:107
+#: includes/elementor/dynamic-tags.php:110
 #: includes/elementor/widgets.php:270
 msgid "Event Location"
 msgstr ""
 
-#: includes/elementor/dynamic-tags.php:129
+#: includes/elementor/dynamic-tags.php:132
 #: includes/elementor/widgets.php:293
 msgid "Event Excerpt"
 msgstr ""
 
-#: includes/elementor/dynamic-tags.php:155
+#: includes/elementor/dynamic-tags.php:158
 msgid "Event Image URL"
 msgstr ""
 
@@ -812,35 +822,35 @@ msgid "Button text"
 msgstr ""
 
 #: includes/functions.php:72
-#: template-parts/content-event-card.php:157
+#: template-parts/content-event-card.php:161
 msgid "Learn More"
-msgstr ""
-
-#: template-parts/content-event-card.php:92
-#, php-format
-msgid "View event: %s"
 msgstr ""
 
 #: template-parts/content-event-card.php:94
 #, php-format
+msgid "View event: %s"
+msgstr ""
+
+#: template-parts/content-event-card.php:96
+#, php-format
 msgid "Image for event: %s"
 msgstr ""
 
-#: template-parts/content-event-card.php:116
+#: template-parts/content-event-card.php:118
 #, php-format
 msgid "Event date: %s"
 msgstr ""
 
-#: template-parts/content-event-card.php:122
+#: template-parts/content-event-card.php:124
 #, php-format
 msgid "Event time: %s"
 msgstr ""
 
-#: template-parts/content-event-card.php:140
+#: template-parts/content-event-card.php:144
 msgid "Event location:"
 msgstr ""
 
-#: template-parts/content-event-card.php:156
+#: template-parts/content-event-card.php:160
 #, php-format
 msgid "Read more about %s"
 msgstr ""
