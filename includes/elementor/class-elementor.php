@@ -28,6 +28,13 @@ if (!defined('ABSPATH')) {
 class Simple_Events_Elementor {
 
     /**
+     * Cached event-options list (built once per request).
+     *
+     * @var array|null
+     */
+    private static $event_options_cache = null;
+
+    /**
      * Wire Elementor hooks if Elementor is present.
      */
     public static function init() {
@@ -163,6 +170,10 @@ class Simple_Events_Elementor {
      * @return array id => title
      */
     public static function event_options() {
+        if (null !== self::$event_options_cache) {
+            return self::$event_options_cache;
+        }
+
         $options = array('' => __('— Current event —', 'simple_events'));
         $events = get_posts(array(
             'post_type'        => 'simple-events',
@@ -175,6 +186,8 @@ class Simple_Events_Elementor {
         foreach ($events as $event) {
             $options[$event->ID] = $event->post_title;
         }
+
+        self::$event_options_cache = $options;
         return $options;
     }
 }
