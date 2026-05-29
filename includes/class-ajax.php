@@ -109,7 +109,9 @@ class Simple_Events_Ajax {
         );
 
         return array(
-            'offset' => $offset,
+            'offset'          => $offset,
+            'category'        => isset($_POST['category']) ? sanitize_text_field(wp_unslash($_POST['category'])) : '',
+            'show_past'       => isset($_POST['show_past']) && $_POST['show_past'] === 'true',
             'display_options' => $display_options
         );
     }
@@ -121,16 +123,26 @@ class Simple_Events_Ajax {
      * @return array Query arguments
      */
     private function build_query_args($request_data) {
-        return array(
+        $per_page = max(1, (int) simple_events_get_setting('load_increment', 6));
+
+        $args = array(
             'post_type'       => 'simple-events',
             'post_status'     => 'publish',
-            'posts_per_page'  => 6,
+            'posts_per_page'  => $per_page,
             'offset'          => $request_data['offset'],
             'orderby'         => 'meta_value',
             'order'           => 'ASC',
             'meta_key'        => 'event_date',
             'meta_type'       => 'DATE',
-            'meta_query'      => array(
+            'no_found_rows'   => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'suppress_filters' => false,
+        );
+
+        // Hide past events unless the originating listing asked to show them.
+        if (empty($request_data['show_past'])) {
+            $args['meta_query'] = array(
                 'relation' => 'AND',
                 array(
                     'key'       => 'event_date',
@@ -138,12 +150,21 @@ class Simple_Events_Ajax {
                     'value'     => current_time('Ymd'),
                     'type'      => 'DATE'
                 )
-            ),
-            'no_found_rows'   => true,
-            'update_post_meta_cache' => false,
-            'update_post_term_cache' => false,
-            'suppress_filters' => false,
-        );
+            );
+        }
+
+        // Preserve the category context of the originating listing.
+        if (!empty($request_data['category'])) {
+            $args['tax_query'] = array(
+                array(
+                    'taxonomy' => 'simple-events-cat',
+                    'field'    => 'slug',
+                    'terms'    => $request_data['category'],
+                ),
+            );
+        }
+
+        return $args;
     }
 
     /**
@@ -173,15 +194,16 @@ class Simple_Events_Ajax {
      * @return array Post data
      */
     private function prepare_post_data($display_options) {
+        $id = get_the_ID();
         return array(
             'title'      => get_the_title(),
             'permalink'  => get_permalink(),
-            'thumbnail'  => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
+            'thumbnail'  => get_the_post_thumbnail_url($id, 'medium_large'),
             'excerpt'    => wp_trim_words(get_the_excerpt(), 30, '...'),
-            'date'       => get_field('event_date'),
-            'start_time' => get_field('event_start_time'),
-            'end_time'   => get_field('event_end_time'),
-            'location'   => get_field('event_location'),
+            'date'       => simple_events_get_event_date($id),
+            'start_time' => simple_events_get_event_time($id, 'event_start_time'),
+            'end_time'   => simple_events_get_event_time($id, 'event_end_time'),
+            'location'   => get_post_meta($id, 'event_location', true),
             'show_time'     => $display_options['show_time'],
             'show_excerpt'  => $display_options['show_excerpt'],
             'show_location' => $display_options['show_location'],
@@ -249,11 +271,12 @@ class Simple_Events_Ajax {
      * @return array AJAX parameters
      */
     public static function get_ajax_params() {
+        $increment = max(1, (int) simple_events_get_setting('load_increment', 6));
         return array(
             'ajaxurl' => self::get_ajax_url(),
             'nonce'   => self::get_nonce(),
-            'initial_offset' => 6,
-            'load_increment' => 6,
+            'initial_offset' => $increment,
+            'load_increment' => $increment,
             'loading_text' => __('Loading more events...', PLUGIN_TEXT_DOMAIN),
             'error_text'   => __('Error loading events. Please try again.', PLUGIN_TEXT_DOMAIN),
             'no_more_text' => __('No more events to load.', PLUGIN_TEXT_DOMAIN)

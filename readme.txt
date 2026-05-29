@@ -1,29 +1,32 @@
 === Simple Events Calendar ===
 Contributors: levelupstudios
 Donate link: https://www.levelupstudios.com/
-Tags: events, calendar, acf, advanced custom fields, shortcode, responsive
+Tags: events, calendar, shortcode, responsive, elementor
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 4.4.0
+Stable tag: 5.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A simple, responsive events calendar plugin for WordPress that integrates seamlessly with Advanced Custom Fields.
+A simple, responsive, self-contained events calendar plugin for WordPress. No external field plugins required.
 
 == Description ==
 
-Simple Events Calendar is a lightweight, user-friendly events management plugin that creates beautiful, responsive event displays on your WordPress site. Built specifically to work with Advanced Custom Fields (ACF), it provides a clean and intuitive way to manage and display events.
+Simple Events Calendar is a lightweight, user-friendly events management plugin that creates beautiful, responsive event displays on your WordPress site. It is fully self-contained — event fields are edited through a native meta box, with no dependency on Advanced Custom Fields or any other plugin.
 
 = Key Features =
 
 * **Responsive Design**: Automatically adapts to different screen sizes (3 columns on desktop, 2 on tablet, 1 on mobile)
-* **Advanced Custom Fields Integration**: Seamlessly works with ACF Free or Pro
+* **No external dependencies**: Native event fields — ACF is no longer required
+* **Settings page**: Choose the front-end date/time format, display defaults, empty-state copy, cache lifetime, and more
+* **Default templates**: Built-in single, archive, and category templates (theme-, Elementor-, and block-theme-overridable)
+* **Modular element shortcodes**: `[sec_event_title]`, `[sec_event_image]`, `[sec_event_date]`, and more for custom layouts
+* **Elementor integration**: Drag-and-drop "Simple Events" widgets plus Dynamic Tags
 * **Infinite Scroll Loading**: Events load smoothly as users scroll down
 * **Flexible Display Options**: Control what event information to show (time, excerpt, location, etc.)
 * **Event Status Filtering**: Filter events by upcoming, today's events, or past events in admin
-* **Clean Shortcode**: Simple `[sec_events]` shortcode with customizable parameters
-* **Modern Build System**: SCSS compilation with development and production builds
+* **SEO**: schema.org Event structured data on cards and single event pages
 * **Accessibility Ready**: Built with accessibility best practices and reduced motion support
 
 = Shortcode Usage =
@@ -34,17 +37,32 @@ Display events anywhere on your site with the simple shortcode:
 
 = Shortcode Parameters =
 
-* `posts_per_page` - Number of events to load initially (default: 6)
+* `posts_per_page` - Number of events to load initially (default: from Settings, 6)
+* `category` - Filter by event-category slug (default: none)
+* `show_past` - Include past events (default: no)
+* `order` - Sort direction ASC/DESC (default: ASC)
 * `show_time` - Display event time (default: true)
 * `show_excerpt` - Display event excerpt (default: true)
 * `show_location` - Display event location (default: true)
 * `show_footer` - Display event footer (default: true)
 
+Defaults for the options above come from the Events → Settings page; shortcode attributes override them per instance.
+
 Example: `[sec_events posts_per_page="9" show_time="false"]`
 
-= Required Plugin =
+= Element Shortcodes =
 
-This plugin requires Advanced Custom Fields (ACF) to be installed and activated. It works with both the free and pro versions of ACF.
+For building custom layouts (including inside page builders), each event element has its own shortcode. They default to the current event and accept an `id` attribute to target a specific event:
+
+`[sec_event_title]`, `[sec_event_image]`, `[sec_event_date]`, `[sec_event_time]`, `[sec_event_location]`, `[sec_event_excerpt]`, `[sec_event_content]`, `[sec_event_categories]`, `[sec_event_button]`
+
+= Elementor =
+
+When Elementor is active, a "Simple Events" widget category provides drag-and-drop widgets for each event element, plus Dynamic Tags for binding native Elementor widgets to event fields.
+
+= No Required Plugins =
+
+This plugin is fully self-contained. Previous versions required Advanced Custom Fields; version 5.0.0 removed that dependency. Existing events created with earlier versions continue to work unchanged — their data is preserved and no migration is needed. ACF can be safely deactivated.
 
 = Developer Features =
 
@@ -66,11 +84,10 @@ Additional languages can be added using standard WordPress translation methods.
 == Installation ==
 
 1. Upload the plugin files to the `/wp-content/plugins/simple-events-calendar` directory, or install the plugin through the WordPress plugins screen directly.
-2. Install and activate Advanced Custom Fields (Free or Pro) if not already installed.
-3. Activate the Simple Events Calendar plugin through the 'Plugins' screen in WordPress.
-4. The plugin will automatically create the necessary custom fields for events.
-5. Start creating events in your WordPress admin under "Events".
-6. Use the `[sec_events]` shortcode to display events on any page or post.
+2. Activate the Simple Events Calendar plugin through the 'Plugins' screen in WordPress.
+3. Start creating events in your WordPress admin under "Events" — event date, time, and location are entered in the "Event Details" box.
+4. Optionally adjust formatting and defaults under Events → Settings.
+5. Use the `[sec_events]` shortcode to display events on any page or post.
 
 == Frequently Asked Questions ==
 
@@ -102,6 +119,22 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 4. Shortcode parameters and usage examples
 
 == Changelog ==
+
+= 5.0.0 (2026-05-29) =
+
+**Removed**
+* Advanced Custom Fields dependency — the plugin is now fully self-contained
+
+**Added**
+* Native "Event Details" meta box for editing date, time, location, and recurrence (replaces the ACF UI)
+* Settings page (Events → Settings): front-end date/time format, display defaults, empty-state copy, cache lifetime + clear button, load-more batch size, recurrence limits, schema.org toggle
+* Element shortcodes for custom layouts: [sec_event_title], [sec_event_image], [sec_event_date], [sec_event_time], [sec_event_location], [sec_event_excerpt], [sec_event_content], [sec_event_categories], [sec_event_button]
+* Default single, archive, and category templates (theme-, Elementor-, and block-theme-overridable)
+* Elementor "Simple Events" widgets and Dynamic Tags (when Elementor is active)
+* schema.org Event structured data on single event pages
+
+**Compatibility**
+* Existing events are preserved with no migration; ACF can be safely deactivated
 
 = 4.4.0 (2026-05-28) =
 
@@ -239,6 +272,9 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Event ordering consistency
 
 == Upgrade Notice ==
+
+= 5.0.0 =
+Advanced Custom Fields is no longer required. Your existing events are preserved with no migration needed, and ACF can be deactivated after upgrading. Event date/time/location are now edited in the built-in "Event Details" box.
 
 = 4.2.4 =
 BREAKING CHANGE: Shortcode changed from [simple_events_calendar] to [sec_events]. Please update your shortcodes after upgrading.

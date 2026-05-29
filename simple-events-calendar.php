@@ -3,11 +3,10 @@
 /**
  * Plugin Name: Simple Events Calendar
  * Plugin URI: https://github.com/Level-Up-Studios-LLC/simple-events-calendar
- * Description: A simple events calendar plugin for WordPress. Requires Advanced Custom Fields (Free or Pro).
- * Version: 4.4.0
+ * Description: A simple events calendar plugin for WordPress. Self-contained — no external field plugins required.
+ * Version: 5.0.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
- * Requires Plugins: advanced-custom-fields
  * Author: Level Up Studios, LLC
  * Author URI: https://www.levelupstudios.com/
  * License: GPL v2 or later
@@ -24,7 +23,7 @@ define('PLUGIN_TEXT_DOMAIN', 'simple_events');
 define('PLUGIN_DIR', __DIR__);
 define('PLUGIN_URL', untrailingslashit(plugin_dir_url(__FILE__)));
 define('PLUGIN_ASSETS', PLUGIN_URL . '/assets');
-define('PLUGIN_VERSION', '4.4.0');
+define('PLUGIN_VERSION', '5.0.0');
 define('SIMPLE_EVENTS_PLUGIN_FILE', __FILE__);
 define('SIMPLE_EVENTS_NONCE_ACTION', 'load_more_events_nonce');
 

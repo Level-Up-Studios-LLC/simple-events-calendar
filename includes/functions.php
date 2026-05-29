@@ -79,125 +79,289 @@ function simple_events_render_fallback_card($post_data) {
 }
 
 /**
- * Check if ACF is available and functional
+ * Render the event card for the current post in the loop.
  *
- * @return bool True if ACF is available
+ * Assembles the card data from the current post (using the shared display
+ * helpers) and includes the card template, falling back to the inline
+ * renderer. Used by the default archive/taxonomy templates so their output
+ * matches the [sec_events] shortcode.
+ *
+ * @param array $flags Optional display flags (show_time, show_excerpt,
+ *                     show_location, show_footer). Booleans; default from
+ *                     settings.
+ * @return void
  */
-function simple_events_check_acf_dependency() {
-    if (function_exists('acf_get_setting')) {
-        return true;
+function simple_events_render_event_card($flags = array()) {
+    $settings = simple_events_get_settings();
+    $flags = wp_parse_args($flags, array(
+        'show_time'     => 'yes' === $settings['show_time'],
+        'show_excerpt'  => 'yes' === $settings['show_excerpt'],
+        'show_location' => 'yes' === $settings['show_location'],
+        'show_footer'   => 'yes' === $settings['show_footer'],
+    ));
+
+    $id = get_the_ID();
+    $post_data = array(
+        'title'         => get_the_title(),
+        'permalink'     => get_permalink(),
+        'thumbnail'     => get_the_post_thumbnail_url($id, 'medium_large'),
+        'excerpt'       => wp_trim_words(get_the_excerpt(), 30, '...'),
+        'date'          => simple_events_get_event_date($id),
+        'start_time'    => simple_events_get_event_time($id, 'event_start_time'),
+        'end_time'      => simple_events_get_event_time($id, 'event_end_time'),
+        'location'      => get_post_meta($id, 'event_location', true),
+        'show_time'     => $flags['show_time'] ? 'yes' : 'no',
+        'show_excerpt'  => $flags['show_excerpt'] ? 'yes' : 'no',
+        'show_location' => $flags['show_location'] ? 'yes' : 'no',
+        'show_footer'   => $flags['show_footer'] ? 'yes' : 'no',
+    );
+
+    if (empty($post_data['title']) || empty($post_data['date'])) {
+        return;
     }
 
-    if (function_exists('acf_add_local_field_group')) {
-        return true;
+    $template_path = PLUGIN_DIR . '/template-parts/content-event-card.php';
+    if (file_exists($template_path)) {
+        include $template_path;
+    } else {
+        simple_events_render_fallback_card($post_data);
     }
-
-    if (defined('ACF_VERSION')) {
-        return true;
-    }
-
-    if (class_exists('ACF')) {
-        return true;
-    }
-
-    return false;
 }
 
 /**
- * Get ACF version and type information
- *
- * @return array ACF version details
+ * Option name that stores all plugin settings as a single array.
  */
-function simple_events_get_acf_version_info() {
-    $info = array(
-        'is_available' => false,
-        'version' => '',
-        'is_pro' => false,
-        'type' => 'Not Available',
-        'detection_method' => ''
+if (!defined('SIMPLE_EVENTS_SETTINGS_OPTION')) {
+    define('SIMPLE_EVENTS_SETTINGS_OPTION', 'simple_events_settings');
+}
+
+/**
+ * Default values for every plugin setting.
+ *
+ * Defaults are chosen so that a site upgrading from a version that relied on
+ * ACF renders and behaves identically until the admin changes something.
+ *
+ * @return array
+ */
+function simple_events_get_setting_defaults() {
+    return array(
+        // Display formatting.
+        'date_format'    => 'l, F j, Y',
+        'time_format'    => '12', // '12' => g:i a, '24' => H:i.
+
+        // Shortcode / query display defaults.
+        'posts_per_page' => 6,
+        'show_past'      => 'no',
+        'order'          => 'ASC',
+        'show_time'      => 'yes',
+        'show_excerpt'   => 'yes',
+        'show_location'  => 'yes',
+        'show_footer'    => 'yes',
+
+        // Empty-state copy.
+        'empty_state_heading' => __('No Events Found', 'simple_events'),
+        'empty_state_text'    => '',
+
+        // Caching.
+        'cache_ttl' => 15, // minutes.
+
+        // Infinite scroll batch size.
+        'load_increment' => 6,
+
+        // Recurrence limits (also exposed as filters).
+        'recur_max_occurrences'    => 1000,
+        'recur_max_horizon_months' => 60,
+
+        // SEO.
+        'enable_schema' => 'yes',
+    );
+}
+
+/**
+ * Get the full settings array, merged over defaults.
+ *
+ * @return array
+ */
+function simple_events_get_settings() {
+    $stored = get_option(SIMPLE_EVENTS_SETTINGS_OPTION, array());
+    if (!is_array($stored)) {
+        $stored = array();
+    }
+    return wp_parse_args($stored, simple_events_get_setting_defaults());
+}
+
+/**
+ * Get a single plugin setting.
+ *
+ * @param string $key      Setting key.
+ * @param mixed  $fallback Value to return when the key is unknown.
+ * @return mixed
+ */
+function simple_events_get_setting($key, $fallback = null) {
+    $settings = simple_events_get_settings();
+    if (array_key_exists($key, $settings)) {
+        return $settings[$key];
+    }
+    return $fallback;
+}
+
+/**
+ * Resolve the event/post ID a single-element renderer or shortcode should use.
+ *
+ * Falls back to the current loop / queried post when no explicit ID is given.
+ *
+ * @param int|string $maybe_id Explicit ID, or empty/0 for the current post.
+ * @return int Post ID (0 when none can be resolved).
+ */
+function simple_events_resolve_event_id($maybe_id = 0) {
+    $id = absint($maybe_id);
+    if ($id) {
+        return $id;
+    }
+
+    $current = get_the_ID();
+    if ($current) {
+        return (int) $current;
+    }
+
+    $queried = get_queried_object_id();
+    return $queried ? (int) $queried : 0;
+}
+
+/**
+ * Get an event's date, reformatted from the stored `Ymd` meta.
+ *
+ * The raw meta value is stored in `Ymd` form (e.g. 20260529) — historically by
+ * ACF's date picker and now by the native meta box. This isolates the one place
+ * the stored format differs from the display format.
+ *
+ * @param int    $post_id Event post ID.
+ * @param string $format  PHP date format. Defaults to the `date_format` setting.
+ * @return string Formatted date, or '' when unset/invalid.
+ */
+function simple_events_get_event_date($post_id, $format = '') {
+    $raw = get_post_meta((int) $post_id, 'event_date', true);
+    if (empty($raw)) {
+        return '';
+    }
+
+    if ('' === $format) {
+        $format = (string) simple_events_get_setting('date_format', 'l, F j, Y');
+    }
+
+    $tz = wp_timezone();
+    $dt = DateTimeImmutable::createFromFormat('!Ymd', (string) $raw, $tz);
+
+    if (!$dt) {
+        // Defensive fallback for any non-Ymd legacy value.
+        $timestamp = strtotime((string) $raw);
+        if (!$timestamp) {
+            return '';
+        }
+        return wp_date($format, $timestamp, $tz);
+    }
+
+    return wp_date($format, $dt->getTimestamp(), $tz);
+}
+
+/**
+ * Get an event time meta value, rendered per the `time_format` setting.
+ *
+ * Stored times are in `g:i a` form (e.g. "2:30 pm"). When the setting is 24h
+ * they are reformatted to `H:i`; otherwise returned in 12h form.
+ *
+ * @param int    $post_id Event post ID.
+ * @param string $key     Meta key (event_start_time | event_end_time).
+ * @return string Formatted time, or '' when unset.
+ */
+function simple_events_get_event_time($post_id, $key) {
+    $raw = get_post_meta((int) $post_id, $key, true);
+    if (empty($raw)) {
+        return '';
+    }
+
+    $dt = DateTimeImmutable::createFromFormat('g:i a', (string) $raw, wp_timezone());
+    if (!$dt) {
+        // Unparseable — return the stored value unchanged.
+        return (string) $raw;
+    }
+
+    $format = ('24' === (string) simple_events_get_setting('time_format', '12')) ? 'H:i' : 'g:i a';
+    return $dt->format($format);
+}
+
+/**
+ * Build the schema.org Event structured-data array for a single event.
+ *
+ * Shared by the event card and the single-event page output so the markup is
+ * identical. Returns null when the JSON-LD setting is disabled or the event has
+ * no date.
+ *
+ * @param int $post_id Event post ID.
+ * @return array|null
+ */
+function simple_events_get_event_schema($post_id) {
+    if ('yes' !== (string) simple_events_get_setting('enable_schema', 'yes')) {
+        return null;
+    }
+
+    $post_id = (int) $post_id;
+    $date_raw = get_post_meta($post_id, 'event_date', true);
+    if (empty($date_raw)) {
+        return null;
+    }
+
+    $tz         = wp_timezone();
+    $start_raw  = (string) get_post_meta($post_id, 'event_start_time', true);
+    $end_raw    = (string) get_post_meta($post_id, 'event_end_time', true);
+
+    $start_dt = $start_raw
+        ? DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $start_raw, $tz)
+        : DateTimeImmutable::createFromFormat('!Ymd', (string) $date_raw, $tz);
+
+    $schema = array(
+        '@context' => 'https://schema.org',
+        '@type'    => 'Event',
+        'name'     => get_the_title($post_id),
+        'url'      => get_permalink($post_id),
     );
 
-    if (function_exists('acf_get_setting')) {
-        $info['is_available'] = true;
-        $info['detection_method'] = 'acf_get_setting';
+    if ($start_dt) {
+        $schema['startDate'] = $start_dt->format('c');
+    }
 
-        try {
-            $version = acf_get_setting('version');
-            if ($version) {
-                $info['version'] = $version;
-
-                if (strpos($version, 'PRO') !== false) {
-                    $info['is_pro'] = true;
-                    $info['type'] = 'ACF Pro';
-                } else {
-                    $info['is_pro'] = false;
-                    $info['type'] = 'ACF Free';
-                }
-            } else {
-                $info['type'] = 'ACF (version unknown)';
-            }
-        } catch (Exception $e) {
-            $info['type'] = 'ACF (error getting version)';
+    if ($end_raw) {
+        $end_dt = DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $end_raw, $tz);
+        if ($end_dt) {
+            $schema['endDate'] = $end_dt->format('c');
         }
     }
-    elseif (defined('ACF_PRO') && ACF_PRO) {
-        $info['is_available'] = true;
-        $info['is_pro'] = true;
-        $info['type'] = 'ACF Pro';
-        $info['detection_method'] = 'ACF_PRO constant';
-        $info['version'] = defined('ACF_VERSION') ? ACF_VERSION : 'Unknown';
-    }
-    elseif (defined('ACF_VERSION')) {
-        $info['is_available'] = true;
-        $info['is_pro'] = false;
-        $info['type'] = 'ACF Free';
-        $info['detection_method'] = 'ACF_VERSION constant';
-        $info['version'] = ACF_VERSION;
-    }
-    elseif (function_exists('acf_add_local_field_group')) {
-        $info['is_available'] = true;
-        $info['type'] = 'ACF (type unknown)';
-        $info['detection_method'] = 'function check';
-        $info['version'] = 'Unknown';
+
+    $location = get_post_meta($post_id, 'event_location', true);
+    if ($location) {
+        $schema['location'] = array(
+            '@type' => 'Place',
+            'name'  => (string) $location,
+        );
     }
 
-    return $info;
-}
+    $excerpt = get_the_excerpt($post_id);
+    if ($excerpt) {
+        $schema['description'] = wp_strip_all_tags($excerpt);
+    }
 
-/**
- * Get detailed ACF status for error messages
- *
- * @return array Status information
- */
-function simple_events_get_acf_status() {
-    $acf_pro_path = WP_PLUGIN_DIR . '/advanced-custom-fields-pro/acf.php';
-    $acf_free_path = WP_PLUGIN_DIR . '/advanced-custom-fields/acf.php';
+    $thumb = get_the_post_thumbnail_url($post_id, 'large');
+    if ($thumb) {
+        $schema['image'] = $thumb;
+    }
 
-    $active_plugins = get_option('active_plugins', array());
-    $network_active_plugins = is_multisite() ? get_site_option('active_sitewide_plugins', array()) : array();
-
-    $acf_info = simple_events_get_acf_version_info();
-
-    return array(
-        'pro_installed' => file_exists($acf_pro_path),
-        'free_installed' => file_exists($acf_free_path),
-        'pro_active' => in_array('advanced-custom-fields-pro/acf.php', $active_plugins) ||
-                       isset($network_active_plugins['advanced-custom-fields-pro/acf.php']) ||
-                       (function_exists('is_plugin_active') && is_plugin_active('advanced-custom-fields-pro/acf.php')),
-        'free_active' => in_array('advanced-custom-fields/acf.php', $active_plugins) ||
-                        isset($network_active_plugins['advanced-custom-fields/acf.php']) ||
-                        (function_exists('is_plugin_active') && is_plugin_active('advanced-custom-fields/acf.php')),
-        'functions_available' => function_exists('acf_add_local_field_group') || function_exists('acf_get_field_groups'),
-        'acf_get_setting_available' => function_exists('acf_get_setting'),
-        'class_available' => class_exists('ACF') || class_exists('acf'),
-        'version_defined' => defined('ACF_VERSION'),
-        'pro_defined' => defined('ACF_PRO'),
-        'path_defined' => defined('ACF_PATH'),
-        'is_multisite' => is_multisite(),
-        'active_plugins_count' => count($active_plugins),
-        'network_active_count' => count($network_active_plugins),
-        'acf_version_info' => $acf_info
-    );
+    /**
+     * Filter the schema.org Event data before output.
+     *
+     * @param array $schema  Schema array.
+     * @param int   $post_id Event post ID.
+     */
+    return apply_filters('simple_events_event_schema', $schema, $post_id);
 }
 
 /**

@@ -51,15 +51,16 @@ Simple Events Calendar provides an elegant way to create and display events on y
 
 - **WordPress**: 6.0 or higher
 - **PHP**: 7.4 or higher
-- **Advanced Custom Fields**: Free or Pro version required
+- **No plugin dependencies** (Elementor is optional, for the bundled widgets/dynamic tags)
 
 ## Installation
 
 1. Download the plugin files
 2. Upload to `/wp-content/plugins/simple-events-calendar/`
-3. Install and activate **Advanced Custom Fields** (Free or Pro)
-4. Activate the **Simple Events Calendar** plugin
-5. Start creating events!
+3. Activate the **Simple Events Calendar** plugin
+4. Start creating events! (Event date/time/location are entered in the "Event Details" box; adjust formatting under Events → Settings.)
+
+> **Upgrading from 4.x (ACF-based)?** No action needed. v5.0.0 removed the Advanced Custom Fields dependency; existing event data is preserved with no migration, and ACF can be deactivated.
 
 ## Usage
 
@@ -129,7 +130,7 @@ Each event includes these custom fields:
 - **Quick Edit**: Fast editing of event details
 - **Category Management**: Organize events with categories
 - **Duplicate Prevention**: Admin columns prevent duplicate content display
-- **ACF Dependency Check**: Clear error messages with download links if ACF is missing
+- **Native Event Details**: Date/time/location and recurrence edited in a built-in meta box — no external field plugin
 
 ## Responsive Breakpoints
 
@@ -224,20 +225,26 @@ simple-events-calendar/
 │   │   ├── simple-events.css.map      # Source map (development)
 │   │   └── simple-events.scss         # Legacy SCSS (use src/ instead)
 │   └── js/
-│       ├── simple-events.js           # Main JavaScript
+│       ├── simple-events.js           # Main JavaScript (infinite scroll)
+│       ├── simple-events-admin.js     # Edit-screen conditional logic
 │       └── simple-events-shortcode.js # Shortcode-specific JS
 ├── includes/
-│   ├── acf-json.php                   # ACF integration
-│   ├── acf-settings-page.php          # Field definitions
 │   ├── class-admin-columns.php        # Admin interface
 │   ├── class-ajax.php                 # AJAX handlers
 │   ├── class-main.php                 # Main plugin class
-│   ├── class-post-type.php            # Post type registration
-│   ├── class-shortcode.php            # Shortcode functionality
-│   └── functions.php                  # Utility functions
+│   ├── class-meta-box.php             # Native Event Details meta box
+│   ├── class-post-type.php            # Post type registration + single-page schema
+│   ├── class-renderer.php             # Shared element renderer + [sec_event_*] shortcodes
+│   ├── class-settings.php             # Settings page (simple_events_settings)
+│   ├── class-shortcode.php            # [sec_events] shortcode
+│   ├── class-templates.php            # Default single/archive/taxonomy templates
+│   ├── class-recurrence.php           # Recurring-events engine
+│   ├── elementor/                     # Elementor widgets + dynamic tags (optional)
+│   └── functions.php                  # Utility + display/schema helpers
 ├── languages/                         # Translation files
 ├── src/                               # Source files for build system
 │   └── css/                           # SCSS source files
+├── templates/                         # Default front-end templates (theme-overridable)
 ├── template-parts/
 │   └── content-event-card.php         # Event card template
 ├── dist/                              # Distribution folder (generated)

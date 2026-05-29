@@ -24,12 +24,28 @@ jQuery(document).ready(function ($) {
     loading: false,
     noMoreEvents: false,
     retryCount: 0,
-    container: $('.simple-events-calendar')
+    container: $('.simple-events-calendar').first()
   };
 
   // Check if we have the required elements and AJAX parameters
   if (!state.container.length || typeof ajax_params === 'undefined') {
     return;
+  }
+
+  // Pull the originating listing's context from the container so "load more"
+  // continues the correct query (category / past-events / display options).
+  const containerData = {
+    offset: parseInt(state.container.attr('data-offset'), 10),
+    category: state.container.attr('data-category') || '',
+    showPast: state.container.attr('data-show-past') || 'false',
+    showTime: state.container.attr('data-show-time') || 'true',
+    showExcerpt: state.container.attr('data-show-excerpt') || 'true',
+    showLocation: state.container.attr('data-show-location') || 'true',
+    showFooter: state.container.attr('data-show-footer') || 'true'
+  };
+
+  if (!isNaN(containerData.offset)) {
+    state.offset = containerData.offset;
   }
 
   /**
@@ -97,7 +113,13 @@ jQuery(document).ready(function ($) {
       data: {
         action: 'load_more_events',
         nonce: ajax_params.nonce,
-        offset: state.offset
+        offset: state.offset,
+        category: containerData.category,
+        show_past: containerData.showPast,
+        show_time: containerData.showTime,
+        show_excerpt: containerData.showExcerpt,
+        show_location: containerData.showLocation,
+        show_footer: containerData.showFooter
       },
       timeout: 15000, // 15 second timeout
       success: function (response) {

@@ -65,30 +65,25 @@ if ($start_time) {
     }
 }
 
-// Generate structured data for better SEO
-$event_schema = array(
-    '@context' => 'https://schema.org',
-    '@type' => 'Event',
-    'name' => $title,
-    'url' => $permalink,
-    'startDate' => date('c', strtotime($post_data['date'] . ' ' . $post_data['start_time'])),
-);
+// Generate structured data for better SEO (shared builder; null when disabled).
+$event_schema = function_exists('simple_events_get_event_schema')
+    ? simple_events_get_event_schema(get_the_ID())
+    : null;
 
-if ($end_time) {
-    $event_schema['endDate'] = date('c', strtotime($post_data['date'] . ' ' . $post_data['end_time']));
-}
-
-if ($excerpt) {
-    $event_schema['description'] = $excerpt;
-}
+// ISO start used for the <time> element; fall back to parsing the display value.
+$start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
+    ? $event_schema['startDate']
+    : date('c', strtotime($post_data['date'] . ' ' . $post_data['start_time']));
 
 ?>
 
 <article class="<?php echo implode(' ', $css_classes); ?>" itemscope itemtype="https://schema.org/Event">
     <!-- Structured Data -->
-    <script type="application/ld+json">
-        <?php echo wp_json_encode($event_schema); ?>
-    </script>
+    <?php if (is_array($event_schema)) : ?>
+        <script type="application/ld+json">
+            <?php echo wp_json_encode($event_schema); ?>
+        </script>
+    <?php endif; ?>
 
     <?php if ($thumbnail) : ?>
         <div class="simple-events-calendar__post__thumbnail">
@@ -116,7 +111,7 @@ if ($excerpt) {
 
         <div class="simple-events-calendar__post__meta">
             <time class="simple-events-calendar__post__date"
-                datetime="<?php echo date('c', strtotime($post_data['date'] . ' ' . $post_data['start_time'])); ?>"
+                datetime="<?php echo esc_attr($start_iso); ?>"
                 itemprop="startDate">
                 <span class="simple-events-calendar__date-text" aria-label="<?php printf(__('Event date: %s', PLUGIN_TEXT_DOMAIN), $date); ?>">
                     <?php echo $date; ?>
@@ -138,7 +133,7 @@ if ($excerpt) {
 
         <!-- Event location if available -->
         <?php
-        $location = get_field('event_location');
+        $location = get_post_meta(get_the_ID(), 'event_location', true);
         if ($location && $show_location) :
         ?>
             <div class="simple-events-calendar__post__location" itemprop="location" itemscope itemtype="https://schema.org/Place">

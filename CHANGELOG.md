@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.0.0] (2026-05-29)
+
+### Removed
+
+* **Advanced Custom Fields dependency.** The plugin is now fully self-contained. The `Requires Plugins: advanced-custom-fields` header, ACF dependency checks/auto-deactivation, the ACF field group registration (`includes/acf-settings-page.php`), and the ACF local-JSON wiring (`includes/acf-json.php`) have all been removed.
+
+### Migration / compatibility
+
+* **No data migration required.** Event values were always stored as plain post meta (`event_date` as `Ymd`, `event_start_time`/`event_end_time` as `g:i a`, `event_location`, and the `event_repeat_*` rule keys). Existing events created with ACF continue to work unchanged, and ACF can be safely deactivated/removed.
+
+### Added
+
+* **Native "Event Details" meta box** (`includes/class-meta-box.php`) replacing the ACF editing UI. Reads/writes the identical meta keys and storage formats; recurrence inputs reproduce the previous conditional show/hide via `assets/js/simple-events-admin.js`. Saves at `save_post_simple-events` priority 10 so the recurrence engine (priority 30) still reads the persisted rule.
+* **Settings page** under Events → Settings (`includes/class-settings.php`, option `simple_events_settings`): front-end date format (with live preview), 12/24-hour time, display defaults, empty-state copy, cache lifetime + "Clear cache now", "load more" batch size, recurrence limits (wired to the existing filters), and a schema.org JSON-LD toggle.
+* **Shared element renderer** (`includes/class-renderer.php`) and **element shortcodes**: `[sec_event_title]`, `[sec_event_image]`, `[sec_event_date]`, `[sec_event_time]`, `[sec_event_location]`, `[sec_event_excerpt]`, `[sec_event_content]`, `[sec_event_categories]`, `[sec_event_button]`.
+* **Default front-end templates** (`includes/class-templates.php` + `templates/`): single, archive, and category. Theme-overridable, and they defer to block (FSE) themes and Elementor Pro Theme Builder; disable via the `simple_events_use_default_template` filter. Archive navigation reuses the existing "load more" infinite scroll, now context-aware (category / past-events).
+* **Elementor integration** (`includes/elementor/`): a "Simple Events" widget category with one widget per element, plus Dynamic Tags for binding native Elementor widgets to event fields. Loaded only when Elementor is active.
+* **SEO**: schema.org `Event` JSON-LD is now emitted on every single event page (`wp_head`), in addition to the event cards.
+* New display helpers in `includes/functions.php`: `simple_events_get_event_date()`, `simple_events_get_event_time()`, `simple_events_get_event_schema()`, `simple_events_get_setting()`, `simple_events_render_event_card()`.
+
+### Changed
+
+* All front-end/admin reads switched from ACF `get_field()` to native `get_post_meta()` / the new helpers. The front-end date format is now controlled by the settings page rather than ACF's return format.
+* `[sec_events]` defaults now derive from the settings page; explicit attributes still override per instance.
+* Uninstall now also deletes the `simple_events_settings` option.
+
 ## [v4.4.0] (2026-05-28)
 
 ### Added

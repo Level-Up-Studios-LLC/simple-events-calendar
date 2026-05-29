@@ -178,11 +178,13 @@ class Simple_Events_Admin_Columns {
      * @param int $post_id Post ID
      */
     private function render_date_column($post_id) {
-        $event_date = get_field('event_date', $post_id);
-        if ($event_date) {
-            $timestamp = strtotime($event_date);
-            $formatted_date = date_i18n(get_option('date_format'), $timestamp);
-            $iso_date = date('Y-m-d', $timestamp);
+        $raw = get_post_meta($post_id, 'event_date', true);
+        if ($raw) {
+            $dt = (8 === strlen((string) $raw))
+                ? DateTimeImmutable::createFromFormat('!Ymd', (string) $raw, wp_timezone())
+                : false;
+            $iso_date       = $dt ? $dt->format('Y-m-d') : date('Y-m-d', strtotime((string) $raw));
+            $formatted_date = simple_events_get_event_date($post_id);
 
             echo '<time datetime="' . esc_attr($iso_date) . '">' . esc_html($formatted_date) . '</time>';
 
@@ -219,8 +221,8 @@ class Simple_Events_Admin_Columns {
      * @param int $post_id Post ID
      */
     private function render_time_column($post_id) {
-        $start_time = get_field('event_start_time', $post_id);
-        $end_time = get_field('event_end_time', $post_id);
+        $start_time = simple_events_get_event_time($post_id, 'event_start_time');
+        $end_time = simple_events_get_event_time($post_id, 'event_end_time');
 
         if ($start_time) {
             echo '<div class="simple-events-time-display">';
@@ -242,7 +244,7 @@ class Simple_Events_Admin_Columns {
      * @param int $post_id Post ID
      */
     private function render_location_column($post_id) {
-        $location = get_field('event_location', $post_id);
+        $location = get_post_meta($post_id, 'event_location', true);
         if ($location) {
             echo '<div class="simple-events-location" title="' . esc_attr($location) . '">' . esc_html($location) . '</div>';
         } else {

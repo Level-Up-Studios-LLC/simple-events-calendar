@@ -46,16 +46,19 @@ class Simple_Events_Shortcode
      */
     public function render_shortcode($atts)
     {
+        // Defaults come from the settings page so site-wide preferences apply,
+        // while any explicit shortcode attribute still overrides per instance.
+        $settings = simple_events_get_settings();
         $atts = shortcode_atts(array(
-            'posts_per_page' => 6,
+            'posts_per_page' => (int) $settings['posts_per_page'],
             'category'       => '',
-            'show_past'      => 'no',
-            'order'          => 'ASC',
+            'show_past'      => $settings['show_past'],
+            'order'          => $settings['order'],
             'orderby'        => 'event_date',
-            'show_time'      => 'yes',
-            'show_excerpt'   => 'yes',
-            'show_location'  => 'yes',
-            'show_footer'    => 'yes'
+            'show_time'      => $settings['show_time'],
+            'show_excerpt'   => $settings['show_excerpt'],
+            'show_location'  => $settings['show_location'],
+            'show_footer'    => $settings['show_footer']
         ), $atts, 'sec_events');
 
         $sanitized_atts = $this->sanitize_attributes($atts);
@@ -74,7 +77,8 @@ class Simple_Events_Shortcode
         $output = $this->generate_output($sanitized_atts);
 
         if (!is_admin() && !empty($output) && strpos($output, 'simple-events-no-events') === false) {
-            set_transient($cache_key, $output, 15 * MINUTE_IN_SECONDS);
+            $ttl = max(1, (int) simple_events_get_setting('cache_ttl', 15));
+            set_transient($cache_key, $output, $ttl * MINUTE_IN_SECONDS);
         }
 
         return $output;
@@ -184,11 +188,14 @@ class Simple_Events_Shortcode
     private function render_events_container($query, $atts)
     {
         $data_attrs = sprintf(
-            'data-show-time="%s" data-show-excerpt="%s" data-show-location="%s" data-show-footer="%s"',
+            'data-show-time="%s" data-show-excerpt="%s" data-show-location="%s" data-show-footer="%s" data-show-past="%s" data-category="%s" data-offset="%d"',
             $atts['show_time'] ? 'true' : 'false',
             $atts['show_excerpt'] ? 'true' : 'false',
             $atts['show_location'] ? 'true' : 'false',
-            $atts['show_footer'] ? 'true' : 'false'
+            $atts['show_footer'] ? 'true' : 'false',
+            $atts['show_past'] ? 'true' : 'false',
+            esc_attr($atts['category']),
+            (int) $query->post_count
         );
 
         echo '<div class="simple-events-calendar" data-shortcode="true" ' . $data_attrs . '>';
@@ -213,10 +220,10 @@ class Simple_Events_Shortcode
             'permalink'    => get_permalink(),
             'thumbnail'    => get_the_post_thumbnail_url(get_the_ID(), 'medium_large'),
             'excerpt'      => wp_trim_words(get_the_excerpt(), 30, '...'),
-            'date'         => get_field('event_date'),
-            'start_time'   => get_field('event_start_time'),
-            'end_time'     => get_field('event_end_time'),
-            'location'     => get_field('event_location'),
+            'date'         => simple_events_get_event_date(get_the_ID()),
+            'start_time'   => simple_events_get_event_time(get_the_ID(), 'event_start_time'),
+            'end_time'     => simple_events_get_event_time(get_the_ID(), 'event_end_time'),
+            'location'     => get_post_meta(get_the_ID(), 'event_location', true),
             'show_time'    => $atts['show_time'] ? 'yes' : 'no',
             'show_excerpt' => $atts['show_excerpt'] ? 'yes' : 'no',
             'show_location' => $atts['show_location'] ? 'yes' : 'no',
@@ -253,16 +260,23 @@ class Simple_Events_Shortcode
      */
     private function render_no_events_message($atts)
     {
+        $settings = simple_events_get_settings();
+        $heading  = $settings['empty_state_heading'] !== '' ? $settings['empty_state_heading'] : __('No Events Found', 'simple_events');
+        $custom   = trim((string) $settings['empty_state_text']);
+
         echo '<div class="simple-events-calendar simple-events-no-events">';
         echo '<div class="simple-events-empty-state">';
-        echo '<h3>No Events Found</h3>';
+        echo '<h3>' . esc_html($heading) . '</h3>';
 
-        if (!empty($atts['category'])) {
-            echo '<p>No events found in the "' . esc_html($atts['category']) . '" category.</p>';
+        if ('' !== $custom) {
+            echo '<p>' . esc_html($custom) . '</p>';
+        } elseif (!empty($atts['category'])) {
+            /* translators: %s: category slug */
+            echo '<p>' . sprintf(esc_html__('No events found in the "%s" category.', 'simple_events'), esc_html($atts['category'])) . '</p>';
         } elseif (!$atts['show_past']) {
-            echo '<p>No upcoming events scheduled. Check back soon!</p>';
+            echo '<p>' . esc_html__('No upcoming events scheduled. Check back soon!', 'simple_events') . '</p>';
         } else {
-            echo '<p>No events have been created yet.</p>';
+            echo '<p>' . esc_html__('No events have been created yet.', 'simple_events') . '</p>';
         }
 
         if (current_user_can('edit_posts')) {

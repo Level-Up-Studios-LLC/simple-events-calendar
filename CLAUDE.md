@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Simple Events Calendar is a WordPress plugin (v4.4.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode and post-type archives. It **requires** Advanced Custom Fields (Free or Pro) — the plugin deactivates itself if ACF is missing.
+Simple Events Calendar is a WordPress plugin (v5.0.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode, per-element shortcodes, post-type archives, and default templates. It is **fully self-contained** — event fields are edited through a native meta box (`includes/class-meta-box.php`). **As of v5.0.0 there is no Advanced Custom Fields dependency.** (Versions ≤ 4.4.0 required ACF; v5.0.0 removed it without any data migration — event values were always plain post meta.)
 
 - PHP 7.4+, WordPress 6.0+
 - Text domain: `simple_events`
@@ -38,18 +38,31 @@ PHP code style is enforced via **phpcs.xml** (WordPress Coding Standards). Run w
 `simple-events-calendar.php` defines plugin constants (`PLUGIN_DIR`, `PLUGIN_URL`, `PLUGIN_ASSETS`, `PLUGIN_VERSION`, `PLUGIN_TEXT_DOMAIN`, `SIMPLE_EVENTS_PLUGIN_FILE`) and calls `Simple_Events_Calendar::get_instance()` (singleton). All real work happens inside `includes/class-main.php`.
 
 ### Initialization order matters
-`class-main.php` hooks both `plugins_loaded` (priority 20) **and** `acf/init` to `init()`. The plugin guards against double-loading and also checks ACF at `admin_init`. If ACF isn't present, the plugin **auto-deactivates** and shows an admin notice — so any new feature that depends on plugin state must tolerate `init()` being called more than once, and must not fire before `load_components()` has run.
+`class-main.php` hooks `plugins_loaded` (priority 20) to `init()`, guarded by an `$initialized` flag so it runs once. `init()` calls `load_components()`; any new feature that depends on plugin state must not fire before `load_components()` has run.
 
 `load_components()` is where the subsystem classes are `require_once`'d and instantiated, in this order:
 1. `includes/functions.php` (shared helpers; loaded first — other classes may depend on it)
-2. `class-post-type.php` → `Simple_Events_Post_Type` (registers `simple-events` CPT + `simple-events-cat` taxonomy)
-3. `class-shortcode.php` → `Simple_Events_Shortcode` (`[sec_events]` + transient caching)
-4. `class-ajax.php` → `Simple_Events_Ajax` (infinite scroll handler)
-5. `class-admin-columns.php` → `Simple_Events_Admin_Columns`
-6. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
-7. `includes/acf-json.php`, `includes/acf-settings-page.php` (ACF field group registration + save path)
+2. `class-post-type.php` → `Simple_Events_Post_Type` (registers `simple-events` CPT + `simple-events-cat` taxonomy; also emits single-page schema on `wp_head`)
+3. `class-renderer.php` → `Simple_Events_Renderer` (shared element renderer + `[sec_event_*]` element shortcodes)
+4. `class-shortcode.php` → `Simple_Events_Shortcode` (`[sec_events]` + transient caching)
+5. `class-ajax.php` → `Simple_Events_Ajax` (infinite scroll handler)
+6. `class-admin-columns.php` → `Simple_Events_Admin_Columns`
+7. `class-meta-box.php` → `Simple_Events_Meta_Box` (native Event Details editing UI)
+8. `class-settings.php` → `Simple_Events_Settings` (Events → Settings page + `simple_events_settings` option)
+9. `class-templates.php` → `Simple_Events_Templates` (default single/archive/taxonomy templates via `template_include`)
+10. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
+11. `includes/elementor/class-elementor.php` → `Simple_Events_Elementor::init()` (no-op unless Elementor is active)
 
-All component instances hang off the main singleton (`$plugin->post_type`, `->shortcode`, `->ajax`, `->admin_columns`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
+All component instances hang off the main singleton (`$plugin->post_type`, `->renderer`, `->shortcode`, `->ajax`, `->admin_columns`, `->meta_box`, `->settings`, `->templates`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
+
+### Settings and the display helpers
+All tunables live in one option array `simple_events_settings` (see `Simple_Events_Settings` + `simple_events_get_setting_defaults()`). Read settings via `simple_events_get_setting($key, $fallback)`. The front-end date/time format is a setting, so **never** read `event_date`/time meta raw for display — use `simple_events_get_event_date($id)` and `simple_events_get_event_time($id, $key)`, which convert the stored `Ymd` / `g:i a` values to the configured display format. Schema is built once by `simple_events_get_event_schema($id)` (returns null when the JSON-LD setting is off). Saving settings flushes the shortcode transients.
+
+### Native fields and storage formats (critical)
+The meta box reads/writes the exact keys/formats earlier versions used via ACF, so existing data is untouched: `event_date` = `Ymd`, `event_start_time`/`event_end_time` = `g:i a`, `event_location` = text, and the rule keys `event_repeats` (int 1/0), `event_repeat_interval` (int), `event_repeat_frequency` (`daily|weekly|monthly|yearly`), `event_repeat_end_type` (`never|count|until`), `event_repeat_count` (int), `event_repeat_until` (`Ymd`). The meta box hooks `save_post_simple-events` at priority 10 (which fires before any `save_post`), so the recurrence engine at `save_post`:30 still reads the persisted rule. **The meta box bails when `$GLOBALS['sec_generating_series']` is set**, so generated children are never overwritten with the parent's submitted values.
+
+### Element shortcodes, templates, Elementor
+`Simple_Events_Renderer` is the single source of truth for per-element HTML. The `[sec_event_*]` shortcodes, the Elementor widgets (`includes/elementor/widgets.php`), and the Dynamic Tags (`includes/elementor/dynamic-tags.php`) all call it — keep new element output there, not duplicated. Default templates (`templates/`) are a fallback only: `Simple_Events_Templates::template_include()` (priority 5) yields to theme files (`locate_template`), block/FSE themes (`wp_is_block_theme`), and — by running before Elementor's filter — Elementor Pro Theme Builder; the `simple_events_use_default_template` filter disables them.
 
 ### CPT and archive query
 The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. **Front-end rewrite slugs differ from internal names**: posts live under `/events/...` and taxonomy archives under `/event-category/...` (see `class-post-type.php`). REST bases are `simple-events` and `simple-events-categories`.
@@ -64,20 +77,24 @@ Any new archive-facing query must go through the same pattern (ACF `event_date` 
 ### Asset enqueue gating
 `enqueue_scripts()` only enqueues CSS/JS when the current request is a `simple-events` archive/single/taxonomy, a post containing the `[sec_events]` shortcode, or a text widget. Test that this gate still holds when adding new rendering paths — silently enqueueing everywhere is a regression.
 
-`wp_localize_script` exposes `ajax_params` (`ajaxurl`, `nonce`, `initial_offset = 6`, `load_increment = 6`) to the infinite-scroll JS. The nonce action string lives in the `SIMPLE_EVENTS_NONCE_ACTION` constant (defined in the main plugin file as `'load_more_events_nonce'`) — use it everywhere, never hardcode the string. Changing any of these keys requires updating `assets/js/simple-events.js` in lockstep.
+`wp_localize_script` exposes `ajax_params` (`ajaxurl`, `nonce`, `initial_offset`, `load_increment`) to the infinite-scroll JS. `initial_offset` and `load_increment` both come from the `load_increment` setting (default 6). The nonce action string lives in the `SIMPLE_EVENTS_NONCE_ACTION` constant (defined in the main plugin file as `'load_more_events_nonce'`) — use it everywhere, never hardcode the string. Changing any of these keys requires updating `assets/js/simple-events.js` in lockstep.
 
-The AJAX handler is registered under the `load_more_events` action (priv + nopriv), returns `wp_send_json_success({ html, has_more })` on success and `wp_send_json_error({ message }, status)` on failure. The JS consumes `response.data.html` / `response.data.has_more`. Don't regress this to bare-string responses. The handler **hardcodes `posts_per_page` to 6** and caps `offset` at 10000 (see `class-ajax.php`) — these are independent of the shortcode's `posts_per_page` attribute and the `load_increment` localized to JS, so changing the page size requires touching all three sites.
+The infinite-scroll JS reads the listing **context from the container's data attributes** (`data-offset`, `data-category`, `data-show-past`, `data-show-*`) and sends them with each request, so "load more" continues the correct query (e.g. stays within a category archive). The shortcode container and the archive/taxonomy templates both set these.
+
+The AJAX handler is registered under the `load_more_events` action (priv + nopriv), returns `wp_send_json_success({ html, has_more })` on success and `wp_send_json_error({ message }, status)` on failure. The JS consumes `response.data.html` / `response.data.has_more`. Don't regress this to bare-string responses. The handler's `posts_per_page` comes from the `load_increment` setting and `offset` is capped at 10000 (see `class-ajax.php`). `modify_archive_query()` also sets the archive main query's `posts_per_page` to `load_increment` so the first batch lines up with the load-more offsets.
 
 ### Shortcode and its caching
 `[sec_events]` accepts these attributes (all optional, defaults shown):
 `posts_per_page=6` (clamped 1–50), `category=""` (taxonomy slug), `show_past="no"`, `order="ASC"`, `orderby="event_date"`, `show_time="yes"`, `show_excerpt="yes"`, `show_location="yes"`, `show_footer="yes"`.
 
-`Simple_Events_Shortcode::render_shortcode()` caches rendered output in a transient for 15 minutes, keyed on `md5(serialize($sanitized_atts) . '|' . PLUGIN_VERSION . '|' . is_user_logged_in())`. The version segment auto-invalidates the cache on plugin upgrade; the login-state segment prevents admin-only variations from leaking to anonymous visitors. **Empty-state output (containing `simple-events-no-events`) is intentionally not cached**, so adding new "no results" markup must keep that class to avoid pinning empty results.
+Attribute **defaults derive from the settings page** (`posts_per_page`, `show_past`, `order`, `show_*`); an explicit shortcode attribute still overrides per instance.
+
+`Simple_Events_Shortcode::render_shortcode()` caches rendered output in a transient for the `cache_ttl` setting (default 15 minutes), keyed on `md5(serialize($sanitized_atts) . '|' . PLUGIN_VERSION . '|' . is_user_logged_in())`. The version segment auto-invalidates the cache on plugin upgrade; the login-state segment prevents admin-only variations from leaking to anonymous visitors. **Empty-state output (containing `simple-events-no-events`) is intentionally not cached**, so adding new "no results" markup must keep that class to avoid pinning empty results.
 
 Cache is invalidated via `save_post`, `delete_post`, and `transition_post_status` — but **only when the post being changed is a `simple-events` post**. If new logic causes the shortcode output to depend on other post types/terms/options, extend the invalidation hooks accordingly.
 
-### ACF dependency
-The plugin relies on ACF field group `group_event_details` (fields: `event_date` date, `event_start_time` time, `event_end_time` time, `event_location` text). Field definitions live in `includes/acf-settings-page.php` (PHP-registered via `register_event_details_fields()` on `acf/init`) and are synced to `includes/acf-json/` via ACF's local JSON mechanism (wired up in `includes/acf-json.php`). The `acf-json/` directory is not committed — it's created at activation by `create_acf_json_directory()` / `simple_events_create_acf_json_dir()`. When modifying fields, edit them in WP admin and let ACF sync to JSON — don't hand-edit the JSON.
+### Event fields (native, no ACF)
+Event fields are registered and persisted entirely by `Simple_Events_Meta_Box` — there is no ACF and no field-group JSON. The fields are plain post meta: `event_date`, `event_start_time`, `event_end_time`, `event_location`, and the `event_repeat_*` rule keys (see "Native fields and storage formats" above for exact formats). To add a field: render an input in `Simple_Events_Meta_Box::render()`, sanitize + persist it in `save()`, add a display path via `Simple_Events_Renderer` (and optionally a `[sec_event_*]` shortcode / Elementor widget), and update `simple_events_get_event_schema()` if it should affect SEO.
 
 ### Admin columns and filters
 `Simple_Events_Admin_Columns` adds Thumbnail / Event Date / Time / Location / Categories columns to the `simple-events` list table, plus two filter dropdowns: a category filter (uses the taxonomy query var `simple-events-cat`) and a status filter (custom query var `event_status` with values `upcoming`, `today`, `past`). When adding new admin filters, follow the same `parse_query` + meta_query pattern.
@@ -106,7 +123,7 @@ The class registers `before_delete_post`, `wp_trash_post`, and `untrashed_post` 
 Public extensibility filters (the plugin's first): `sec_recur_max_occurrences` (1000), `sec_recur_max_horizon_months` (60), `sec_recur_sync_batch_size` (50), `sec_recur_horizon_refill_threshold_months` (6), `sec_recur_horizon_extend_months` (18), `sec_recur_copyable_field_keys`. Keep these stable — they're part of the public contract.
 
 ### Templates and SEO markup
-Both the shortcode and AJAX paths render each event through `template-parts/content-event-card.php` (with `simple_events_render_fallback_card()` in `includes/functions.php` as a fallback). The card emits **schema.org Event JSON-LD** inline; if you add new event metadata that should affect search results, update the `$event_schema` block in the template.
+Both the shortcode and AJAX paths render each event through `template-parts/content-event-card.php` (with `simple_events_render_fallback_card()` in `includes/functions.php` as a fallback; the archive/taxonomy templates render cards via `simple_events_render_event_card()`). The card emits **schema.org Event JSON-LD** inline via `simple_events_get_event_schema()` (skipped when the JSON-LD setting is off), and single event pages emit the same schema on `wp_head` (`Simple_Events_Post_Type::output_single_schema()`). To change structured data, edit `simple_events_get_event_schema()` in `includes/functions.php` — it's the single source.
 
 ### Build pipeline
 - `src/css/simple-events.scss` is the source; `assets/css/simple-events.css` is generated output. **Never edit `assets/css/simple-events.css` directly** — it will be overwritten by the next build.
