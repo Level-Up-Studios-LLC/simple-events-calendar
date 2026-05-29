@@ -56,3 +56,6 @@ wp-config.php
 
 # Claude instructions (local development only)
 .claude-instructions
+
+# Superpowers brainstorming scratch files (local development only)
+.superpowers/
