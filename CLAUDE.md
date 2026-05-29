@@ -72,7 +72,7 @@ The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. *
 - a `meta_query` filter that hides events where `event_date < current_time('Ymd')`
 - If a `meta_query` already exists, it is **nested under an `AND` relation** rather than merged — preserve this pattern when adding more filters.
 
-Any new archive-facing query must go through the same pattern (ACF `event_date` meta, `Ymd` format) or it will not sort/filter consistently with the rest of the plugin.
+Any new archive-facing query must go through the same pattern (the `event_date` post meta, `Ymd` format) or it will not sort/filter consistently with the rest of the plugin.
 
 ### Asset enqueue gating
 `enqueue_scripts()` only enqueues CSS/JS when the current request is a `simple-events` archive/single/taxonomy, a post containing the `[sec_events]` shortcode, or a text widget. Test that this gate still holds when adding new rendering paths — silently enqueueing everywhere is a regression.
@@ -94,7 +94,22 @@ Attribute **defaults derive from the settings page** (`posts_per_page`, `show_pa
 Cache is invalidated via `save_post`, `delete_post`, and `transition_post_status` — but **only when the post being changed is a `simple-events` post**. If new logic causes the shortcode output to depend on other post types/terms/options, extend the invalidation hooks accordingly.
 
 ### Event fields (native, no ACF)
-Event fields are registered and persisted entirely by `Simple_Events_Meta_Box` — there is no ACF and no field-group JSON. The fields are plain post meta: `event_date`, `event_start_time`, `event_end_time`, `event_location`, and the `event_repeat_*` rule keys (see "Native fields and storage formats" above for exact formats). To add a field: render an input in `Simple_Events_Meta_Box::render()`, sanitize + persist it in `save()`, add a display path via `Simple_Events_Renderer` (and optionally a `[sec_event_*]` shortcode / Elementor widget), and update `simple_events_get_event_schema()` if it should affect SEO.
+Event fields are registered and persisted entirely by `Simple_Events_Meta_Box` — there is no ACF and no field-group JSON. The fields are plain post meta:
+
+| Meta key                 | Input    | Stored format               | Required                |
+| ------------------------ | -------- | --------------------------- | ----------------------- |
+| `event_date`             | date     | `Ymd`                       | Yes                     |
+| `event_start_time`       | time     | `g:i a`                     | Recommended             |
+| `event_end_time`         | time     | `g:i a`                     | No                      |
+| `event_location`         | text     | string (≤255)               | No                      |
+| `event_repeats`          | checkbox | int `1`/`0`                 | No                      |
+| `event_repeat_interval`  | number   | int                         | When repeating          |
+| `event_repeat_frequency` | select   | `daily/weekly/monthly/yearly` | When repeating        |
+| `event_repeat_end_type`  | select   | `never/count/until`         | When repeating          |
+| `event_repeat_count`     | number   | int                         | When `end_type=count`   |
+| `event_repeat_until`     | date     | `Ymd`                       | When `end_type=until`   |
+
+When "Ends on a date" is selected but the date is blank/invalid, `save()` falls back to `end_type = never` so `read_rule()` never rejects the rule (recurrence keeps generating on its rolling horizon). To add a field: render an input in `Simple_Events_Meta_Box::render()`, sanitize + persist it in `save()`, add a display path via `Simple_Events_Renderer` (and optionally a `[sec_event_*]` shortcode / Elementor widget), and update `simple_events_get_event_schema()` if it should affect SEO.
 
 ### Admin columns and filters
 `Simple_Events_Admin_Columns` adds Thumbnail / Event Date / Time / Location / Categories columns to the `simple-events` list table, plus two filter dropdowns: a category filter (uses the taxonomy query var `simple-events-cat`) and a status filter (custom query var `event_status` with values `upcoming`, `today`, `past`). When adding new admin filters, follow the same `parse_query` + meta_query pattern.
@@ -105,18 +120,53 @@ Event fields are registered and persisted entirely by `Simple_Events_Meta_Box` �
 ### Recurring events
 `Simple_Events_Recurrence` (in `includes/class-recurrence.php`) implements per-occurrence recurring events. Each occurrence is a **real** `simple-events` post with its own `event_date` linked back to a parent via `_sec_series_parent` post meta, so the shortcode, archive, AJAX, and admin filters work unchanged.
 
-Key invariants:
-- The **parent post is occurrence #0**. Children carry `_sec_series_parent`, `_sec_series_occurrence_index`, and `_sec_field_overrides` (array of meta keys the user diverged on; the generator never overwrites these).
-- The rule is stored on the parent as `_sec_recur_freq` / `_sec_recur_interval` / `_sec_recur_end_type` / `_sec_recur_count` / `_sec_recur_until` / `_sec_recur_horizon` / `_sec_recur_skipped_indexes`.
-- All date math uses `DateTimeImmutable` + `wp_timezone()`. Monthly recurrences anchor on the parent's day-of-month and clamp to the last day of the target month (Jan 31 → Feb 28 → Mar 31). Yearly Feb 29 anchors clamp to Feb 28 in non-leap years.
-- **`save_post` is hooked at priority 30** (not the post-type-specific variant) because `save_post_simple-events` fires before `save_post`, and ACF persists field meta at `save_post` priority 10 — running at 30 guarantees ACF has already populated the rule meta.
-- The recursion guard is `$GLOBALS['sec_generating_series']`. Every hook handler (`save_post`, `before_delete_post`, `wp_trash_post`, `untrashed_post`) bails when it's set; the generator and cascade routines set it via `lock_generation()` / `unlock_generation()`.
+**Per-parent meta keys** (all exposed as `Simple_Events_Recurrence::META_*` constants):
+
+| Constant            | Meta key                          | Stored on | Purpose                                                                                       |
+| ------------------- | --------------------------------- | --------- | --------------------------------------------------------------------------------------------- |
+| `META_PARENT`       | `_sec_series_parent`              | child     | Parent post ID                                                                                |
+| `META_INDEX`        | `_sec_series_occurrence_index`    | child     | Ordinal in the series (parent is 0)                                                           |
+| `META_OVERRIDES`    | `_sec_field_overrides`            | child     | Array of field keys the user has diverged on; the generator never overwrites these            |
+| `META_CASCADED_TRASH` | `_sec_recur_cascaded_trash`     | child     | Marker set by `cascade_children('trash')` so `handle_untrash` only restores its own cascaded children, not children the user pre-trashed |
+| `META_RULE_FREQ`    | `_sec_recur_freq`                 | parent    | Frequency snapshot (`daily`/`weekly`/`monthly`/`yearly`) — written by `regenerate_series` so cron / background workers don't depend on ACF |
+| `META_RULE_INTERVAL`| `_sec_recur_interval`             | parent    | Interval snapshot                                                                              |
+| `META_RULE_END_TYPE`| `_sec_recur_end_type`             | parent    | End-type snapshot (`never`/`count`/`until`)                                                    |
+| `META_RULE_COUNT`   | `_sec_recur_count`                | parent    | Count snapshot (only when end_type=count)                                                      |
+| `META_RULE_UNTIL`   | `_sec_recur_until`                | parent    | Until-date snapshot (`Ymd`, only when end_type=until)                                          |
+| `META_RULE_HORIZON` | `_sec_recur_horizon`              | parent    | Target horizon for "never" series — written write-monotonically (`end($computed)`), never `last_date` |
+| `META_RULE_SKIPPED` | `_sec_recur_skipped_indexes`      | parent    | Indexes the user force-deleted; regeneration never recreates them                              |
+| `META_CHILD_COUNT`  | `_sec_recur_child_count`          | parent    | Cached live (non-trash) child count used by the admin Series column. Refreshed by `recount_children()` after every mutation — **after** the state change (i.e., `trashed_post` / `deleted_post`, not their pre-action siblings) so the cache isn't stale by ±1 |
+| `META_FUTURE_SEGMENTS` | `_sec_recur_future_segments`   | parent    | Persisted "this and future" edits as `[{from_index, fields}]` segments — `create_child` overlays matching segments so children generated later by async batching / horizon extension / count increase inherit the edit |
+
+**Invariants:**
+- The **parent post is occurrence #0**. Children carry the child-side meta above.
+- All date math uses `DateTimeImmutable` + `wp_timezone()` (NOT `date('t', mktime(...))` — keep month-length lookups on the DateTimeImmutable too). Monthly recurrences anchor on the parent's day-of-month and clamp to the last day of the target month (Jan 31 → Feb 28 → Mar 31). Yearly Feb 29 anchors clamp to Feb 28 in non-leap years.
+- **`save_post` is hooked at priority 30** (not the post-type-specific variant) because `save_post_simple-events` fires before `save_post`, and the native meta box persists field meta on `save_post_simple-events` (priority 10) — running at 30 guarantees the meta box has already populated the rule meta.
+- The recursion guard is `$GLOBALS['sec_generating_series']`. Every hook handler (`post_updated`, `save_post`, `before_delete_post`, `deleted_post`, `wp_trash_post`, `trashed_post`, `untrashed_post`) bails when it's set; the generator and cascade routines set it via `lock_generation()` / `unlock_generation()`.
 - A per-parent **atomic option-row lock** (`sec_recur_lock_<parent_id>`, acquired via `add_option(..., '', 'no')` — the options-table INSERT IGNORE provides atomic cross-request semantics, unlike a transient where the get-then-set pair would race) prevents concurrent regenerations from double-creating occurrences. A stale-lock check clears and re-acquires once if the value is older than 60 s, recovering from any process that died holding the lock. **Don't switch this back to a transient** — the round-3 review caught the original implementation race.
 - Large series are generated up to `sec_recur_sync_batch_size` (default 50) synchronously, then continued via `wp_schedule_single_event('sec_recur_continue_generation', [parent_id, 0])`. The continuation re-enters `regenerate_series` — `diff_and_apply` is idempotent because already-created indexes are detected and skipped. **Don't add side effects to `diff_and_apply` that aren't safe to repeat.**
-- "Never" series have their horizon stored in `_sec_recur_horizon` and refilled by the `sec_recur_extend_horizon` daily cron, capped at start + `sec_recur_max_horizon_months` (60).
-- Field propagation for "this and future" / "entire series" edits goes through `write_field_to_post()`, which uses **direct `$wpdb->update` + `clean_post_cache`** for `post_title` / `post_content` / `post_excerpt` to avoid re-firing `save_post` (and ACF's field-save handler) on each propagation target — re-firing would write the original post's `$_POST['acf']` onto every sibling.
+- "Never" series have their horizon stored in `_sec_recur_horizon` and refilled by the `sec_recur_extend_horizon` daily cron, capped at start + `sec_recur_max_horizon_months` (60). The persisted value is the **target** horizon (`end($computed)`), not `last_date`, and only ever **grows** — partial passes never roll a cron-extended horizon backward.
+- Field propagation for "this and future" / "entire series" edits goes through `write_field_to_post()`, which uses **direct `$wpdb->update` + `clean_post_cache`** for `post_title` / `post_content` / `post_excerpt` to avoid re-firing `save_post` (and the meta box's save handler) on each propagation target — re-firing would write the original post's submitted values onto every sibling.
+- **The native meta box bails during generation**: `Simple_Events_Meta_Box::save()` returns early when `$GLOBALS['sec_generating_series']` is set, so the child `wp_insert_post` calls inside the parent's save chain don't get the parent's submitted values written onto them. `create_child` still **defensively deletes the six `event_repeat*` rule keys** on each child so a leaked value can't turn a child into a phantom series-parent. Don't remove that cleanup loop.
+- `get_existing_children` **includes `'trash'` in the status list** (the WP `'any'` shorthand excludes it). Trashed children show up so the diff pass can short-circuit on their index instead of duplicating a live child at the same slot. The deletion pass detaches them rather than force-deleting.
+- **Past-friendly toggle-off**: when `event_repeats` flips on → off, `handle_toggle_off` only force-deletes future unmodified live children. Past, trashed, or per-occurrence-edited children get detached and survive as standalone events. The admin notice documents this behavior; keep them aligned.
 
-The class registers `before_delete_post`, `wp_trash_post`, and `untrashed_post` to cascade parent operations to children: trashing or force-deleting a parent cascades to unmodified children and **detaches** modified children (clears their series meta so they become standalone events). Force-deleting an individual child records its index in `_sec_recur_skipped_indexes` so the next regeneration won't recreate it; trashing a child individually is a no-op so it can be restored back into the series.
+**Hook surface:**
+
+| Hook                            | Handler                             | Purpose                                                                                |
+| ------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `post_updated` (pri. 10, 3 args)| `snapshot_pre_save`                 | Captures OLD field values into `self::$pre_save_snapshots` so the priority-30 save-post handler can diff against them after the meta box rewrites meta on `save_post_simple-events`. |
+| `save_post` (pri. 30, 3 args)   | `handle_save_post`                  | Routes to `handle_child_save` (child) or `regenerate_series` / `handle_toggle_off` (parent). |
+| `add_meta_boxes_simple-events`  | `register_edit_scope_metabox`       | Adds the Series Edit Scope sidebar metabox on children only.                           |
+| `before_delete_post`            | `handle_before_delete`              | Parent → cascade-delete. Child → record skipped index + capture parent ID into `self::$pending_delete_parents` for the post-delete recount. |
+| `deleted_post`                  | `handle_deleted_post`               | Refreshes the cached child count using the captured parent ID — runs AFTER the row is gone (when `get_post_meta` on the child returns nothing). |
+| `wp_trash_post`                 | `handle_trash`                      | Parent → cascade-trash (marks each cascaded child with `META_CASCADED_TRASH`). Child trash is a documented no-op here. |
+| `trashed_post`                  | `handle_trashed_post`               | Refreshes the cached child count after the post status flips to `trash` — recount in the pre-action sibling would still count the trashed-to-be child as live. |
+| `untrashed_post`                | `handle_untrash`                    | Parent → restore only children carrying `META_CASCADED_TRASH` (clearing the marker on restore). |
+| `sec_recur_extend_horizon` (daily cron) | `cron_extend_horizon`       | Extends `META_RULE_HORIZON` on any "never" series within the refill threshold.         |
+| `sec_recur_continue_generation` (one-shot cron) | `continue_background_generation` | Re-enters `regenerate_series` for the next batch of large series.                  |
+| `init` (pri. 20)                | `maybe_reschedule_cron`             | Defensively re-registers the daily cron if it disappeared (e.g., DB migration).        |
+| `admin_notices`                 | `render_admin_notices`              | Surfaces transient-stored notices on the parent's edit screen.                         |
 
 `Simple_Events_Calendar::activation_check()` calls `Simple_Events_Recurrence::schedule_cron()`; `deactivation()` inlines `wp_unschedule_hook('sec_recur_extend_horizon')` + `wp_unschedule_hook('sec_recur_continue_generation')` so the deactivation path doesn't depend on `class-recurrence.php` being loaded. `wp_unschedule_hook` (not `wp_clear_scheduled_hook`) is required because the continuation events are scheduled with per-parent args — the no-arg form of `wp_clear_scheduled_hook` only matches no-arg events and would leave queued batches behind.
 

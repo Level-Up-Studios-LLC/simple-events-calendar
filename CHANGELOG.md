@@ -31,15 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `[sec_events]` defaults now derive from the settings page; explicit attributes still override per instance.
 * Uninstall now also deletes the `simple_events_settings` option.
 
-## [v4.4.0] (2026-05-28)
+## [v4.4.0] (2026-05-29)
 
 ### Added
 
-* **Recurring events**: events can now repeat every N days, weeks, months, or years from the event edit screen. Recurrence settings live in the existing **Event Details** ACF field group (`event_repeats`, `event_repeat_frequency`, `event_repeat_interval`, `event_repeat_end_type`, `event_repeat_count`, `event_repeat_until`) and use ACF conditional logic to show/hide.
+* **Recurring events**: events can now repeat every N days, weeks, months, or years from the event edit screen. Recurrence settings live in the existing **Event Details** ACF field group (`event_repeats`, `event_repeat_frequency`, `event_repeat_interval`, `event_repeat_end_type`, `event_repeat_count`, `event_repeat_until`) and use ACF conditional logic to show/hide. `event_repeat_until` is **required at the ACF level** when "On a specific date" is selected, so a blank end date can't silently leave a stale series behind.
 * End conditions: **after a number of occurrences**, **on a specific date**, or **never** (with a rolling horizon refilled daily via WP-Cron, capped at 60 months out per series).
 * New `Simple_Events_Recurrence` class manages generation, edit-scope propagation, cascade hooks, and the horizon cron. Wired into `Simple_Events_Calendar::load_components()` and exposed at `simple_events_calendar()->recurrence`.
 * Per-occurrence editing: when editing a child event, a sidebar **Series Edit Scope** metabox offers *only this occurrence*, *this and future occurrences*, or *entire series*. Edits are tracked per-field via `_sec_field_overrides` so a series-wide change of (e.g.) start time doesn't blow away a previously-customized title.
-* New admin **Series** column on the events list table indicates parents (`Weekly series (+N)`) and children (`Occurrence #N (parent)`).
+* **Future-scope edits are persisted as segments** on the parent (`_sec_recur_future_segments`), so children created later by async batching, horizon extension, or count increases inherit the edit instead of reverting to the parent's untouched values.
+* New admin **Series** column on the events list table indicates parents (`Weekly series (+N)`) and children (`Occurrence #N (parent)`). Backed by a cached `_sec_recur_child_count` meta refreshed by `recount_children()` after every mutation, so the list table doesn't run a per-row count query.
 * New helper functions in `includes/functions.php`: `simple_events_is_series_parent()`, `simple_events_is_series_child()`, `simple_events_get_series_parent_id()`.
 * New public filters (the plugin's first extensibility hooks): `sec_recur_max_occurrences` (1000), `sec_recur_max_horizon_months` (60), `sec_recur_sync_batch_size` (50), `sec_recur_horizon_refill_threshold_months` (6), `sec_recur_horizon_extend_months` (18), `sec_recur_copyable_field_keys`.
 
@@ -47,14 +48,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Each occurrence is a real `simple-events` post with its own `event_date`, so the shortcode, archive, AJAX load-more, and admin filters require no changes. The parent post is occurrence #0; children carry `_sec_series_parent`, `_sec_series_occurrence_index`, and `_sec_field_overrides`. The rule itself is stored as `_sec_recur_*` post meta on the parent.
 
+When `Simple_Events_Recurrence::regenerate_series()` updates an existing live child, it syncs **every** copyable parent field (`post_title` / `post_content` / `post_excerpt` / `_thumbnail_id` / `event_start_time` / `event_end_time` / `event_location`) that the child hasn't locally overridden — not just `event_date` — so editing the parent (e.g., changing the title) propagates to already-generated children. Generated children also explicitly strip any inherited recurrence ACF meta (`event_repeats`, frequency, etc.) so each occurrence is a leaf, not a phantom series-parent.
+
 ### Behavioral notes
 
 * **Disabling recurrence** on a saved series only force-deletes FUTURE unmodified live children. Past, edited (per-occurrence override), or trashed children get detached (series meta cleared) and survive as standalone events, so history isn't destroyed. An admin notice surfaces the counts on the next edit-screen load.
-* **Trashing a parent** cascade-trashes its unmodified children and detaches modified ones; **restoring a parent from trash** restores those cascade-trashed children.
+* **Trashing a parent** cascade-trashes its unmodified children (each marked with `_sec_recur_cascaded_trash`) and detaches modified ones; **restoring a parent from trash** restores only the children carrying that marker, so occurrences the user individually trashed before the parent operation stay in trash where they belong.
 * **Force-deleting a parent** cascade-deletes unmodified children (including any sitting in trash) and detaches modified ones. **Force-deleting a child** records its index in `_sec_recur_skipped_indexes` on the parent so the next regeneration won't recreate it.
-* **Large series** (more than `sec_recur_sync_batch_size`) are generated in the foreground up to the limit, then continued in 5-second-spaced batches via `wp_schedule_single_event('sec_recur_continue_generation')`. An admin notice on the parent edit screen reports progress.
+* **Trashed children survive regeneration**: if a parent regen runs while one of its children is in the trash, the diff pass leaves the trashed child alone (no event_date update, no duplicate replacement) so restoring the child later brings it back into the series at its original state.
+* **Large series** (more than `sec_recur_sync_batch_size`) are generated in the foreground up to the limit, then continued in 5-second-spaced batches via `wp_schedule_single_event('sec_recur_continue_generation')`. An admin notice on the parent edit screen reports progress. The `_sec_recur_horizon` for "never" series persists the **target** stop date (write-monotonic — never shrinks) so partial passes don't truncate the series to the first batch.
 * **DST and month-end math**: date arithmetic uses `DateTimeImmutable` + `wp_timezone()` so daily/weekly intervals don't drift across DST transitions. Monthly recurrences are anchored to the parent's day-of-month and clamp to the last day of the target month when the original day doesn't exist there (Jan 31 → Feb 28 → Mar 31). Feb 29 yearly recurrences clamp to Feb 28 in non-leap years.
 * **Concurrency**: a per-parent **atomic option-row lock** (`sec_recur_lock_<parent_id>` acquired via `add_option(..., '', 'no')` so the options-table INSERT IGNORE provides atomicity across concurrent requests) plus a `$GLOBALS['sec_generating_series']` recursion guard prevent concurrent regenerations from double-creating occurrences and prevent each cascaded child's save / delete from re-entering the parent's handler. A stale-lock check (older than 60 s) clears and re-acquires once to recover from processes that died mid-flight.
+* **Child-count cache is fresh**: refreshed via `trashed_post` / `deleted_post` (post-action) instead of `wp_trash_post` / `before_delete_post` (pre-action), so the Series admin column never shows a stale +1 after individual deletions or trashes.
 
 ### Changed
 
