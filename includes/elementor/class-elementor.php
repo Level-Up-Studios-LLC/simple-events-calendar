@@ -68,6 +68,7 @@ class Simple_Events_Elementor {
      */
     public static function register_widgets($widgets_manager) {
         require_once __DIR__ . '/widgets.php';
+        require_once __DIR__ . '/display-widgets.php';
 
         $widgets_manager->register(new Simple_Events_Widget_Title());
         $widgets_manager->register(new Simple_Events_Widget_Image());
@@ -78,6 +79,8 @@ class Simple_Events_Elementor {
         $widgets_manager->register(new Simple_Events_Widget_Content());
         $widgets_manager->register(new Simple_Events_Widget_Categories());
         $widgets_manager->register(new Simple_Events_Widget_Button());
+        $widgets_manager->register(new Simple_Events_Widget_Grid());
+        $widgets_manager->register(new Simple_Events_Widget_Single());
     }
 
     /**

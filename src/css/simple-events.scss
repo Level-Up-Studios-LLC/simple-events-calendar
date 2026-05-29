@@ -465,7 +465,16 @@ $sec-list-image-width: 240px;
   }
 }
 
-// Elementor Events Grid column override (scoped by Elementor's wrapper).
+// Elementor Events Grid column override (desktop honors the widget's column
+// count; tablet/mobile still stack like the default responsive grid).
 .simple-events-calendar.sec-grid-columns {
   grid-template-columns: repeat(var(--sec-columns, 3), 1fr);
+
+  @media screen and (width <= 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media screen and (width <= 480px) {
+    grid-template-columns: 1fr;
+  }
 }
