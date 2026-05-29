@@ -1,0 +1,125 @@
+/* Simple Events Calendar — Event Details meta box (admin only; hand-written, not built). */
+.sec-mb {
+    --sec-wp: #2271b1;
+    --sec-bd: #dcdcde;
+    --sec-mut: #646970;
+    --sec-soft: #f0f6fc;
+    border-left: 4px solid var(--sec-wp);
+    padding-left: 16px;
+}
+
+.sec-mb__section {
+    padding: 4px 0 8px;
+}
+
+.sec-mb__section + .sec-mb__section {
+    border-top: 1px solid var(--sec-bd);
+    margin-top: 14px;
+    padding-top: 16px;
+}
+
+.sec-mb__section-label {
+    margin: 0 0 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sec-mut);
+}
+
+.sec-mb__field {
+    margin-bottom: 14px;
+}
+
+.sec-mb__field:last-child {
+    margin-bottom: 0;
+}
+
+.sec-mb__grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.sec-mb__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.sec-mb__icon {
+    width: 16px;
+    height: 16px;
+    color: var(--sec-wp);
+    flex: 0 0 auto;
+}
+
+.sec-mb__req,
+.sec-mb__opt {
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.sec-mb__req { color: #b32d2e; }
+.sec-mb__opt { color: var(--sec-mut); }
+
+.sec-mb input[type="date"],
+.sec-mb input[type="time"],
+.sec-mb input[type="number"],
+.sec-mb select {
+    max-width: 100%;
+}
+
+.sec-mb__check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.sec-mb__pill {
+    display: inline-block;
+    background: #e7f0f8;
+    color: var(--sec-wp);
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.sec-mb__recur {
+    border: 1px solid #c5d9ed;
+    border-radius: 6px;
+    padding: 14px;
+    margin-top: 12px;
+    background: var(--sec-soft);
+}
+
+.sec-mb__summary {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: var(--sec-wp);
+    background: #fff;
+    border: 1px solid #c5d9ed;
+    border-radius: 4px;
+    padding: 6px 10px;
+}
+
+.sec-mb__summary:empty {
+    display: none;
+}
+
+.sec-mb__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sec-mb__child-note {
+    margin-top: 14px;
+}

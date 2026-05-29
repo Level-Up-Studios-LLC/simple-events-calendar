@@ -88,6 +88,28 @@ class Simple_Events_Meta_Box {
             PLUGIN_VERSION,
             true
         );
+
+        wp_enqueue_style(
+            'simple-events-admin',
+            PLUGIN_ASSETS . '/css/simple-events-admin.css',
+            array(),
+            PLUGIN_VERSION
+        );
+
+        wp_localize_script('simple-events-admin', 'secMetaBox', array(
+            'every'    => __('Repeats every', 'simple_events'),
+            'units'    => array(
+                'daily'   => __('day(s)', 'simple_events'),
+                'weekly'  => __('week(s)', 'simple_events'),
+                'monthly' => __('month(s)', 'simple_events'),
+                'yearly'  => __('year(s)', 'simple_events'),
+            ),
+            'countOne' => __('%d occurrence', 'simple_events'),
+            'countMany'=> __('%d occurrences', 'simple_events'),
+            'never'    => __('repeats indefinitely', 'simple_events'),
+            'until'    => __('until %s', 'simple_events'),
+            'sep'      => ' · ',
+        ));
     }
 
     /**
@@ -125,94 +147,101 @@ class Simple_Events_Meta_Box {
         $is_child = class_exists('Simple_Events_Recurrence')
             && (int) get_post_meta($post->ID, Simple_Events_Recurrence::META_PARENT, true) > 0;
         ?>
-        <div class="simple-events-meta-box">
-            <p>
-                <label for="sec_event_date"><strong><?php esc_html_e('Event Date', 'simple_events'); ?></strong> <span class="description">(<?php esc_html_e('required', 'simple_events'); ?>)</span></label><br />
-                <input type="date" id="sec_event_date" name="sec_event_date" value="<?php echo esc_attr($date_input); ?>" required />
-            </p>
+        <div class="simple-events-meta-box sec-mb">
+            <div class="sec-mb__section">
+                <p class="sec-mb__section-label"><?php esc_html_e('When & where', 'simple_events'); ?></p>
 
-            <p>
-                <label for="sec_event_start_time"><strong><?php esc_html_e('Start Time', 'simple_events'); ?></strong></label>
-                &nbsp;&nbsp;
-                <label for="sec_event_end_time"><strong><?php esc_html_e('End Time', 'simple_events'); ?></strong> <span class="description">(<?php esc_html_e('optional', 'simple_events'); ?>)</span></label>
-                <br />
-                <input type="time" id="sec_event_start_time" name="sec_event_start_time" value="<?php echo esc_attr($start_input); ?>" />
-                &nbsp;&nbsp;
-                <input type="time" id="sec_event_end_time" name="sec_event_end_time" value="<?php echo esc_attr($end_input); ?>" />
-            </p>
+                <div class="sec-mb__field">
+                    <label class="sec-mb__label" for="sec_event_date">
+                        <svg class="sec-mb__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                        <?php esc_html_e('Event Date', 'simple_events'); ?> <span class="sec-mb__req"><?php esc_html_e('required', 'simple_events'); ?></span>
+                    </label>
+                    <input type="date" id="sec_event_date" name="sec_event_date" value="<?php echo esc_attr($date_input); ?>" required />
+                </div>
 
-            <p>
-                <label for="sec_event_location"><strong><?php esc_html_e('Location', 'simple_events'); ?></strong> <span class="description">(<?php esc_html_e('optional', 'simple_events'); ?>)</span></label><br />
-                <input type="text" id="sec_event_location" name="sec_event_location" class="widefat" maxlength="255" value="<?php echo esc_attr($location); ?>" placeholder="<?php esc_attr_e('e.g., Conference Room A, 123 Main St, or Online', 'simple_events'); ?>" />
-            </p>
+                <div class="sec-mb__grid2">
+                    <div class="sec-mb__field">
+                        <label class="sec-mb__label" for="sec_event_start_time">
+                            <svg class="sec-mb__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            <?php esc_html_e('Start Time', 'simple_events'); ?>
+                        </label>
+                        <input type="time" id="sec_event_start_time" name="sec_event_start_time" value="<?php echo esc_attr($start_input); ?>" />
+                    </div>
+                    <div class="sec-mb__field">
+                        <label class="sec-mb__label" for="sec_event_end_time"><?php esc_html_e('End Time', 'simple_events'); ?> <span class="sec-mb__opt"><?php esc_html_e('optional', 'simple_events'); ?></span></label>
+                        <input type="time" id="sec_event_end_time" name="sec_event_end_time" value="<?php echo esc_attr($end_input); ?>" />
+                    </div>
+                </div>
 
-            <hr />
+                <div class="sec-mb__field">
+                    <label class="sec-mb__label" for="sec_event_location">
+                        <svg class="sec-mb__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                        <?php esc_html_e('Location', 'simple_events'); ?> <span class="sec-mb__opt"><?php esc_html_e('optional', 'simple_events'); ?></span>
+                    </label>
+                    <input type="text" id="sec_event_location" name="sec_event_location" class="widefat" maxlength="255" value="<?php echo esc_attr($location); ?>" placeholder="<?php esc_attr_e('e.g., Conference Room A, 123 Main St, or Online', 'simple_events'); ?>" />
+                </div>
+            </div>
 
             <?php if ($is_child) : ?>
-                <p class="description"><?php esc_html_e('This event is part of a recurring series. Recurrence settings are managed on the series parent.', 'simple_events'); ?></p>
+                <p class="sec-mb__child-note description"><?php esc_html_e('This event is part of a recurring series. Recurrence settings are managed on the series parent.', 'simple_events'); ?></p>
             <?php else : ?>
-                <p>
-                    <label>
+                <div class="sec-mb__section">
+                    <label class="sec-mb__check">
                         <input type="checkbox" id="sec_event_repeats" name="sec_event_repeats" value="1" <?php checked($repeats); ?> data-sec-toggle="recur" />
-                        <strong><?php esc_html_e('This is a recurring event', 'simple_events'); ?></strong>
+                        <span class="sec-mb__pill"><?php esc_html_e('Recurring', 'simple_events'); ?></span>
+                        <?php esc_html_e('This is a recurring event', 'simple_events'); ?>
                     </label>
-                </p>
 
-                <div class="sec-recur-fields" data-sec-recur-group>
-                    <p>
-                        <label for="sec_event_repeat_frequency"><?php esc_html_e('Repeats', 'simple_events'); ?></label><br />
-                        <?php esc_html_e('Every', 'simple_events'); ?>
-                        <input type="number" id="sec_event_repeat_interval" name="sec_event_repeat_interval" min="1" step="1" value="<?php echo esc_attr($interval); ?>" style="width:5em;" />
-                        <select id="sec_event_repeat_frequency" name="sec_event_repeat_frequency">
-                            <?php
-                            $freqs = array(
-                                'daily'   => __('day(s)', 'simple_events'),
-                                'weekly'  => __('week(s)', 'simple_events'),
-                                'monthly' => __('month(s)', 'simple_events'),
-                                'yearly'  => __('year(s)', 'simple_events'),
-                            );
-                            foreach ($freqs as $value => $label) {
-                                printf(
-                                    '<option value="%s" %s>%s</option>',
-                                    esc_attr($value),
-                                    selected($frequency, $value, false),
-                                    esc_html($label)
+                    <div class="sec-mb__recur" data-sec-recur-group>
+                        <p class="sec-mb__summary" data-sec-summary></p>
+
+                        <div class="sec-mb__field">
+                            <label class="sec-mb__label" for="sec_event_repeat_frequency"><?php esc_html_e('Repeats', 'simple_events'); ?></label>
+                            <div class="sec-mb__row">
+                                <?php esc_html_e('Every', 'simple_events'); ?>
+                                <input type="number" id="sec_event_repeat_interval" name="sec_event_repeat_interval" min="1" step="1" value="<?php echo esc_attr($interval); ?>" style="width:5em;" data-sec-summary-input />
+                                <select id="sec_event_repeat_frequency" name="sec_event_repeat_frequency" data-sec-summary-input>
+                                    <?php
+                                    $freqs = array(
+                                        'daily'   => __('day(s)', 'simple_events'),
+                                        'weekly'  => __('week(s)', 'simple_events'),
+                                        'monthly' => __('month(s)', 'simple_events'),
+                                        'yearly'  => __('year(s)', 'simple_events'),
+                                    );
+                                    foreach ($freqs as $value => $label) {
+                                        printf('<option value="%s" %s>%s</option>', esc_attr($value), selected($frequency, $value, false), esc_html($label));
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="sec-mb__field">
+                            <label class="sec-mb__label" for="sec_event_repeat_end_type"><?php esc_html_e('Ends', 'simple_events'); ?></label>
+                            <select id="sec_event_repeat_end_type" name="sec_event_repeat_end_type" data-sec-toggle="end-type" data-sec-summary-input>
+                                <?php
+                                $end_types = array(
+                                    'never' => __('Never', 'simple_events'),
+                                    'count' => __('After a number of occurrences', 'simple_events'),
+                                    'until' => __('On a date', 'simple_events'),
                                 );
-                            }
-                            ?>
-                        </select>
-                    </p>
+                                foreach ($end_types as $value => $label) {
+                                    printf('<option value="%s" %s>%s</option>', esc_attr($value), selected($end_type, $value, false), esc_html($label));
+                                }
+                                ?>
+                            </select>
+                        </div>
 
-                    <p>
-                        <label for="sec_event_repeat_end_type"><?php esc_html_e('Ends', 'simple_events'); ?></label><br />
-                        <select id="sec_event_repeat_end_type" name="sec_event_repeat_end_type" data-sec-toggle="end-type">
-                            <?php
-                            $end_types = array(
-                                'never' => __('Never', 'simple_events'),
-                                'count' => __('After a number of occurrences', 'simple_events'),
-                                'until' => __('On a date', 'simple_events'),
-                            );
-                            foreach ($end_types as $value => $label) {
-                                printf(
-                                    '<option value="%s" %s>%s</option>',
-                                    esc_attr($value),
-                                    selected($end_type, $value, false),
-                                    esc_html($label)
-                                );
-                            }
-                            ?>
-                        </select>
-                    </p>
+                        <div class="sec-mb__field" data-sec-end="count">
+                            <label class="sec-mb__label" for="sec_event_repeat_count"><?php esc_html_e('Number of occurrences', 'simple_events'); ?></label>
+                            <input type="number" id="sec_event_repeat_count" name="sec_event_repeat_count" min="1" step="1" value="<?php echo esc_attr($count); ?>" data-sec-summary-input />
+                        </div>
 
-                    <p data-sec-end="count">
-                        <label for="sec_event_repeat_count"><?php esc_html_e('Number of occurrences', 'simple_events'); ?></label><br />
-                        <input type="number" id="sec_event_repeat_count" name="sec_event_repeat_count" min="1" step="1" value="<?php echo esc_attr($count); ?>" />
-                    </p>
-
-                    <p data-sec-end="until">
-                        <label for="sec_event_repeat_until"><?php esc_html_e('Repeat until', 'simple_events'); ?></label><br />
-                        <input type="date" id="sec_event_repeat_until" name="sec_event_repeat_until" value="<?php echo esc_attr($until_input); ?>" />
-                    </p>
+                        <div class="sec-mb__field" data-sec-end="until">
+                            <label class="sec-mb__label" for="sec_event_repeat_until"><?php esc_html_e('Repeat until', 'simple_events'); ?></label>
+                            <input type="date" id="sec_event_repeat_until" name="sec_event_repeat_until" value="<?php echo esc_attr($until_input); ?>" data-sec-summary-input />
+                        </div>
+                    </div>
                 </div>
             <?php endif; ?>
         </div>
