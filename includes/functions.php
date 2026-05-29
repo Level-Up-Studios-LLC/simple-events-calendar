@@ -738,3 +738,167 @@ function simple_events_get_template_part($template_name, $args = array()) {
         simple_events_debug_log("Template not found: {$template_name}");
     }
 }
+
+/**
+ * Render a grid/list of events as an HTML string.
+ *
+ * Used by the Elementor Events Grid widget. Builds the same kind of query the
+ * [sec_events] shortcode uses (event_date / Ymd ordering, upcoming-only unless
+ * show_past) and renders the shared card template for each event.
+ *
+ * @param array $args {
+ *     @type int    $posts_per_page Number of events (1-50). Default 6.
+ *     @type string $category       Category slug filter. Default ''.
+ *     @type bool   $show_past      Include past events. Default false.
+ *     @type string $order          ASC|DESC. Default 'ASC'.
+ *     @type string $layout         'grid'|'list'. Default 'grid'.
+ *     @type bool   $show_time      Default true.
+ *     @type bool   $show_excerpt   Default true.
+ *     @type bool   $show_location  Default true.
+ *     @type bool   $show_footer    Default true.
+ * }
+ *
+ * Defaults are widget-oriented and do not derive from the plugin settings
+ * (unlike the [sec_events] shortcode). The `simple_events_grid_extra_class`
+ * filter lets callers add a CSS class to the grid container.
+ * @return string
+ */
+function simple_events_render_events_grid($args = array()) {
+    $defaults = array(
+        'posts_per_page' => 6,
+        'category'       => '',
+        'show_past'      => false,
+        'order'          => 'ASC',
+        'layout'         => 'grid',
+        'show_time'      => true,
+        'show_excerpt'   => true,
+        'show_location'  => true,
+        'show_footer'    => true,
+    );
+    $args = wp_parse_args($args, $defaults);
+
+    // Protect the caller's global $post: the loop below + wp_reset_postdata()
+    // restore from the main query, which may be null/stale outside a main loop.
+    global $post;
+    $original_post = $post;
+
+    $ppp   = max(1, min(50, (int) $args['posts_per_page']));
+    $order = in_array(strtoupper((string) $args['order']), array('ASC', 'DESC'), true) ? strtoupper((string) $args['order']) : 'ASC';
+
+    $query_args = array(
+        'post_type'              => 'simple-events',
+        'post_status'            => 'publish',
+        'posts_per_page'         => $ppp,
+        'orderby'                => 'meta_value',
+        'order'                  => $order,
+        'meta_key'               => 'event_date',
+        'meta_type'              => 'DATE',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => true,
+        'update_post_term_cache' => false,
+        'suppress_filters'       => false,
+    );
+
+    if (empty($args['show_past'])) {
+        $query_args['meta_query'] = array(
+            'relation' => 'AND',
+            array(
+                'key'     => 'event_date',
+                'compare' => '>=',
+                'value'   => current_time('Ymd'),
+                'type'    => 'DATE',
+            ),
+        );
+    }
+
+    if (!empty($args['category'])) {
+        $query_args['tax_query'] = array(
+            array(
+                'taxonomy' => 'simple-events-cat',
+                'field'    => 'slug',
+                'terms'    => sanitize_text_field((string) $args['category']),
+            ),
+        );
+    }
+
+    $query = new WP_Query($query_args);
+
+    if (!$query->have_posts()) {
+        $post = $original_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+        return '<div class="simple-events-calendar simple-events-no-events"><div class="simple-events-empty-state"><h3>'
+            . esc_html__('No Events Found', 'simple_events') . '</h3><p>'
+            . esc_html__('No upcoming events scheduled. Check back soon!', 'simple_events')
+            . '</p></div></div>';
+    }
+
+    $layout_class = ('list' === $args['layout']) ? ' sec-layout-list' : '';
+    $flags = array(
+        'show_time'     => !empty($args['show_time']),
+        'show_excerpt'  => !empty($args['show_excerpt']),
+        'show_location' => !empty($args['show_location']),
+        'show_footer'   => !empty($args['show_footer']),
+    );
+
+    $extra_class = apply_filters('simple_events_grid_extra_class', '');
+    ob_start();
+    echo '<div class="simple-events-calendar' . esc_attr($layout_class) . (('' !== $extra_class) ? ' ' . esc_attr($extra_class) : '') . '">';
+    while ($query->have_posts()) {
+        $query->the_post();
+        simple_events_render_event_card($flags);
+    }
+    echo '</div>';
+    $html = (string) ob_get_clean();
+
+    wp_reset_postdata();
+    $post = $original_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+    return $html;
+}
+
+/**
+ * Render a single event (by ID) as a card or list row, returned as HTML.
+ *
+ * Used by the [sec_event] shortcode and the Single Event Elementor widget so
+ * both produce identical markup. Returns '' when the post is missing or is not
+ * a published simple-events post.
+ *
+ * @param int    $post_id Event post ID.
+ * @param array  $flags   show_time, show_excerpt, show_location, show_footer (bools).
+ * @param string $layout  'card'|'list'. Default 'card'.
+ * @return string
+ */
+function simple_events_render_single_event($post_id, $flags = array(), $layout = 'card') {
+    $post_id = (int) $post_id;
+    $event   = $post_id ? get_post($post_id) : null;
+
+    if (!$event || 'simple-events' !== $event->post_type || 'publish' !== $event->post_status) {
+        return '';
+    }
+
+    $flags = wp_parse_args($flags, array(
+        'show_time'     => true,
+        'show_excerpt'  => true,
+        'show_location' => true,
+        'show_footer'   => true,
+    ));
+
+    $layout_class = ('list' === $layout) ? ' sec-layout-list' : '';
+
+    global $post;
+    $original = $post;
+    $post = $event; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+    setup_postdata($post);
+
+    ob_start();
+    echo '<div class="simple-events-calendar simple-events-single' . esc_attr($layout_class) . '">';
+    simple_events_render_event_card($flags);
+    echo '</div>';
+    $html = (string) ob_get_clean();
+
+    // wp_reset_postdata() resets $wp_query state; we also restore $post directly
+    // because the manual assignment above is not undone by reset alone outside a loop.
+    wp_reset_postdata();
+    $post = $original; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+    return $html;
+}
