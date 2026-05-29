@@ -301,8 +301,14 @@ class Simple_Events_Calendar {
 
         $today = current_time('Ymd');
 
+        // Honor the display-default settings so archives match the documented
+        // behavior (and the [sec_events] defaults).
+        $order = strtoupper((string) simple_events_get_setting('order', 'ASC'));
+        $order = in_array($order, array('ASC', 'DESC'), true) ? $order : 'ASC';
+        $show_past = ('yes' === (string) simple_events_get_setting('show_past', 'no'));
+
         $query->set('orderby', 'meta_value');
-        $query->set('order', 'ASC');
+        $query->set('order', $order);
         $query->set('meta_key', 'event_date');
         $query->set('meta_type', 'DATE');
         $query->set('suppress_filters', false);
@@ -311,27 +317,30 @@ class Simple_Events_Calendar {
         // scroll offsets line up with what the archive template rendered.
         $query->set('posts_per_page', max(1, (int) simple_events_get_setting('load_increment', 6)));
 
-        $date_clause = array(
-            'key'     => 'event_date',
-            'compare' => '>=',
-            'value'   => $today,
-            'type'    => 'DATE',
-        );
-
-        $existing_meta_query = $query->get('meta_query');
-
-        if (!empty($existing_meta_query) && is_array($existing_meta_query)) {
-            // Nest rather than merge, so existing relation/clauses are preserved intact.
-            $meta_query = array(
-                'relation' => 'AND',
-                $existing_meta_query,
-                $date_clause,
+        // Only hide past events when the setting says so.
+        if (!$show_past) {
+            $date_clause = array(
+                'key'     => 'event_date',
+                'compare' => '>=',
+                'value'   => $today,
+                'type'    => 'DATE',
             );
-        } else {
-            $meta_query = array($date_clause);
-        }
 
-        $query->set('meta_query', $meta_query);
+            $existing_meta_query = $query->get('meta_query');
+
+            if (!empty($existing_meta_query) && is_array($existing_meta_query)) {
+                // Nest rather than merge, so existing relation/clauses are preserved intact.
+                $meta_query = array(
+                    'relation' => 'AND',
+                    $existing_meta_query,
+                    $date_clause,
+                );
+            } else {
+                $meta_query = array($date_clause);
+            }
+
+            $query->set('meta_query', $meta_query);
+        }
     }
 
     /**

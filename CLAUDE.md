@@ -68,8 +68,9 @@ The meta box reads/writes the exact keys/formats earlier versions used via ACF, 
 The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. **Front-end rewrite slugs differ from internal names**: posts live under `/events/...` and taxonomy archives under `/event-category/...` (see `class-post-type.php`). REST bases are `simple-events` and `simple-events-categories`.
 
 `modify_archive_query()` in `class-main.php` hooks `pre_get_posts` on the front-end main query and forces:
-- `orderby = meta_value`, `meta_key = event_date`, `meta_type = DATE`, `order = ASC`
-- a `meta_query` filter that hides events where `event_date < current_time('Ymd')`
+- `orderby = meta_value`, `meta_key = event_date`, `meta_type = DATE`; `order` comes from the `order` setting (ASC/DESC)
+- `posts_per_page` is set to the `load_increment` setting so the first batch lines up with "load more" offsets
+- unless the `show_past` setting is `yes`, a `meta_query` filter hides events where `event_date < current_time('Ymd')`
 - If a `meta_query` already exists, it is **nested under an `AND` relation** rather than merged — preserve this pattern when adding more filters.
 
 Any new archive-facing query must go through the same pattern (the `event_date` post meta, `Ymd` format) or it will not sort/filter consistently with the rest of the plugin.

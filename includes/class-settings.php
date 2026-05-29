@@ -234,7 +234,7 @@ class Simple_Events_Settings {
                 </table>
 
                 <h2><?php echo esc_html__('Display defaults', 'simple_events'); ?></h2>
-                <p class="description"><?php echo esc_html__('These are defaults for the [sec_events] shortcode and archives. Shortcode attributes still override them per instance.', 'simple_events'); ?></p>
+                <p class="description"><?php echo esc_html__('Defaults for the [sec_events] shortcode and the event archives; shortcode attributes override them per instance. On archive pages the page size uses the "Load more" batch size below (so infinite-scroll offsets line up), not "Events per page".', 'simple_events'); ?></p>
                 <table class="form-table" role="presentation">
                     <tr>
                         <th scope="row"><?php echo esc_html__('Events per page', 'simple_events'); ?></th>

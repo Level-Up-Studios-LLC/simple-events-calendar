@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-29T17:30:30+00:00\n"
+"POT-Creation-Date: 2026-05-29T17:45:16+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 
@@ -155,7 +155,7 @@ msgid "Invalid request data."
 msgstr ""
 
 #: includes/class-ajax.php:286
-#: includes/class-main.php:386
+#: includes/class-main.php:395
 #: includes/class-shortcode.php:342
 msgid "Loading more events..."
 msgstr ""
@@ -166,21 +166,21 @@ msgid "Error loading events. Please try again."
 msgstr ""
 
 #: includes/class-ajax.php:288
-#: includes/class-main.php:388
+#: includes/class-main.php:397
 #: includes/class-shortcode.php:344
 msgid "No more events to load."
 msgstr ""
 
-#: includes/class-main.php:387
+#: includes/class-main.php:396
 msgid "Try Again"
 msgstr ""
 
-#: includes/class-main.php:401
+#: includes/class-main.php:410
 #: includes/class-post-type.php:68
 msgid "Events"
 msgstr ""
 
-#: includes/class-main.php:402
+#: includes/class-main.php:411
 #: includes/class-settings.php:55
 msgid "Settings"
 msgstr ""
@@ -554,7 +554,7 @@ msgid "Display defaults"
 msgstr ""
 
 #: includes/class-settings.php:237
-msgid "These are defaults for the [sec_events] shortcode and archives. Shortcode attributes still override them per instance."
+msgid "Defaults for the [sec_events] shortcode and the event archives; shortcode attributes override them per instance. On archive pages the page size uses the \"Load more\" batch size below (so infinite-scroll offsets line up), not \"Events per page\"."
 msgstr ""
 
 #: includes/class-settings.php:240

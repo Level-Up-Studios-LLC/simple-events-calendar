@@ -75,9 +75,14 @@ class Simple_Events_Templates {
             return $template;
         }
 
-        // Defer to a theme-provided template.
-        if (locate_template($theme_cand)) {
-            return $template;
+        // Defer to a theme-provided template. locate_template() returns the
+        // path to the first matching candidate; return that rather than the
+        // already-resolved $template, so a theme's archive-simple-events.php
+        // overrides the taxonomy view (which WP's hierarchy resolves to a
+        // generic archive.php/taxonomy.php, not our candidate).
+        $located = locate_template($theme_cand);
+        if ($located) {
+            return $located;
         }
 
         $plugin_template = PLUGIN_DIR . '/templates/' . $file;
