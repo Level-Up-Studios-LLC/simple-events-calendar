@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Base widget: shared category, preview picker, event resolution, render.
+ * Base widget: shared category, event resolution, render.
  */
 abstract class Simple_Events_Widget_Base extends \Elementor\Widget_Base {
 
@@ -54,17 +54,6 @@ abstract class Simple_Events_Widget_Base extends \Elementor\Widget_Base {
             array(
                 'label' => __('Event', 'simple_events'),
                 'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
-            )
-        );
-
-        $this->add_control(
-            'sec_preview_event',
-            array(
-                'label'       => __('Preview event', 'simple_events'),
-                'description' => __('Used in the editor only. On the front end the current event is used automatically.', 'simple_events'),
-                'type'        => \Elementor\Controls_Manager::SELECT2,
-                'options'     => Simple_Events_Elementor::event_options(),
-                'default'     => '',
             )
         );
 
@@ -136,14 +125,18 @@ abstract class Simple_Events_Widget_Base extends \Elementor\Widget_Base {
     }
 
     /**
-     * Render the widget.
+     * Render the widget. Gated to event contexts: outside one, render nothing
+     * on the front end and a hint in the Elementor editor.
      */
     protected function render() {
-        $settings   = $this->get_settings_for_display();
-        $preview_id = isset($settings['sec_preview_event']) ? (int) $settings['sec_preview_event'] : 0;
-        $post_id    = Simple_Events_Elementor::resolve_event_id($preview_id);
+        $post_id = Simple_Events_Elementor::resolve_event_id();
 
         if (!$post_id) {
+            if (Simple_Events_Elementor::is_edit_hint_allowed()) {
+                echo '<span class="sec-elementor-hint" style="display:block;padding:10px 12px;border:1px dashed #c3c4c7;border-radius:4px;color:#646970;font-size:12px;">'
+                    . esc_html__('Displays the current event. Use this element inside a single-event template, an event archive, or a Loop Grid.', 'simple_events')
+                    . '</span>';
+            }
             return;
         }
 

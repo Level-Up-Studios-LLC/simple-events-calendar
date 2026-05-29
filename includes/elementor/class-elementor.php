@@ -104,42 +104,30 @@ class Simple_Events_Elementor {
     }
 
     /**
-     * Resolve the event ID to render for in a widget/tag.
+     * Resolve the event ID to render for an element widget. Loop/queried event
+     * only — these widgets are gated to event contexts and have no picker.
      *
-     * On the front end this is the current event in the loop / the queried
-     * event. In the Elementor editor/preview the loop post is the template
-     * being edited (not an event), so the explicit preview-event selection is
-     * preferred. When the current context isn't an event at all, the preview
-     * selection is used as a fallback.
-     *
-     * @param int $preview_id Optional explicit preview ID.
      * @return int
      */
-    public static function resolve_event_id($preview_id = 0) {
-        $preview_id = (int) $preview_id;
-
-        // In the Elementor editor/preview, prefer the selected preview event.
-        if ($preview_id && self::is_elementor_edit_mode()) {
-            return $preview_id;
-        }
-
-        // Prefer a real event in the current context (single view / loop).
+    public static function resolve_event_id() {
         $id = (int) get_the_ID();
         if ($id && 'simple-events' === get_post_type($id)) {
             return $id;
         }
-
         $queried = (int) get_queried_object_id();
         if ($queried && 'simple-events' === get_post_type($queried)) {
             return $queried;
         }
+        return 0;
+    }
 
-        // Context isn't an event — fall back to the explicit selection.
-        if ($preview_id) {
-            return $preview_id;
-        }
-
-        return $id ? $id : $queried;
+    /**
+     * Public accessor: whether to show editor-only hints (edit/preview mode).
+     *
+     * @return bool
+     */
+    public static function is_edit_hint_allowed() {
+        return self::is_elementor_edit_mode();
     }
 
     /**
