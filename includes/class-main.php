@@ -241,6 +241,20 @@ class Simple_Events_Calendar {
      * Plugin uninstall
      */
     public static function uninstall() {
+        // Respect the admin's data-retention choice. Default is to retain, so a
+        // reinstall keeps existing events. Only an explicit opt-in deletes data.
+        // The option name is a bare string on purpose: uninstall runs in an
+        // isolated request where functions.php / the settings class are not
+        // loaded, so the SIMPLE_EVENTS_SETTINGS_OPTION constant is unavailable.
+        $settings = get_option('simple_events_settings');
+        $delete = is_array($settings) && isset($settings['delete_data_on_uninstall'])
+            ? ('yes' === $settings['delete_data_on_uninstall'])
+            : false;
+
+        if (!$delete) {
+            return;
+        }
+
         // Delete all simple-events posts
         $events = get_posts(array(
             'post_type' => 'simple-events',

@@ -109,7 +109,7 @@ class Simple_Events_Settings {
         $clean['order'] = (isset($input['order']) && 'DESC' === strtoupper((string) $input['order'])) ? 'DESC' : 'ASC';
 
         // Yes/no toggles.
-        foreach (array('show_past', 'show_time', 'show_excerpt', 'show_location', 'show_footer', 'enable_schema') as $flag) {
+        foreach (array('show_past', 'show_time', 'show_excerpt', 'show_location', 'show_footer', 'enable_schema', 'delete_data_on_uninstall') as $flag) {
             $clean[$flag] = (isset($input[$flag]) && 'yes' === (string) $input[$flag]) ? 'yes' : 'no';
         }
 
@@ -332,6 +332,18 @@ class Simple_Events_Settings {
                     <tr>
                         <th scope="row"><?php echo esc_html__('Cache lifetime (minutes)', 'simple_events'); ?></th>
                         <td><input type="number" min="1" max="1440" name="<?php echo esc_attr(self::OPTION); ?>[cache_ttl]" value="<?php echo esc_attr($settings['cache_ttl']); ?>" /></td>
+                    </tr>
+                </table>
+
+                <h2><?php echo esc_html__('Data', 'simple_events'); ?></h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row"><?php echo esc_html__('When the plugin is deleted', 'simple_events'); ?></th>
+                        <td>
+                            <label><input type="radio" name="<?php echo esc_attr(self::OPTION); ?>[delete_data_on_uninstall]" value="no" <?php checked($settings['delete_data_on_uninstall'], 'no'); ?> /> <?php echo esc_html__('Keep all events and settings (recommended)', 'simple_events'); ?></label><br />
+                            <label><input type="radio" name="<?php echo esc_attr(self::OPTION); ?>[delete_data_on_uninstall]" value="yes" <?php checked($settings['delete_data_on_uninstall'], 'yes'); ?> /> <?php echo esc_html__('Permanently delete all events, categories, and settings', 'simple_events'); ?></label>
+                            <p class="description"><?php echo esc_html__('Deletion only happens when you delete the plugin from the Plugins screen — never on deactivation. Leave this set to "Keep all events and settings" if you may reinstall later.', 'simple_events'); ?></p>
+                        </td>
                     </tr>
                 </table>
 
