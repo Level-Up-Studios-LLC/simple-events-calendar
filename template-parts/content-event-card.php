@@ -70,10 +70,12 @@ $event_schema = function_exists('simple_events_get_event_schema')
     ? simple_events_get_event_schema(get_the_ID())
     : null;
 
-// ISO start used for the <time> element; fall back to parsing the display value.
+// ISO start used for the <time> element. Computed from stored meta (not the
+// display-formatted date) so it is locale/format independent and valid even
+// when schema output is disabled.
 $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
     ? $event_schema['startDate']
-    : date('c', strtotime($post_data['date'] . ' ' . $post_data['start_time']));
+    : simple_events_get_event_datetime_iso(get_the_ID(), 'event_start_time');
 
 ?>
 
@@ -133,7 +135,9 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
 
         <!-- Event location if available -->
         <?php
-        $location = get_post_meta(get_the_ID(), 'event_location', true);
+        // Use the value already prepared by the caller to avoid an extra
+        // per-card meta query (post meta cache is disabled on these queries).
+        $location = isset($post_data['location']) ? $post_data['location'] : '';
         if ($location && $show_location) :
         ?>
             <div class="simple-events-calendar__post__location" itemprop="location" itemscope itemtype="https://schema.org/Place">

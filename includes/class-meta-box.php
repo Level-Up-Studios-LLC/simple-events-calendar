@@ -267,7 +267,8 @@ class Simple_Events_Meta_Box {
         }
 
         $location = isset($_POST['sec_event_location']) ? sanitize_text_field(wp_unslash($_POST['sec_event_location'])) : '';
-        $location = mb_substr($location, 0, 255);
+        // mbstring is not guaranteed on every host; fall back to substr().
+        $location = function_exists('mb_substr') ? mb_substr($location, 0, 255) : substr($location, 0, 255);
         if ('' !== $location) {
             update_post_meta($post_id, 'event_location', $location);
         } else {
@@ -305,13 +306,21 @@ class Simple_Events_Meta_Box {
         if (!in_array($end_type, array('never', 'count', 'until'), true)) {
             $end_type = 'never';
         }
-        update_post_meta($post_id, 'event_repeat_end_type', $end_type);
 
         $count = isset($_POST['sec_event_repeat_count']) ? absint($_POST['sec_event_repeat_count']) : 1;
         update_post_meta($post_id, 'event_repeat_count', max(1, $count));
 
         $until_input = isset($_POST['sec_event_repeat_until']) ? sanitize_text_field(wp_unslash($_POST['sec_event_repeat_until'])) : '';
         $until_ymd = self::input_to_ymd($until_input);
+
+        // "Ends on a date" with no/invalid date would persist a rule that
+        // read_rule() rejects (recurrence silently stops). Fall back to "never"
+        // so the series keeps generating on its rolling horizon.
+        if ('until' === $end_type && 8 !== strlen($until_ymd)) {
+            $end_type = 'never';
+        }
+
+        update_post_meta($post_id, 'event_repeat_end_type', $end_type);
         update_post_meta($post_id, 'event_repeat_until', $until_ymd);
     }
 

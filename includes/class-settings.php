@@ -277,7 +277,9 @@ class Simple_Events_Settings {
                 <table class="form-table" role="presentation">
                     <tr>
                         <th scope="row"><?php echo esc_html__('Heading', 'simple_events'); ?></th>
-                        <td><input type="text" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[empty_state_heading]" value="<?php echo esc_attr($settings['empty_state_heading']); ?>" /></td>
+                        <td><input type="text" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[empty_state_heading]" value="<?php echo esc_attr($settings['empty_state_heading']); ?>" placeholder="<?php esc_attr_e('No Events Found', 'simple_events'); ?>" />
+                            <p class="description"><?php echo esc_html__('Leave blank to use the default.', 'simple_events'); ?></p>
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row"><?php echo esc_html__('Message', 'simple_events'); ?></th>

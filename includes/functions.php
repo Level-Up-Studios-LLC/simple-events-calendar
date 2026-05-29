@@ -158,8 +158,9 @@ function simple_events_get_setting_defaults() {
         'show_location'  => 'yes',
         'show_footer'    => 'yes',
 
-        // Empty-state copy.
-        'empty_state_heading' => __('No Events Found', 'simple_events'),
+        // Empty-state copy. Stored blank so the translated default is resolved
+        // at render time (avoids persisting one locale's string into the option).
+        'empty_state_heading' => '',
         'empty_state_text'    => '',
 
         // Caching.
@@ -291,6 +292,35 @@ function simple_events_get_event_time($post_id, $key) {
 }
 
 /**
+ * Get an ISO-8601 datetime for an event built from the stored meta.
+ *
+ * Combines `event_date` (Ymd) with the given time meta (g:i a). Computed from
+ * the raw stored values — never from a display-formatted string — so it is
+ * locale/format independent. Falls back to the date at midnight when the time
+ * is absent.
+ *
+ * @param int    $post_id  Event post ID.
+ * @param string $time_key Time meta key (event_start_time | event_end_time).
+ * @return string ISO-8601 datetime, or '' when the date is unset/invalid.
+ */
+function simple_events_get_event_datetime_iso($post_id, $time_key = 'event_start_time') {
+    $post_id  = (int) $post_id;
+    $date_raw = get_post_meta($post_id, 'event_date', true);
+    if (empty($date_raw)) {
+        return '';
+    }
+
+    $tz       = wp_timezone();
+    $time_raw = (string) get_post_meta($post_id, $time_key, true);
+
+    $dt = ('' !== $time_raw)
+        ? DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $time_raw, $tz)
+        : DateTimeImmutable::createFromFormat('!Ymd', (string) $date_raw, $tz);
+
+    return $dt ? $dt->format('c') : '';
+}
+
+/**
  * Build the schema.org Event structured-data array for a single event.
  *
  * Shared by the event card and the single-event page output so the markup is
@@ -311,14 +341,6 @@ function simple_events_get_event_schema($post_id) {
         return null;
     }
 
-    $tz         = wp_timezone();
-    $start_raw  = (string) get_post_meta($post_id, 'event_start_time', true);
-    $end_raw    = (string) get_post_meta($post_id, 'event_end_time', true);
-
-    $start_dt = $start_raw
-        ? DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $start_raw, $tz)
-        : DateTimeImmutable::createFromFormat('!Ymd', (string) $date_raw, $tz);
-
     $schema = array(
         '@context' => 'https://schema.org',
         '@type'    => 'Event',
@@ -326,14 +348,15 @@ function simple_events_get_event_schema($post_id) {
         'url'      => get_permalink($post_id),
     );
 
-    if ($start_dt) {
-        $schema['startDate'] = $start_dt->format('c');
+    $start_iso = simple_events_get_event_datetime_iso($post_id, 'event_start_time');
+    if ('' !== $start_iso) {
+        $schema['startDate'] = $start_iso;
     }
 
-    if ($end_raw) {
-        $end_dt = DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $end_raw, $tz);
-        if ($end_dt) {
-            $schema['endDate'] = $end_dt->format('c');
+    if (get_post_meta($post_id, 'event_end_time', true)) {
+        $end_iso = simple_events_get_event_datetime_iso($post_id, 'event_end_time');
+        if ('' !== $end_iso) {
+            $schema['endDate'] = $end_iso;
         }
     }
 

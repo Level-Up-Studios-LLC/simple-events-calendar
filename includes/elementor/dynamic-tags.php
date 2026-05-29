@@ -62,13 +62,16 @@ abstract class Simple_Events_Tag_Base extends \Elementor\Core\DynamicTags\Tag {
 
     /**
      * Render the tag value.
+     *
+     * These tags declare the plain-text category, so strip any markup and
+     * escape — keeps output consistent with widgets that expect text.
      */
     public function render() {
         $id = $this->sec_event_id();
         if (!$id) {
             return;
         }
-        echo wp_kses_post($this->sec_value($id));
+        echo esc_html(wp_strip_all_tags((string) $this->sec_value($id)));
     }
 }
 
