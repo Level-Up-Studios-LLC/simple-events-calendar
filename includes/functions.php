@@ -158,11 +158,6 @@ function simple_events_get_setting_defaults() {
         'show_location'  => 'yes',
         'show_footer'    => 'yes',
 
-        // Empty-state copy. Stored blank so the translated default is resolved
-        // at render time (avoids persisting one locale's string into the option).
-        'empty_state_heading' => '',
-        'empty_state_text'    => '',
-
         // Caching.
         'cache_ttl' => 15, // minutes.
 
@@ -175,6 +170,9 @@ function simple_events_get_setting_defaults() {
 
         // SEO.
         'enable_schema' => 'yes',
+
+        // Data lifecycle: 'no' keeps events on uninstall (default), 'yes' deletes.
+        'delete_data_on_uninstall' => 'no',
     );
 }
 

@@ -261,17 +261,13 @@ class Simple_Events_Shortcode
      */
     private function render_no_events_message($atts)
     {
-        $settings = simple_events_get_settings();
-        $heading  = $settings['empty_state_heading'] !== '' ? $settings['empty_state_heading'] : __('No Events Found', 'simple_events');
-        $custom   = trim((string) $settings['empty_state_text']);
+        $heading = __('No Events Found', 'simple_events');
 
         echo '<div class="simple-events-calendar simple-events-no-events">';
         echo '<div class="simple-events-empty-state">';
         echo '<h3>' . esc_html($heading) . '</h3>';
 
-        if ('' !== $custom) {
-            echo '<p>' . esc_html($custom) . '</p>';
-        } elseif (!empty($atts['category'])) {
+        if (!empty($atts['category'])) {
             /* translators: %s: category slug */
             echo '<p>' . sprintf(esc_html__('No events found in the "%s" category.', 'simple_events'), esc_html($atts['category'])) . '</p>';
         } elseif (!$atts['show_past']) {
@@ -282,7 +278,7 @@ class Simple_Events_Shortcode
 
         if (current_user_can('edit_posts')) {
             $admin_url = admin_url('post-new.php?post_type=simple-events');
-            echo '<p><a href="' . esc_url($admin_url) . '" class="button">Add New Event</a></p>';
+            echo '<p><a href="' . esc_url($admin_url) . '" class="button">' . esc_html__('Add New Event', 'simple_events') . '</a></p>';
         }
 
         echo '</div>';

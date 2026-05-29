@@ -104,14 +104,6 @@ class Simple_Events_Settings {
             $clean[$flag] = (isset($input[$flag]) && 'yes' === (string) $input[$flag]) ? 'yes' : 'no';
         }
 
-        // Empty-state copy.
-        $clean['empty_state_heading'] = isset($input['empty_state_heading'])
-            ? sanitize_text_field($input['empty_state_heading'])
-            : $defaults['empty_state_heading'];
-        $clean['empty_state_text'] = isset($input['empty_state_text'])
-            ? sanitize_text_field($input['empty_state_text'])
-            : $defaults['empty_state_text'];
-
         // Cache TTL in minutes (1-1440).
         $ttl = isset($input['cache_ttl']) ? absint($input['cache_ttl']) : $defaults['cache_ttl'];
         $clean['cache_ttl'] = ($ttl >= 1 && $ttl <= 1440) ? $ttl : $defaults['cache_ttl'];
@@ -269,23 +261,6 @@ class Simple_Events_Settings {
                         <td>
                             <input type="number" min="1" max="50" name="<?php echo esc_attr(self::OPTION); ?>[load_increment]" value="<?php echo esc_attr($settings['load_increment']); ?>" />
                             <p class="description"><?php echo esc_html__('How many events to load per "load more" / infinite-scroll request.', 'simple_events'); ?></p>
-                        </td>
-                    </tr>
-                </table>
-
-                <h2><?php echo esc_html__('Empty state', 'simple_events'); ?></h2>
-                <table class="form-table" role="presentation">
-                    <tr>
-                        <th scope="row"><?php echo esc_html__('Heading', 'simple_events'); ?></th>
-                        <td><input type="text" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[empty_state_heading]" value="<?php echo esc_attr($settings['empty_state_heading']); ?>" placeholder="<?php esc_attr_e('No Events Found', 'simple_events'); ?>" />
-                            <p class="description"><?php echo esc_html__('Leave blank to use the default.', 'simple_events'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php echo esc_html__('Message', 'simple_events'); ?></th>
-                        <td>
-                            <input type="text" class="large-text" name="<?php echo esc_attr(self::OPTION); ?>[empty_state_text]" value="<?php echo esc_attr($settings['empty_state_text']); ?>" />
-                            <p class="description"><?php echo esc_html__('Leave blank to use the context-aware default message.', 'simple_events'); ?></p>
                         </td>
                     </tr>
                 </table>

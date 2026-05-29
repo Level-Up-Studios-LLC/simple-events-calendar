@@ -54,8 +54,8 @@ $sec_slug     = ($sec_term && isset($sec_term->slug)) ? $sec_term->slug : '';
     <?php else : ?>
         <div class="simple-events-calendar simple-events-no-events">
             <div class="simple-events-empty-state">
-                <h3><?php echo esc_html($sec_settings['empty_state_heading'] !== '' ? $sec_settings['empty_state_heading'] : __('No Events Found', 'simple_events')); ?></h3>
-                <p><?php echo esc_html($sec_settings['empty_state_text'] !== '' ? $sec_settings['empty_state_text'] : __('No upcoming events scheduled. Check back soon!', 'simple_events')); ?></p>
+                <h3><?php echo esc_html__('No Events Found', 'simple_events'); ?></h3>
+                <p><?php echo esc_html__('No upcoming events scheduled. Check back soon!', 'simple_events'); ?></p>
             </div>
         </div>
     <?php endif; ?>
