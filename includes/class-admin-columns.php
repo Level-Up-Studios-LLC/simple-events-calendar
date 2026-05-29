@@ -179,11 +179,25 @@ class Simple_Events_Admin_Columns {
      */
     private function render_date_column($post_id) {
         $raw = get_post_meta($post_id, 'event_date', true);
+
+        // Resolve a valid ISO date; treat unparseable values as missing so we
+        // never emit 1970-01-01 (which would mislabel the event as Past).
+        $iso_date = '';
         if ($raw) {
             $dt = (8 === strlen((string) $raw))
                 ? DateTimeImmutable::createFromFormat('!Ymd', (string) $raw, wp_timezone())
                 : false;
-            $iso_date       = $dt ? $dt->format('Y-m-d') : date('Y-m-d', strtotime((string) $raw));
+            if ($dt) {
+                $iso_date = $dt->format('Y-m-d');
+            } else {
+                $timestamp = strtotime((string) $raw);
+                if ($timestamp) {
+                    $iso_date = wp_date('Y-m-d', $timestamp);
+                }
+            }
+        }
+
+        if ('' !== $iso_date) {
             $formatted_date = simple_events_get_event_date($post_id);
 
             echo '<time datetime="' . esc_attr($iso_date) . '">' . esc_html($formatted_date) . '</time>';
