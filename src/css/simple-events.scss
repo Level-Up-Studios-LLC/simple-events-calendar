@@ -1,3 +1,9 @@
+// Shared card design tokens.
+$sec-card-radius: 5px;
+$sec-card-shadow: 0 1px 4px rgb(0 0 0 / 8%), 0 3px 10px rgb(0 0 0 / 5%);
+$sec-title-size: 22px;
+$sec-list-image-width: 240px;
+
 /* Simple Events Calendar Styles */
 
 /* Main Grid Layout - Responsive */
@@ -59,25 +65,34 @@
 .simple-events-calendar__post {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Ensures cards have equal height */
-}
-
-/* Thumbnail Styles - 4:3 Aspect Ratio */
-.simple-events-calendar__post__thumbnail {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 100%; // Equal-height cards.
+  background: #fff;
+  border: 0;
+  border-radius: $sec-card-radius;
+  box-shadow: $sec-card-shadow;
   overflow: hidden;
-  margin-bottom: 30px;
-}
 
-.simple-events-calendar__post__thumbnail img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  &__thumbnail {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2; // Grid images are 3:2.
+    overflow: hidden;
+    margin-bottom: 16px;
+
+    img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__title {
+    margin: 0;
+    font-size: $sec-title-size;
+    line-height: 1.25;
+  }
 }
 
 .simple-events-calendar__post__link {
@@ -100,10 +115,6 @@
 .simple-events-calendar__post__description .simple-events-calendar__post__header a {
   text-decoration: none;
   transition: color 0.3s ease;
-}
-
-.simple-events-calendar__post__title {
-  margin: 0;
 }
 
 /* Meta Information */
@@ -367,8 +378,7 @@
 /* High Contrast Mode */
 @media (prefers-contrast: high) {
   .simple-events-calendar__post {
-    border-color: #000;
-    border-width: 2px;
+    border: 2px solid #000;
   }
 
   .simple-events-calendar__post__header a {
@@ -411,5 +421,51 @@
 .simple-events-calendar__post__title a:focus,
 .simple-events-calendar__read-more:focus {
   outline: 2px solid #007cba;
-  outline-offset: 2px;
+  outline-offset: -2px;
+}
+
+// List layout (Elementor List mode + [sec_event layout="list"]).
+.simple-events-calendar.sec-layout-list {
+  display: block;
+
+  .simple-events-calendar__post {
+    flex-flow: row wrap;
+    align-items: stretch;
+    margin-bottom: 18px;
+  }
+
+  .simple-events-calendar__post__thumbnail {
+    flex: 0 0 $sec-list-image-width;
+    width: $sec-list-image-width;
+    margin-bottom: 0;
+  }
+
+  .simple-events-calendar__post__description {
+    flex: 1 1 300px;
+    max-width: calc(100% - #{$sec-list-image-width});
+  }
+
+  .simple-events-calendar__post__footer {
+    flex-basis: 100%;
+  }
+
+  @media screen and (width <= 600px) {
+    .simple-events-calendar__post {
+      flex-direction: column;
+    }
+
+    .simple-events-calendar__post__thumbnail {
+      flex-basis: auto;
+      width: 100%;
+    }
+
+    .simple-events-calendar__post__description {
+      max-width: 100%;
+    }
+  }
+}
+
+// Elementor Events Grid column override (scoped by Elementor's wrapper).
+.simple-events-calendar.sec-grid-columns {
+  grid-template-columns: repeat(var(--sec-columns, 3), 1fr);
 }
