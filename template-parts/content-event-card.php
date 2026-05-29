@@ -83,7 +83,7 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
     <!-- Structured Data -->
     <?php if (is_array($event_schema)) : ?>
         <script type="application/ld+json">
-            <?php echo wp_json_encode($event_schema); ?>
+            <?php echo wp_json_encode($event_schema, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>
         </script>
     <?php endif; ?>
 

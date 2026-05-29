@@ -317,7 +317,15 @@ function simple_events_get_event_datetime_iso($post_id, $time_key = 'event_start
         ? DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $time_raw, $tz)
         : DateTimeImmutable::createFromFormat('!Ymd', (string) $date_raw, $tz);
 
-    return $dt ? $dt->format('c') : '';
+    if ($dt) {
+        return $dt->format('c');
+    }
+
+    // Defensive fallback for any non-Ymd legacy value, matching
+    // simple_events_get_event_date() so a visible date never pairs with an
+    // empty ISO datetime.
+    $timestamp = strtotime(trim($date_raw . ' ' . $time_raw));
+    return $timestamp ? wp_date('c', $timestamp, $tz) : '';
 }
 
 /**
