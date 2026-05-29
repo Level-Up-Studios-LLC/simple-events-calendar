@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.4.0] (2026-05-28)
+
+### Added
+
+* **Recurring events**: events can now repeat every N days, weeks, months, or years from the event edit screen. Recurrence settings live in the existing **Event Details** ACF field group (`event_repeats`, `event_repeat_frequency`, `event_repeat_interval`, `event_repeat_end_type`, `event_repeat_count`, `event_repeat_until`) and use ACF conditional logic to show/hide.
+* End conditions: **after a number of occurrences**, **on a specific date**, or **never** (with a rolling horizon refilled daily via WP-Cron, capped at 60 months out per series).
+* New `Simple_Events_Recurrence` class manages generation, edit-scope propagation, cascade hooks, and the horizon cron. Wired into `Simple_Events_Calendar::load_components()` and exposed at `simple_events_calendar()->recurrence`.
+* Per-occurrence editing: when editing a child event, a sidebar **Series Edit Scope** metabox offers *only this occurrence*, *this and future occurrences*, or *entire series*. Edits are tracked per-field via `_sec_field_overrides` so a series-wide change of (e.g.) start time doesn't blow away a previously-customized title.
+* New admin **Series** column on the events list table indicates parents (`Weekly series (+N)`) and children (`Occurrence #N (parent)`).
+* New helper functions in `includes/functions.php`: `simple_events_is_series_parent()`, `simple_events_is_series_child()`, `simple_events_get_series_parent_id()`.
+* New public filters (the plugin's first extensibility hooks): `sec_recur_max_occurrences` (1000), `sec_recur_max_horizon_months` (60), `sec_recur_sync_batch_size` (50), `sec_recur_horizon_refill_threshold_months` (6), `sec_recur_horizon_extend_months` (18), `sec_recur_copyable_field_keys`.
+
+### Storage model
+
+Each occurrence is a real `simple-events` post with its own `event_date`, so the shortcode, archive, AJAX load-more, and admin filters require no changes. The parent post is occurrence #0; children carry `_sec_series_parent`, `_sec_series_occurrence_index`, and `_sec_field_overrides`. The rule itself is stored as `_sec_recur_*` post meta on the parent.
+
+### Behavioral notes
+
+* **Disabling recurrence** on a saved series only force-deletes FUTURE unmodified live children. Past, edited (per-occurrence override), or trashed children get detached (series meta cleared) and survive as standalone events, so history isn't destroyed. An admin notice surfaces the counts on the next edit-screen load.
+* **Trashing a parent** cascade-trashes its unmodified children and detaches modified ones; **restoring a parent from trash** restores those cascade-trashed children.
+* **Force-deleting a parent** cascade-deletes unmodified children (including any sitting in trash) and detaches modified ones. **Force-deleting a child** records its index in `_sec_recur_skipped_indexes` on the parent so the next regeneration won't recreate it.
+* **Large series** (more than `sec_recur_sync_batch_size`) are generated in the foreground up to the limit, then continued in 5-second-spaced batches via `wp_schedule_single_event('sec_recur_continue_generation')`. An admin notice on the parent edit screen reports progress.
+* **DST and month-end math**: date arithmetic uses `DateTimeImmutable` + `wp_timezone()` so daily/weekly intervals don't drift across DST transitions. Monthly recurrences are anchored to the parent's day-of-month and clamp to the last day of the target month when the original day doesn't exist there (Jan 31 → Feb 28 → Mar 31). Feb 29 yearly recurrences clamp to Feb 28 in non-leap years.
+* **Concurrency**: a per-parent **atomic option-row lock** (`sec_recur_lock_<parent_id>` acquired via `add_option(..., '', 'no')` so the options-table INSERT IGNORE provides atomicity across concurrent requests) plus a `$GLOBALS['sec_generating_series']` recursion guard prevent concurrent regenerations from double-creating occurrences and prevent each cascaded child's save / delete from re-entering the parent's handler. A stale-lock check (older than 60 s) clears and re-acquires once to recover from processes that died mid-flight.
+
+### Changed
+
+* Bumped minimum tested WordPress version metadata to track the new release.
+
 ## [v4.3.1] (2026-04-22)
 
 ### Security
@@ -223,6 +252,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CSS file
 - Updated the "No more events" message from the `simple-events-shortcode.php` file.
 
+[v4.4.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.3.1...v4.4.0
 [v4.3.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.3.0...v4.3.1
 [v4.3.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.2.4...v4.3.0
 [v4.2.4]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.1.1...v4.2.4

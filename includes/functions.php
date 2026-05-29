@@ -482,6 +482,49 @@ function simple_events_is_event_page() {
 }
 
 /**
+ * Whether the given post is the parent of a recurring series.
+ *
+ * Detected via the persisted rule snapshot meta, so the function works in
+ * cron / background contexts that don't have ACF loaded.
+ *
+ * @param int $post_id Post ID.
+ * @return bool
+ */
+function simple_events_is_series_parent($post_id) {
+    if (!class_exists('Simple_Events_Recurrence')) {
+        return false;
+    }
+    return (bool) get_post_meta((int) $post_id, Simple_Events_Recurrence::META_RULE_FREQ, true);
+}
+
+/**
+ * Whether the given post is a generated child occurrence of a series.
+ *
+ * @param int $post_id Post ID.
+ * @return bool
+ */
+function simple_events_is_series_child($post_id) {
+    if (!class_exists('Simple_Events_Recurrence')) {
+        return false;
+    }
+    return (bool) get_post_meta((int) $post_id, Simple_Events_Recurrence::META_PARENT, true);
+}
+
+/**
+ * Returns the parent post ID for a child occurrence, or 0 if the post is
+ * not part of a series.
+ *
+ * @param int $post_id Post ID.
+ * @return int
+ */
+function simple_events_get_series_parent_id($post_id) {
+    if (!class_exists('Simple_Events_Recurrence')) {
+        return 0;
+    }
+    return (int) get_post_meta((int) $post_id, Simple_Events_Recurrence::META_PARENT, true);
+}
+
+/**
  * Get template part with fallback
  *
  * @param string $template_name Template name

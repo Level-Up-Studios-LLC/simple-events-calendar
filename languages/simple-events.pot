@@ -1,315 +1,493 @@
-# Simple Events Calendar
-# Copyright (C) 2024 Level Up Studios, LLC
+# Copyright (C) 2026 Level Up Studios, LLC
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Simple Events Calendar 4.3.0\n"
-"Report-Msgid-Bugs-To: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/issues\n"
-"POT-Creation-Date: 2024-09-22 00:00:00+00:00\n"
+"Project-Id-Version: Simple Events Calendar 4.4.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/simple-events\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: WP-CLI 2.8.1\n"
-"X-Domain: simple_events\n"
+"POT-Creation-Date: 2026-05-28T19:10:17+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
 
-#: includes/class-admin-columns.php:33
+#. Plugin Name of the plugin
+#: simple-events-calendar.php
+msgid "Simple Events Calendar"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: simple-events-calendar.php
+msgid "https://github.com/Level-Up-Studios-LLC/simple-events-calendar"
+msgstr ""
+
+#. Description of the plugin
+#: simple-events-calendar.php
+msgid "A simple events calendar plugin for WordPress. Requires Advanced Custom Fields (Free or Pro)."
+msgstr ""
+
+#. Author of the plugin
+#: simple-events-calendar.php
+msgid "Level Up Studios, LLC"
+msgstr ""
+
+#. Author URI of the plugin
+#: simple-events-calendar.php
+msgid "https://www.levelupstudios.com/"
+msgstr ""
+
+#: includes/acf-settings-page.php:356
+msgid "This event repeats"
+msgstr ""
+
+#: includes/acf-settings-page.php:357
+msgid "Disabling recurrence on a saved series deletes future unmodified occurrences. Children with per-occurrence edits become standalone events."
+msgstr ""
+
+#: includes/acf-settings-page.php:363
+msgid "Repeat Every"
+msgstr ""
+
+#: includes/acf-settings-page.php:379
+msgid "Day(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php:380
+msgid "Week(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php:381
+msgid "Month(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php:382
+msgid "Year(s)"
+msgstr ""
+
+#: includes/acf-settings-page.php:384
+msgid "Frequency"
+msgstr ""
+
+#: includes/acf-settings-page.php:398
+msgid "Never"
+msgstr ""
+
+#: includes/acf-settings-page.php:399
+msgid "After a number of occurrences"
+msgstr ""
+
+#: includes/acf-settings-page.php:400
+msgid "On a specific date"
+msgstr ""
+
+#: includes/acf-settings-page.php:402
+msgid "Ends"
+msgstr ""
+
+#: includes/acf-settings-page.php:415
+msgid "Number of Occurrences"
+msgstr ""
+
+#: includes/acf-settings-page.php:416
+msgid "Total occurrences including the first event."
+msgstr ""
+
+#: includes/acf-settings-page.php:430
+msgid "End Date"
+msgstr ""
+
+#: includes/acf-settings-page.php:431
+msgid "Final date on which a recurrence may fall."
+msgstr ""
+
+#: includes/class-admin-columns.php:50
+msgid "Event Title"
+msgstr ""
+
+#: includes/class-admin-columns.php:51
+#: includes/class-admin-columns.php:588
 msgid "Image"
 msgstr ""
 
-#: includes/class-admin-columns.php:34
+#: includes/class-admin-columns.php:52
+#: includes/class-admin-columns.php:570
+#: includes/class-admin-columns.php:593
 msgid "Event Date"
 msgstr ""
 
-#: includes/class-admin-columns.php:35
+#: includes/class-admin-columns.php:53
+#: includes/class-admin-columns.php:598
 msgid "Time"
 msgstr ""
 
-#: includes/class-admin-columns.php:36
+#: includes/class-admin-columns.php:54
+#: includes/class-admin-columns.php:603
 msgid "Location"
 msgstr ""
 
-#: includes/class-admin-columns.php:37
+#: includes/class-admin-columns.php:55
 msgid "Categories"
 msgstr ""
 
-#: includes/class-admin-columns.php:88
-msgid "Past"
+#: includes/class-admin-columns.php:56
+msgid "Series"
 msgstr ""
 
-#: includes/class-admin-columns.php:90
-msgid "Today"
+#: includes/class-admin-columns.php:57
+msgid "Published"
 msgstr ""
 
-#: includes/class-admin-columns.php:92
-msgid "Upcoming"
+#. translators: %d is the occurrence number within the series
+#: includes/class-admin-columns.php:122
+#, php-format
+msgid "Occurrence #%d"
 msgstr ""
 
-#: includes/class-admin-columns.php:195
-msgid "All Categories"
+#: includes/class-admin-columns.php:126
+msgid "parent"
 msgstr ""
 
-#: includes/class-admin-columns.php:205
-msgid "All Events"
+#: includes/class-admin-columns.php:144
+msgid "Daily"
 msgstr ""
 
-#: includes/class-admin-columns.php:206
-msgid "Upcoming Events"
+#: includes/class-admin-columns.php:145
+msgid "Weekly"
 msgstr ""
 
-#: includes/class-admin-columns.php:207
-msgid "Today's Events"
+#: includes/class-admin-columns.php:146
+msgid "Monthly"
+msgstr ""
+
+#: includes/class-admin-columns.php:147
+msgid "Yearly"
+msgstr ""
+
+#. translators: 1: frequency label (Daily/Weekly/etc), 2: number of child occurrences
+#: includes/class-admin-columns.php:154
+#, php-format
+msgid "%1$s series (+%2$d)"
 msgstr ""
 
 #: includes/class-admin-columns.php:208
+msgid "Past"
+msgstr ""
+
+#: includes/class-admin-columns.php:210
+msgid "Today"
+msgstr ""
+
+#: includes/class-admin-columns.php:212
+msgid "Upcoming"
+msgstr ""
+
+#: includes/class-admin-columns.php:347
+msgid "All Categories"
+msgstr ""
+
+#: includes/class-admin-columns.php:372
+#: includes/class-post-type.php:49
+msgid "All Events"
+msgstr ""
+
+#: includes/class-admin-columns.php:373
+msgid "Upcoming Events"
+msgstr ""
+
+#: includes/class-admin-columns.php:374
+msgid "Today's Events"
+msgstr ""
+
+#: includes/class-admin-columns.php:375
 msgid "Past Events"
 msgstr ""
 
-#: includes/class-post-type.php:23
+#: includes/class-ajax.php:43
+msgid "Security check failed."
+msgstr ""
+
+#: includes/class-ajax.php:51
+msgid "Invalid request data."
+msgstr ""
+
+#: includes/class-ajax.php:257
+#: includes/class-shortcode.php:327
+msgid "Loading more events..."
+msgstr ""
+
+#: includes/class-ajax.php:258
+#: includes/class-shortcode.php:328
+msgid "Error loading events. Please try again."
+msgstr ""
+
+#: includes/class-ajax.php:259
+#: includes/class-shortcode.php:329
+msgid "No more events to load."
+msgstr ""
+
+#: includes/class-post-type.php:42
 msgctxt "Post Type General Name"
 msgid "Events"
 msgstr ""
 
-#: includes/class-post-type.php:24
+#: includes/class-post-type.php:43
 msgctxt "Post Type Singular Name"
 msgid "Event"
 msgstr ""
 
-#: includes/class-post-type.php:25
+#: includes/class-post-type.php:44
 msgid "Events"
 msgstr ""
 
-#: includes/class-post-type.php:26
-msgid "Event Archives"
-msgstr ""
-
-#: includes/class-post-type.php:31
+#: includes/class-post-type.php:45
+#: includes/class-post-type.php:72
 msgid "Event"
 msgstr ""
 
-#: includes/class-post-type.php:33
-msgid "Event Attributes"
-msgstr ""
-
-#: includes/class-post-type.php:34
-msgid "Parent Event:"
-msgstr ""
-
-#: includes/class-post-type.php:35
-msgid "All Events"
-msgstr ""
-
-#: includes/class-post-type.php:36
-msgid "Add New Event"
-msgstr ""
-
-#: includes/class-post-type.php:37
-msgid "Add New"
-msgstr ""
-
-#: includes/class-post-type.php:38
-msgid "New Event"
-msgstr ""
-
-#: includes/class-post-type.php:39
-msgid "Edit Event"
-msgstr ""
-
-#: includes/class-post-type.php:40
-msgid "Update Event"
-msgstr ""
-
-#: includes/class-post-type.php:41
-msgid "View Event"
-msgstr ""
-
-#: includes/class-post-type.php:42
-msgid "View Events"
-msgstr ""
-
-#: includes/class-post-type.php:43
-msgid "Search Events"
-msgstr ""
-
-#: includes/class-post-type.php:44
-msgid "Not found"
-msgstr ""
-
-#: includes/class-post-type.php:45
-msgid "Not found in Trash"
-msgstr ""
-
 #: includes/class-post-type.php:46
-msgid "Featured Image"
+msgid "Event Archives"
 msgstr ""
 
 #: includes/class-post-type.php:47
-msgid "Set featured image"
+msgid "Event Attributes"
 msgstr ""
 
 #: includes/class-post-type.php:48
-msgid "Remove featured image"
-msgstr ""
-
-#: includes/class-post-type.php:49
-msgid "Use as featured image"
+msgid "Parent Event:"
 msgstr ""
 
 #: includes/class-post-type.php:50
-msgid "Insert into event"
+msgid "Add New Event"
 msgstr ""
 
 #: includes/class-post-type.php:51
-msgid "Uploaded to this event"
+msgid "Add New"
 msgstr ""
 
 #: includes/class-post-type.php:52
-msgid "Events list"
+msgid "New Event"
 msgstr ""
 
 #: includes/class-post-type.php:53
-msgid "Events list navigation"
+msgid "Edit Event"
 msgstr ""
 
 #: includes/class-post-type.php:54
-msgid "Filter events list"
+msgid "Update Event"
+msgstr ""
+
+#: includes/class-post-type.php:55
+msgid "View Event"
+msgstr ""
+
+#: includes/class-post-type.php:56
+msgid "View Events"
+msgstr ""
+
+#: includes/class-post-type.php:57
+msgid "Search Events"
 msgstr ""
 
 #: includes/class-post-type.php:58
+msgid "Not found"
+msgstr ""
+
+#: includes/class-post-type.php:59
+msgid "Not found in Trash"
+msgstr ""
+
+#: includes/class-post-type.php:60
+msgid "Featured Image"
+msgstr ""
+
+#: includes/class-post-type.php:61
+msgid "Set featured image"
+msgstr ""
+
+#: includes/class-post-type.php:62
+msgid "Remove featured image"
+msgstr ""
+
+#: includes/class-post-type.php:63
+msgid "Use as featured image"
+msgstr ""
+
+#: includes/class-post-type.php:64
+msgid "Insert into event"
+msgstr ""
+
+#: includes/class-post-type.php:65
+msgid "Uploaded to this event"
+msgstr ""
+
+#: includes/class-post-type.php:66
+msgid "Events list"
+msgstr ""
+
+#: includes/class-post-type.php:67
+msgid "Events list navigation"
+msgstr ""
+
+#: includes/class-post-type.php:68
+msgid "Filter events list"
+msgstr ""
+
+#: includes/class-post-type.php:73
 msgid "Events for the Simple Events Calendar"
 msgstr ""
 
-#: includes/class-post-type.php:98
+#: includes/class-post-type.php:120
 msgctxt "Taxonomy General Name"
 msgid "Event Categories"
 msgstr ""
 
-#: includes/class-post-type.php:99
+#: includes/class-post-type.php:121
 msgctxt "Taxonomy Singular Name"
 msgid "Event Category"
 msgstr ""
 
-#: includes/class-post-type.php:100
+#: includes/class-post-type.php:122
 msgid "Event Categories"
 msgstr ""
 
-#: includes/class-post-type.php:101
+#: includes/class-post-type.php:123
 msgid "All Event Categories"
 msgstr ""
 
-#: includes/class-post-type.php:102
+#: includes/class-post-type.php:124
 msgid "Parent Event Category"
 msgstr ""
 
-#: includes/class-post-type.php:103
+#: includes/class-post-type.php:125
 msgid "Parent Event Category:"
 msgstr ""
 
-#: includes/class-post-type.php:104
+#: includes/class-post-type.php:126
 msgid "New Event Category Name"
 msgstr ""
 
-#: includes/class-post-type.php:105
+#: includes/class-post-type.php:127
 msgid "Add New Event Category"
 msgstr ""
 
-#: includes/class-post-type.php:106
+#: includes/class-post-type.php:128
 msgid "Edit Event Category"
 msgstr ""
 
-#: includes/class-post-type.php:107
+#: includes/class-post-type.php:129
 msgid "Update Event Category"
 msgstr ""
 
-#: includes/class-post-type.php:108
+#: includes/class-post-type.php:130
 msgid "View Event Category"
 msgstr ""
 
-#: includes/class-post-type.php:109
+#: includes/class-post-type.php:131
 msgid "Separate event categories with commas"
 msgstr ""
 
-#: includes/class-post-type.php:110
+#: includes/class-post-type.php:132
 msgid "Add or remove event categories"
 msgstr ""
 
-#: includes/class-post-type.php:111
+#: includes/class-post-type.php:133
 msgid "Choose from the most used"
 msgstr ""
 
-#: includes/class-post-type.php:112
+#: includes/class-post-type.php:134
 msgid "Popular Event Categories"
 msgstr ""
 
-#: includes/class-post-type.php:113
+#: includes/class-post-type.php:135
 msgid "Search Event Categories"
 msgstr ""
 
-#: includes/class-post-type.php:114
+#: includes/class-post-type.php:136
 msgid "Not Found"
 msgstr ""
 
-#: includes/class-post-type.php:115
+#: includes/class-post-type.php:137
 msgid "No event categories"
 msgstr ""
 
-#: includes/class-post-type.php:116
+#: includes/class-post-type.php:138
 msgid "Event categories list"
 msgstr ""
 
-#: includes/class-post-type.php:117
+#: includes/class-post-type.php:139
 msgid "Event categories list navigation"
 msgstr ""
 
-#: includes/class-shortcode.php:128
-msgid "Showing current and upcoming events only."
+#. translators: 1: future unmodified occurrences deleted, 2: past / modified / trashed occurrences kept as standalone events
+#: includes/class-recurrence.php:489
+#, php-format
+msgid "Recurrence disabled. %1$d future unmodified occurrence(s) deleted; %2$d occurrence(s) (past, edited, or trashed) kept as standalone events."
 msgstr ""
 
-#: includes/class-shortcode.php:185
-msgid "No events found in the \"%s\" category."
+#: includes/class-recurrence.php:514
+msgid "Series Edit Scope"
 msgstr ""
 
-#: includes/class-shortcode.php:187
-msgid "No upcoming events scheduled. Check back soon!"
+#: includes/class-recurrence.php:530
+msgid "Only this occurrence"
 msgstr ""
 
-#: includes/class-shortcode.php:189
-msgid "No events have been created yet."
+#: includes/class-recurrence.php:531
+msgid "This and future occurrences"
 msgstr ""
 
-#: includes/class-shortcode.php:195
-msgid "Add New Event"
+#: includes/class-recurrence.php:532
+msgid "Entire series"
 msgstr ""
 
-#: includes/class-ajax.php:250
-msgid "Loading more events..."
+#. translators: %d is the occurrence number within the series
+#: includes/class-recurrence.php:540
+#, php-format
+msgid "This event is occurrence #%d in a recurring series."
 msgstr ""
 
-#: includes/class-ajax.php:251
-msgid "Error loading events. Please try again."
+#: includes/class-recurrence.php:544
+msgid "Edit parent"
 msgstr ""
 
-#: includes/class-ajax.php:252
-msgid "No more events to load."
+#: includes/class-recurrence.php:548
+msgid "Apply changes to:"
+msgstr ""
+
+#: includes/class-recurrence.php:560
+msgid "Only this occurrence: changes stay here. This and future: changes propagate to later siblings (date excluded). Entire series: propagates to the parent and every sibling, and a date change shifts the whole series."
+msgstr ""
+
+#. translators: %d is the number of occurrences created in the foreground pass
+#: includes/class-recurrence.php:1188
+#, php-format
+msgid "Created %d occurrence(s) so far; the remaining occurrences will be generated in the background within a few minutes."
+msgstr ""
+
+#: includes/functions.php:72
+#: template-parts/content-event-card.php:162
+msgid "Learn More"
 msgstr ""
 
 #: template-parts/content-event-card.php:97
+#, php-format
 msgid "View event: %s"
 msgstr ""
 
 #: template-parts/content-event-card.php:99
+#, php-format
 msgid "Image for event: %s"
 msgstr ""
 
 #: template-parts/content-event-card.php:121
+#, php-format
 msgid "Event date: %s"
 msgstr ""
 
 #: template-parts/content-event-card.php:127
+#, php-format
 msgid "Event time: %s"
 msgstr ""
 
@@ -318,9 +496,6 @@ msgid "Event location:"
 msgstr ""
 
 #: template-parts/content-event-card.php:161
+#, php-format
 msgid "Read more about %s"
-msgstr ""
-
-#: template-parts/content-event-card.php:162
-msgid "Learn More"
 msgstr ""

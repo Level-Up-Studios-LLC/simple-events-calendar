@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Simple Events Calendar is a WordPress plugin (v4.3.1) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode and post-type archives. It **requires** Advanced Custom Fields (Free or Pro) — the plugin deactivates itself if ACF is missing.
+Simple Events Calendar is a WordPress plugin (v4.4.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode and post-type archives. It **requires** Advanced Custom Fields (Free or Pro) — the plugin deactivates itself if ACF is missing.
 
 - PHP 7.4+, WordPress 6.0+
 - Text domain: `simple_events`
@@ -46,9 +46,10 @@ PHP code style is enforced via **phpcs.xml** (WordPress Coding Standards). Run w
 3. `class-shortcode.php` → `Simple_Events_Shortcode` (`[sec_events]` + transient caching)
 4. `class-ajax.php` → `Simple_Events_Ajax` (infinite scroll handler)
 5. `class-admin-columns.php` → `Simple_Events_Admin_Columns`
-6. `includes/acf-json.php`, `includes/acf-settings-page.php` (ACF field group registration + save path)
+6. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
+7. `includes/acf-json.php`, `includes/acf-settings-page.php` (ACF field group registration + save path)
 
-All component instances hang off the main singleton (`$plugin->post_type`, `->shortcode`, `->ajax`, `->admin_columns`) — reach them via `simple_events_calendar()` rather than constructing new ones.
+All component instances hang off the main singleton (`$plugin->post_type`, `->shortcode`, `->ajax`, `->admin_columns`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
 
 ### CPT and archive query
 The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. **Front-end rewrite slugs differ from internal names**: posts live under `/events/...` and taxonomy archives under `/event-category/...` (see `class-post-type.php`). REST bases are `simple-events` and `simple-events-categories`.
@@ -83,6 +84,26 @@ The plugin relies on ACF field group `group_event_details` (fields: `event_date`
 
 ### Uninstall is destructive
 `Simple_Events_Calendar::uninstall()` (registered via `register_uninstall_hook`) **deletes every `simple-events` post, every `simple-events-cat` term, and every `_transient_simple_events_*` row** on plugin uninstall. There is no opt-out. Any data the plugin should preserve must live outside that post type/taxonomy/transient prefix.
+
+### Recurring events
+`Simple_Events_Recurrence` (in `includes/class-recurrence.php`) implements per-occurrence recurring events. Each occurrence is a **real** `simple-events` post with its own `event_date` linked back to a parent via `_sec_series_parent` post meta, so the shortcode, archive, AJAX, and admin filters work unchanged.
+
+Key invariants:
+- The **parent post is occurrence #0**. Children carry `_sec_series_parent`, `_sec_series_occurrence_index`, and `_sec_field_overrides` (array of meta keys the user diverged on; the generator never overwrites these).
+- The rule is stored on the parent as `_sec_recur_freq` / `_sec_recur_interval` / `_sec_recur_end_type` / `_sec_recur_count` / `_sec_recur_until` / `_sec_recur_horizon` / `_sec_recur_skipped_indexes`.
+- All date math uses `DateTimeImmutable` + `wp_timezone()`. Monthly recurrences anchor on the parent's day-of-month and clamp to the last day of the target month (Jan 31 → Feb 28 → Mar 31). Yearly Feb 29 anchors clamp to Feb 28 in non-leap years.
+- **`save_post` is hooked at priority 30** (not the post-type-specific variant) because `save_post_simple-events` fires before `save_post`, and ACF persists field meta at `save_post` priority 10 — running at 30 guarantees ACF has already populated the rule meta.
+- The recursion guard is `$GLOBALS['sec_generating_series']`. Every hook handler (`save_post`, `before_delete_post`, `wp_trash_post`, `untrashed_post`) bails when it's set; the generator and cascade routines set it via `lock_generation()` / `unlock_generation()`.
+- A per-parent **atomic option-row lock** (`sec_recur_lock_<parent_id>`, acquired via `add_option(..., '', 'no')` — the options-table INSERT IGNORE provides atomic cross-request semantics, unlike a transient where the get-then-set pair would race) prevents concurrent regenerations from double-creating occurrences. A stale-lock check clears and re-acquires once if the value is older than 60 s, recovering from any process that died holding the lock. **Don't switch this back to a transient** — the round-3 review caught the original implementation race.
+- Large series are generated up to `sec_recur_sync_batch_size` (default 50) synchronously, then continued via `wp_schedule_single_event('sec_recur_continue_generation', [parent_id, 0])`. The continuation re-enters `regenerate_series` — `diff_and_apply` is idempotent because already-created indexes are detected and skipped. **Don't add side effects to `diff_and_apply` that aren't safe to repeat.**
+- "Never" series have their horizon stored in `_sec_recur_horizon` and refilled by the `sec_recur_extend_horizon` daily cron, capped at start + `sec_recur_max_horizon_months` (60).
+- Field propagation for "this and future" / "entire series" edits goes through `write_field_to_post()`, which uses **direct `$wpdb->update` + `clean_post_cache`** for `post_title` / `post_content` / `post_excerpt` to avoid re-firing `save_post` (and ACF's field-save handler) on each propagation target — re-firing would write the original post's `$_POST['acf']` onto every sibling.
+
+The class registers `before_delete_post`, `wp_trash_post`, and `untrashed_post` to cascade parent operations to children: trashing or force-deleting a parent cascades to unmodified children and **detaches** modified children (clears their series meta so they become standalone events). Force-deleting an individual child records its index in `_sec_recur_skipped_indexes` so the next regeneration won't recreate it; trashing a child individually is a no-op so it can be restored back into the series.
+
+`Simple_Events_Calendar::activation_check()` calls `Simple_Events_Recurrence::schedule_cron()`; `deactivation()` inlines `wp_unschedule_hook('sec_recur_extend_horizon')` + `wp_unschedule_hook('sec_recur_continue_generation')` so the deactivation path doesn't depend on `class-recurrence.php` being loaded. `wp_unschedule_hook` (not `wp_clear_scheduled_hook`) is required because the continuation events are scheduled with per-parent args — the no-arg form of `wp_clear_scheduled_hook` only matches no-arg events and would leave queued batches behind.
+
+Public extensibility filters (the plugin's first): `sec_recur_max_occurrences` (1000), `sec_recur_max_horizon_months` (60), `sec_recur_sync_batch_size` (50), `sec_recur_horizon_refill_threshold_months` (6), `sec_recur_horizon_extend_months` (18), `sec_recur_copyable_field_keys`. Keep these stable — they're part of the public contract.
 
 ### Templates and SEO markup
 Both the shortcode and AJAX paths render each event through `template-parts/content-event-card.php` (with `simple_events_render_fallback_card()` in `includes/functions.php` as a fallback). The card emits **schema.org Event JSON-LD** inline; if you add new event metadata that should affect search results, update the `$event_schema` block in the template.
