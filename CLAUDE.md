@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Simple Events Calendar is a WordPress plugin (v5.0.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode, per-element shortcodes, post-type archives, and default templates. It is **fully self-contained** — event fields are edited through a native meta box (`includes/class-meta-box.php`). **As of v5.0.0 there is no Advanced Custom Fields dependency.** (Versions ≤ 4.4.0 required ACF; v5.0.0 removed it without any data migration — event values were always plain post meta.)
+Simple Events Calendar is a WordPress plugin (v5.1.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode, per-element shortcodes, post-type archives, and default templates. It is **fully self-contained** — event fields are edited through a native meta box (`includes/class-meta-box.php`). **As of v5.0.0 there is no Advanced Custom Fields dependency.** (Versions ≤ 4.4.0 required ACF; v5.0.0 removed it without any data migration — event values were always plain post meta.)
 
 - PHP 7.4+, WordPress 6.0+
 - Text domain: `simple_events`
@@ -58,11 +58,26 @@ All component instances hang off the main singleton (`$plugin->post_type`, `->re
 ### Settings and the display helpers
 All tunables live in one option array `simple_events_settings` (see `Simple_Events_Settings` + `simple_events_get_setting_defaults()`). Read settings via `simple_events_get_setting($key, $fallback)`. The front-end date/time format is a setting, so **never** read `event_date`/time meta raw for display — use `simple_events_get_event_date($id)` and `simple_events_get_event_time($id, $key)`, which convert the stored `Ymd` / `g:i a` values to the configured display format. Schema is built once by `simple_events_get_event_schema($id)` (returns null when the JSON-LD setting is off). Saving settings flushes the shortcode transients.
 
+**v5.1.0 settings changes:**
+- **Date format** is now chosen via named presets (e.g. "Month Day, Year", "MM/DD/YYYY") plus a "Custom" option where the admin enters any PHP date-format string. Internally it is still stored as a single `date_format` PHP format string — the preset UI is a front-end convenience only.
+- **Empty-state message** is now a hardcoded, translatable static string rendered by `Simple_Events_Renderer`. The editable empty-state settings fields were removed in v5.1.0 — no setting key exists for it.
+- **`delete_data_on_uninstall`** (new in v5.1.0, default `'no'`) controls whether uninstall deletes plugin data. See the "Uninstall" section below.
+
 ### Native fields and storage formats (critical)
 The meta box reads/writes the exact keys/formats earlier versions used via ACF, so existing data is untouched: `event_date` = `Ymd`, `event_start_time`/`event_end_time` = `g:i a`, `event_location` = text, and the rule keys `event_repeats` (int 1/0), `event_repeat_interval` (int), `event_repeat_frequency` (`daily|weekly|monthly|yearly`), `event_repeat_end_type` (`never|count|until`), `event_repeat_count` (int), `event_repeat_until` (`Ymd`). The meta box hooks `save_post_simple-events` at priority 10 (which fires before any `save_post`), so the recurrence engine at `save_post`:30 still reads the persisted rule. **The meta box bails when `$GLOBALS['sec_generating_series']` is set**, so generated children are never overwritten with the parent's submitted values.
 
 ### Element shortcodes, templates, Elementor
 `Simple_Events_Renderer` is the single source of truth for per-element HTML. The `[sec_event_*]` shortcodes, the Elementor widgets (`includes/elementor/widgets.php`), and the Dynamic Tags (`includes/elementor/dynamic-tags.php`) all call it — keep new element output there, not duplicated. Default templates (`templates/`) are a fallback only: `Simple_Events_Templates::template_include()` (priority 5) yields to theme files (`locate_template`), block/FSE themes (`wp_is_block_theme`), and — by running before Elementor's filter — Elementor Pro Theme Builder; the `simple_events_use_default_template` filter disables them.
+
+**v5.1.0 Elementor additions (in `includes/elementor/display-widgets.php`):**
+
+- **Events Grid widget** (`sec-events-grid`): Standalone grid or image-left list of events. Controls include layout (grid/list), responsive column count (via `--sec-columns` CSS custom property), event count, category filter, order, show-past toggle, and `show_time`/`show_excerpt`/`show_location`/`show_footer` toggles. Rendering is delegated to `simple_events_render_events_grid()` in `includes/functions.php`.
+
+- **Single Event widget** (`sec-single-event`): Renders one event chosen via a searchable SELECT2 picker (searches by post title). Supports `card` (default) or `list` layout plus the standard `show_*` toggles. Rendering is delegated to `simple_events_render_single_event()` in `includes/functions.php`.
+
+- **Per-element widgets (Title/Image/Date/Time/Location/Excerpt — in `includes/elementor/widgets.php`) are now gated to event-loop contexts.** The per-widget "Preview event" picker was removed in v5.1.0. These widgets now render the current loop/queried event (single event page, archive, Elementor Loop Grid item, Theme Builder single template) and show an editor-only notice elsewhere. They produce no front-end output when used outside an event context.
+
+**Shared render helpers** — `simple_events_render_events_grid( array $args )` (returns the grid/list HTML string) and `simple_events_render_single_event( int $post_id, array $flags, string $layout )` (returns the single-event HTML string) live in `includes/functions.php` and are the single source for the display widgets and the `[sec_event]` shortcode. Keep rendering logic there, not duplicated in widget `render()` methods.
 
 ### CPT and archive query
 The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. **Front-end rewrite slugs differ from internal names**: posts live under `/events/...` and taxonomy archives under `/event-category/...` (see `class-post-type.php`). REST bases are `simple-events` and `simple-events-categories`.
@@ -76,7 +91,7 @@ The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. *
 Any new archive-facing query must go through the same pattern (the `event_date` post meta, `Ymd` format) or it will not sort/filter consistently with the rest of the plugin.
 
 ### Asset enqueue gating
-`enqueue_scripts()` only enqueues CSS/JS when the current request is a `simple-events` archive/single/taxonomy, a post containing the `[sec_events]` shortcode, or a text widget. Test that this gate still holds when adding new rendering paths — silently enqueueing everywhere is a regression.
+`enqueue_scripts()` only enqueues CSS/JS when the current request is a `simple-events` archive/single/taxonomy, a post containing the `[sec_events]` shortcode, or a text widget. Test that this gate still holds when adding new rendering paths — silently enqueueing everywhere is a regression. The front-end stylesheet handle `simple-events-style` is registered on `wp_enqueue_scripts` (priority 1) and enqueued on demand: the shortcode class also enqueues it when the post contains `[sec_event]` (single-event shortcode), and the Elementor Events Grid and Single Event widgets pull it in via `get_style_depends()`.
 
 `wp_localize_script` exposes `ajax_params` (`ajaxurl`, `nonce`, `initial_offset`, `load_increment`) to the infinite-scroll JS. `initial_offset` and `load_increment` both come from the `load_increment` setting (default 6). The nonce action string lives in the `SIMPLE_EVENTS_NONCE_ACTION` constant (defined in the main plugin file as `'load_more_events_nonce'`) — use it everywhere, never hardcode the string. Changing any of these keys requires updating `assets/js/simple-events.js` in lockstep.
 
@@ -93,6 +108,8 @@ Attribute **defaults derive from the settings page** (`posts_per_page`, `show_pa
 `Simple_Events_Shortcode::render_shortcode()` caches rendered output in a transient for the `cache_ttl` setting (default 15 minutes), keyed on `md5(serialize($sanitized_atts) . '|' . PLUGIN_VERSION . '|' . is_user_logged_in())`. The version segment auto-invalidates the cache on plugin upgrade; the login-state segment prevents admin-only variations from leaking to anonymous visitors. **Empty-state output (containing `simple-events-no-events`) is intentionally not cached**, so adding new "no results" markup must keep that class to avoid pinning empty results.
 
 Cache is invalidated via `save_post`, `delete_post`, and `transition_post_status` — but **only when the post being changed is a `simple-events` post**. If new logic causes the shortcode output to depend on other post types/terms/options, extend the invalidation hooks accordingly.
+
+**`[sec_event]` shortcode (new in v5.1.0):** Displays a single event by ID. `id` (required) is the post ID of the `simple-events` post. `layout` is `"card"` (default, renders as an event card) or `"list"` (image-left list layout). Also accepts `show_time`, `show_excerpt`, `show_location`, and `show_footer` (all default to the corresponding setting value). Rendered via `simple_events_render_single_event()` in `includes/functions.php`. This shortcode is NOT cached (single-item output is cheap and already covered by WordPress object cache).
 
 ### Event fields (native, no ACF)
 Event fields are registered and persisted entirely by `Simple_Events_Meta_Box` — there is no ACF and no field-group JSON. The fields are plain post meta:
@@ -115,8 +132,10 @@ When "Ends on a date" is selected but the date is blank/invalid, `save()` falls 
 ### Admin columns and filters
 `Simple_Events_Admin_Columns` adds Thumbnail / Event Date / Time / Location / Categories columns to the `simple-events` list table, plus two filter dropdowns: a category filter (uses the taxonomy query var `simple-events-cat`) and a status filter (custom query var `event_status` with values `upcoming`, `today`, `past`). When adding new admin filters, follow the same `parse_query` + meta_query pattern.
 
-### Uninstall is destructive
-`Simple_Events_Calendar::uninstall()` (registered via `register_uninstall_hook`) **deletes every `simple-events` post, every `simple-events-cat` term, and every `_transient_simple_events_*` row** on plugin uninstall. There is no opt-out. Any data the plugin should preserve must live outside that post type/taxonomy/transient prefix.
+### Uninstall (opt-in data deletion)
+`Simple_Events_Calendar::uninstall()` (registered via `register_uninstall_hook`) checks the `delete_data_on_uninstall` setting before removing anything. The default value is `'no'`, which **retains all data** — reinstalling the plugin after deletion keeps all existing events intact. Only when an admin explicitly sets the option to `'yes'` will uninstall delete every `simple-events` post, every `simple-events-cat` term, the `simple_events_settings` option, and every `_transient_simple_events_*` row.
+
+Deletion occurs **only on plugin deletion** (via `register_uninstall_hook`), never on deactivation. Any data the plugin should always preserve must live outside that post type/taxonomy/transient prefix regardless of the setting.
 
 ### Recurring events
 `Simple_Events_Recurrence` (in `includes/class-recurrence.php`) implements per-occurrence recurring events. Each occurrence is a **real** `simple-events` post with its own `event_date` linked back to a parent via `_sec_series_parent` post meta, so the shortcode, archive, AJAX, and admin filters work unchanged.
@@ -181,5 +200,13 @@ Both the shortcode and AJAX paths render each event through `template-parts/cont
 - JS in `assets/js/` is hand-written (no build step). `assets/js/simple-events.js` is the main script; `simple-events-shortcode.js` is shortcode-specific.
 - The distribution step excludes `node_modules`, `src`, `.git`, `dist`, dotfiles, `package*.json`, `phpcs.xml`, and `*.md`.
 
+**v5.1.0 asset changes:**
+- `src/css/simple-events.scss`: The shared event card was restyled — 5 px border-radius, soft drop-shadow, no border, 22 px h3 title, and grid thumbnail aspect ratio changed from 4:3 to **3:2**. New modifiers: `.sec-layout-list` (image-left list layout) and `.sec-grid-columns` (Elementor column-count container using the `--sec-columns` CSS custom property).
+- `assets/css/simple-events-admin.css` (new): hand-written admin styles for the Event Details meta box. This file is **not** part of the SCSS build — edit it directly.
+- `assets/js/simple-events-settings.js` (new): handles the date-preset toggle on the Settings page (shows/hides the custom format input). Hand-written, no build step.
+- `includes/elementor/display-widgets.php` (new): registers the Events Grid and Single Event Elementor widgets.
+
 ## Internationalization
 Three shipped locales (`en`, `es_ES`, `fr_FR`) in `languages/`. Always wrap user-facing strings with `__()`/`_e()`/`_x()` using the `simple_events` / `PLUGIN_TEXT_DOMAIN` text domain — phpcs is configured to enforce this.
+
+**v5.1.0 note:** New user-facing strings were introduced in: the Settings page (date-format preset labels, the Data section for delete-on-uninstall), the Event Details meta box (field labels, recurrence summary text), the Elementor Events Grid and Single Event display widgets, and the `[sec_event]` shortcode error states. The shipped `es_ES` and `fr_FR` `.po`/`.mo` files have **not** yet been updated with translations for these strings — WordPress falls back to the English source strings until the catalogues are refreshed.
