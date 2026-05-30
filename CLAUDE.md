@@ -50,11 +50,12 @@ PHP code style is enforced via **phpcs.xml** (WordPress Coding Standards). Run w
 7. `class-meta-box.php` → `Simple_Events_Meta_Box` (native Event Details editing UI)
 8. `class-settings.php` → `Simple_Events_Settings` (Events → Settings page + `simple_events_settings` option)
 9. `class-docs.php` → `Simple_Events_Docs` (read-only Events → Documentation page; capability `edit_posts`, slug `simple-events-docs`)
-10. `class-templates.php` → `Simple_Events_Templates` (default single/archive/taxonomy templates via `template_include`)
-11. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
-12. `includes/elementor/class-elementor.php` → `Simple_Events_Elementor::init()` (no-op unless Elementor is active)
+10. `class-ics.php` → `Simple_Events_ICS` ("Add to Calendar" .ics generator; streams on `template_redirect` via `?sec_ical=<id>`)
+11. `class-templates.php` → `Simple_Events_Templates` (default single/archive/taxonomy templates via `template_include`)
+12. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
+13. `includes/elementor/class-elementor.php` → `Simple_Events_Elementor::init()` (no-op unless Elementor is active)
 
-All component instances hang off the main singleton (`$plugin->post_type`, `->renderer`, `->shortcode`, `->ajax`, `->admin_columns`, `->meta_box`, `->settings`, `->docs`, `->templates`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
+All component instances hang off the main singleton (`$plugin->post_type`, `->renderer`, `->shortcode`, `->ajax`, `->admin_columns`, `->meta_box`, `->settings`, `->docs`, `->ics`, `->templates`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
 
 ### Settings and the display helpers
 All tunables live in one option array `simple_events_settings` (see `Simple_Events_Settings` + `simple_events_get_setting_defaults()`). Read settings via `simple_events_get_setting($key, $fallback)`. The front-end date/time format is a setting, so **never** read `event_date`/time meta raw for display — use `simple_events_get_event_date($id)` and `simple_events_get_event_time($id, $key)`, which convert the stored `Ymd` / `g:i a` values to the configured display format. Schema is built once by `simple_events_get_event_schema($id)` (returns null when the JSON-LD setting is off). Saving settings flushes the shortcode transients.
@@ -204,6 +205,8 @@ Public extensibility filters (the plugin's first): `sec_recur_max_occurrences` (
 
 ### Templates and SEO markup
 Both the shortcode and AJAX paths render each event through `template-parts/content-event-card.php` (with `simple_events_render_fallback_card()` in `includes/functions.php` as a fallback; the archive/taxonomy templates render cards via `simple_events_render_event_card()`). The card emits **schema.org Event JSON-LD** inline via `simple_events_get_event_schema()` (skipped when the JSON-LD setting is off), and single event pages emit the same schema on `wp_head` (`Simple_Events_Post_Type::output_single_schema()`). To change structured data, edit `simple_events_get_event_schema()` in `includes/functions.php` — it's the single source.
+
+The default **single event template** (`templates/single-simple-events.php`, theme-overridable) is a two-column layout: featured image + content on the left, a sticky `.simple-events-single__card` "Event Details" card (date/time/location/category pills + **Add to Calendar**) on the right, stacking with the details above the content on small screens. The Add to Calendar button links to `Simple_Events_ICS::url($event_id)` (`home_url()` + `?sec_ical=<id>`); `Simple_Events_ICS` intercepts that on `template_redirect` and streams a `.ics` file. Single-page styles live under `.simple-events-single` in the SCSS.
 
 ### Build pipeline
 - `src/css/simple-events.scss` is the source; `assets/css/simple-events.css` is generated output. **Never edit `assets/css/simple-events.css` directly** — it will be overwritten by the next build.

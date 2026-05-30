@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Documentation page** (`includes/class-docs.php`, `Simple_Events_Docs`) — read-only Events → Documentation page listing all shortcodes and Elementor widgets and their usage contexts. Requires `edit_posts` capability; slug `simple-events-docs`.
 * **Opt-in data deletion on uninstall** — new `delete_data_on_uninstall` setting (Events → Settings → Data, default `'no'`). Uninstall retains all events/categories/settings unless an admin explicitly opts in. Deletion never happens on deactivation.
 * Shared render helpers `simple_events_render_events_grid( array $args )` and `simple_events_render_single_event( int $post_id, array $flags, string $layout )` added to `includes/functions.php`.
+* **Redesigned single event page** (`templates/single-simple-events.php`): featured image + content with a sticky "Event Details" card (date / time / location / category pills) and an **Add to Calendar** button.
+* **Add to Calendar (.ics)** — `includes/class-ics.php` (`Simple_Events_ICS`) streams a standards-compliant iCalendar file on `template_redirect` via `?sec_ical=<id>` (timed events emit UTC instants, time-less events are all-day; RFC 5545 escaped). Works with Apple Calendar, Outlook, and Google Calendar import.
 
 ### Changed
 

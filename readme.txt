@@ -150,6 +150,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * **Weekly by-day recurrence** — recurring weekly events can now target specific weekdays (S–M–T–W–T–F–S picker) with **Weekdays**, **Weekend**, and **Every day** presets and a live plain-English recurrence summary
 * **Documentation page** at Events → Documentation listing all shortcodes and Elementor widgets
 * **Opt-in data deletion on uninstall** (Events → Settings → Data): default keeps all events, categories, and settings on uninstall; only an explicit choice deletes them — deletion never happens on deactivation
+* **Redesigned single event page** with a sticky "Event Details" card (date, time, location, categories) and a working **Add to Calendar** button that downloads a universal .ics file (Apple Calendar, Outlook, Google Calendar import)
 
 **Changed**
 * Event cards restyled: 5 px corner radius, softer drop shadow, light-gray border, 22 px event title; grid thumbnails changed from 4:3 to **3:2** aspect ratio; new image-left **list layout**
