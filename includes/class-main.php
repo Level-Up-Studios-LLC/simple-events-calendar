@@ -74,6 +74,13 @@ class Simple_Events_Calendar {
     public $settings;
 
     /**
+     * Documentation page
+     *
+     * @var Simple_Events_Docs
+     */
+    public $docs;
+
+    /**
      * Element renderer / element shortcodes
      *
      * @var Simple_Events_Renderer
@@ -176,6 +183,7 @@ class Simple_Events_Calendar {
         require_once PLUGIN_DIR . '/includes/class-admin-columns.php';
         require_once PLUGIN_DIR . '/includes/class-meta-box.php';
         require_once PLUGIN_DIR . '/includes/class-settings.php';
+        require_once PLUGIN_DIR . '/includes/class-docs.php';
         require_once PLUGIN_DIR . '/includes/class-templates.php';
         require_once PLUGIN_DIR . '/includes/class-recurrence.php';
 
@@ -187,6 +195,7 @@ class Simple_Events_Calendar {
         $this->admin_columns = new Simple_Events_Admin_Columns();
         $this->meta_box = new Simple_Events_Meta_Box();
         $this->settings = new Simple_Events_Settings();
+        $this->docs = new Simple_Events_Docs();
         $this->templates = new Simple_Events_Templates();
         $this->recurrence = new Simple_Events_Recurrence();
 
