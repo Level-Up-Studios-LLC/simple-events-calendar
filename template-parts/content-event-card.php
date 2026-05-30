@@ -158,20 +158,21 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
             </div>
         <?php endif; ?>
 
-    </div>
+        <?php if ($show_footer) : ?>
+            <!-- Call to action footer. Inside the description so it sits with the
+                 other details (right of the image in list mode), not full-width. -->
+            <footer class="simple-events-calendar__post__footer">
+                <a href="<?php echo $permalink; ?>"
+                    class="simple-events-calendar__read-more"
+                    aria-label="<?php printf(__('Read more about %s', PLUGIN_TEXT_DOMAIN), $title); ?>">
+                    <?php _e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
+                    <svg class="simple-events-calendar__arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                    </svg>
+                </a>
+            </footer>
+        <?php endif; ?>
 
-    <?php if ($show_footer) : ?>
-        <!-- Call to action footer -->
-        <footer class="simple-events-calendar__post__footer">
-            <a href="<?php echo $permalink; ?>"
-                class="simple-events-calendar__read-more"
-                aria-label="<?php printf(__('Read more about %s', PLUGIN_TEXT_DOMAIN), $title); ?>">
-                <?php _e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
-                <svg class="simple-events-calendar__arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-                </svg>
-            </a>
-        </footer>
-    <?php endif; ?>
+    </div>
 
 </article>

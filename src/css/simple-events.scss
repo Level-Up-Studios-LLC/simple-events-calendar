@@ -443,15 +443,11 @@ $sec-list-image-width: 240px;
     margin-bottom: 0;
   }
 
-  // No max-width here: the footer's flex-basis:100% already forces its own
-  // row, and dropping the constraint lets thumbnail-less cards use the full
-  // width instead of reserving a blank image column.
+  // The description is the right-hand column and now contains the footer
+  // (Learn More), so it sits under the details to the right of the image
+  // rather than wrapping full-width beneath the card.
   .simple-events-calendar__post__description {
     flex: 1 1 300px;
-  }
-
-  .simple-events-calendar__post__footer {
-    flex-basis: 100%;
   }
 
   @media screen and (width <= 600px) {
