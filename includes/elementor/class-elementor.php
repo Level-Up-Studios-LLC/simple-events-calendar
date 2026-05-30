@@ -54,20 +54,23 @@ class Simple_Events_Elementor {
 
         // Loop Grid query presets — set the Loop Grid's "Query ID" to one of
         // these to order results by the event date (event_date meta) instead of
-        // the post date. `sec_events_by_date` hides past events; the `_all`
-        // variant includes them. The ASC/DESC direction follows the widget's
-        // own Order control.
+        // the post date. `sec_events_by_date` follows the global "Show past
+        // events" setting; the `_all` variant always includes past events. The
+        // ASC/DESC direction follows the widget's own Order control.
         add_action('elementor/query/sec_events_by_date', array(__CLASS__, 'query_events_by_date'));
         add_action('elementor/query/sec_events_by_date_all', array(__CLASS__, 'query_events_by_date_all'));
     }
 
     /**
-     * Loop Grid query: order by event date, upcoming events only.
+     * Loop Grid query: order by event date, honoring the global "Show past
+     * events" setting (Events → Settings) — the single source of truth for past
+     * visibility across the plugin.
      *
      * @param WP_Query $query Elementor's loop query.
      */
     public static function query_events_by_date($query) {
-        self::apply_event_date_order($query, false);
+        $show_past = ('yes' === (string) simple_events_get_setting('show_past', 'no'));
+        self::apply_event_date_order($query, $show_past);
     }
 
     /**

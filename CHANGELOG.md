@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Shared render helpers `simple_events_render_events_grid( array $args )` and `simple_events_render_single_event( int $post_id, array $flags, string $layout )` added to `includes/functions.php`.
 * **Redesigned single event page** (`templates/single-simple-events.php`): featured image + content with a sticky "Event Details" card (date / time / location / category pills) and an **Add to Calendar** button.
 * **Add to Calendar (.ics)** — `includes/class-ics.php` (`Simple_Events_ICS`) streams a standards-compliant iCalendar file on `template_redirect` via `?sec_ical=<id>` (timed events emit UTC instants, time-less events are all-day; RFC 5545 escaped). Works with Apple Calendar, Outlook, and Google Calendar import.
-* **Elementor Loop Grid query presets** — set a Loop Grid's *Query ID* to `sec_events_by_date` (upcoming only) or `sec_events_by_date_all` (includes past) to order results by the `event_date` meta instead of the post date. Registered via `elementor/query/{id}` in `Simple_Events_Elementor`; the ASC/DESC direction follows the widget's own Order control.
+* **Elementor Loop Grid query presets** — set a Loop Grid's *Query ID* to `sec_events_by_date` (orders by the `event_date` meta and follows the global "Show past events" setting) or `sec_events_by_date_all` (orders by event date, always includes past) instead of sorting by post date. Registered via `elementor/query/{id}` in `Simple_Events_Elementor`; the ASC/DESC direction follows the widget's own Order control.
 
 ### Changed
 

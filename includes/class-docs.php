@@ -199,11 +199,11 @@ class Simple_Events_Docs {
                 <tbody>
                     <tr>
                         <td><code>sec_events_by_date</code></td>
-                        <td><?php echo esc_html__('Orders by event date and shows only upcoming events (hides past dates).', 'simple_events'); ?></td>
+                        <td><?php echo esc_html__('Orders by event date and follows the global "Show past events" setting (Events → Settings) — past events are hidden unless that setting is turned on.', 'simple_events'); ?></td>
                     </tr>
                     <tr>
                         <td><code>sec_events_by_date_all</code></td>
-                        <td><?php echo esc_html__('Orders by event date and includes past events too.', 'simple_events'); ?></td>
+                        <td><?php echo esc_html__('Orders by event date and always includes past events (ignores the global setting).', 'simple_events'); ?></td>
                     </tr>
                 </tbody>
             </table>
