@@ -212,13 +212,31 @@ jQuery(document).ready(function ($) {
     return;
   }
 
+  // Leading + trailing throttle. A leading-only throttle drops the final
+  // scroll event when the user flicks to the bottom and stops mid-window, so
+  // the resting position is never re-checked (load-more never fires until the
+  // next scroll). The trailing call re-evaluates the final position.
   function throttle(fn, limit) {
-    var inThrottle;
+    var lastRun = 0;
+    var timer = null;
     return function () {
-      if (!inThrottle) {
-        fn.apply(this, arguments);
-        inThrottle = true;
-        setTimeout(function () { inThrottle = false; }, limit);
+      var context = this;
+      var args = arguments;
+      var now = Date.now();
+      var remaining = limit - (now - lastRun);
+      if (remaining <= 0) {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        lastRun = now;
+        fn.apply(context, args);
+      } else if (!timer) {
+        timer = setTimeout(function () {
+          lastRun = Date.now();
+          timer = null;
+          fn.apply(context, args);
+        }, remaining);
       }
     };
   }
