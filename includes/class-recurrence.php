@@ -21,6 +21,7 @@ class Simple_Events_Recurrence
     const META_RULE_END_TYPE = '_sec_recur_end_type';
     const META_RULE_COUNT    = '_sec_recur_count';
     const META_RULE_UNTIL    = '_sec_recur_until';
+    const META_RULE_BYDAY    = '_sec_recur_byday';
     const META_RULE_HORIZON  = '_sec_recur_horizon';
     const META_RULE_SKIPPED  = '_sec_recur_skipped_indexes';
     const META_CASCADED_TRASH = '_sec_recur_cascaded_trash';
@@ -1161,6 +1162,11 @@ class Simple_Events_Recurrence
             } else {
                 delete_post_meta($parent_id, self::META_RULE_UNTIL);
             }
+            if (!empty($rule['byday'])) {
+                update_post_meta($parent_id, self::META_RULE_BYDAY, implode(',', $rule['byday']));
+            } else {
+                delete_post_meta($parent_id, self::META_RULE_BYDAY);
+            }
 
             if (!empty($result['more_remaining'])) {
                 $this->schedule_continuation($parent_id, (int) $result['created'], (string) $context);
@@ -1215,12 +1221,28 @@ class Simple_Events_Recurrence
             return null;
         }
 
+        $byday = array();
+        if ($freq === 'weekly') {
+            $byday_raw = (string) get_post_meta($parent_id, 'event_repeat_byday', true);
+            if ($byday_raw !== '') {
+                foreach (explode(',', $byday_raw) as $piece) {
+                    $day = (int) trim($piece);
+                    if ($day >= 0 && $day <= 6) {
+                        $byday[$day] = $day;
+                    }
+                }
+                $byday = array_values($byday);
+                sort($byday);
+            }
+        }
+
         return array(
             'freq'     => $freq,
             'interval' => $interval,
             'end_type' => $end_type,
             'count'    => $count,
             'until'    => $until,
+            'byday'    => $byday,
         );
     }
 
@@ -1273,6 +1295,10 @@ class Simple_Events_Recurrence
             }
         }
 
+        if ($rule['freq'] === 'weekly' && !empty($rule['byday'])) {
+            return $this->compute_weekly_byday_dates($start, $rule, $stop_count, $stop_date, $max_horizon_months);
+        }
+
         $dates = array();
         for ($index = 0; $index < $stop_count; $index++) {
             $date = $this->advance_date($start, $rule['freq'], $rule['interval'] * $index);
@@ -1289,6 +1315,91 @@ class Simple_Events_Recurrence
         }
 
         return $dates;
+    }
+
+    /**
+     * Generate weekly occurrences restricted to specific weekdays.
+     *
+     * Index 0 is always the parent's own date (the engine contract). Children
+     * (index 1+) are emitted in chronological order on each selected weekday
+     * after the start, but only in "active" weeks — every $interval-th calendar
+     * week measured from the week containing the start date (week start follows
+     * the site's start_of_week setting).
+     *
+     * @param DateTimeImmutable $start              Series start.
+     * @param array             $rule               Rule incl. 'interval' and 'byday' (ints 0-6).
+     * @param int               $stop_count         Max total occurrences (incl. parent).
+     * @param string|null       $stop_date          Inclusive Ymd ceiling, or null.
+     * @param int               $max_horizon_months Absolute safety ceiling in months.
+     * @return array<int,string> index => Ymd
+     */
+    private function compute_weekly_byday_dates(DateTimeImmutable $start, array $rule, $stop_count, $stop_date, $max_horizon_months)
+    {
+        $byday    = $rule['byday'];
+        $interval = max(1, (int) $rule['interval']);
+        $sow      = (int) get_option('start_of_week', 0);
+
+        $dates    = array($start->format('Ymd')); // index 0 = parent.
+        $start_wk = $this->week_start_anchor($start, $sow);
+
+        // Absolute scan ceiling so 'count' mode (no stop_date) can never loop
+        // away if byday is unexpectedly unsatisfiable. Note: for a very sparse
+        // 'count' rule (e.g. one weekday every 4 weeks) this ceiling can also
+        // cap the series below the requested count — the same bounded behavior
+        // as the plugin's other horizon limits.
+        try {
+            $ceiling_ymd = $start->add(new DateInterval('P' . max(1, (int) $max_horizon_months) . 'M'))->format('Ymd');
+        } catch (Exception $e) {
+            return $dates;
+        }
+
+        $cursor = $start->modify('+1 day');
+        $index  = 1;
+        while ($index < $stop_count && $cursor instanceof DateTimeImmutable) {
+            $ymd = $cursor->format('Ymd');
+            if ($ymd > $ceiling_ymd) {
+                break;
+            }
+            if ($stop_date !== null && $ymd > $stop_date) {
+                break;
+            }
+
+            $dow = (int) $cursor->format('w');
+            if (in_array($dow, $byday, true)) {
+                $cur_wk = $this->week_start_anchor($cursor, $sow);
+                // Count whole CALENDAR days between the two week-starts, not the
+                // raw timestamp delta: a DST week is 604800±3600s, so dividing
+                // the timestamp difference by WEEK_IN_SECONDS would floor a
+                // genuine N-week gap to N-1 across spring-forward and drift the
+                // whole series a week early. diff()->days is DST-immune.
+                $days  = (int) $start_wk->diff($cur_wk)->days;
+                $weeks = intdiv($days, 7);
+                if ($weeks % $interval === 0) {
+                    $dates[$index] = $ymd;
+                    $index++;
+                }
+            }
+
+            $cursor = $cursor->modify('+1 day');
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Return the date shifted back to the start of its week, per the site's
+     * start_of_week (0=Sunday … 6=Saturday). Used to measure whole-week
+     * intervals between two dates independent of weekday.
+     *
+     * @param DateTimeImmutable $date Date.
+     * @param int               $sow  start_of_week (0-6).
+     * @return DateTimeImmutable
+     */
+    private function week_start_anchor(DateTimeImmutable $date, $sow)
+    {
+        $dow  = (int) $date->format('w');
+        $diff = (($dow - $sow) + 7) % 7;
+        return $diff > 0 ? $date->modify('-' . $diff . ' days') : $date;
     }
 
     private function advance_date(DateTimeImmutable $start, $freq, $offset_units)
@@ -1572,6 +1683,7 @@ class Simple_Events_Recurrence
             'event_repeat_end_type',
             'event_repeat_count',
             'event_repeat_until',
+            'event_repeat_byday',
         ) as $recur_key) {
             delete_post_meta($child_id, $recur_key);
         }
