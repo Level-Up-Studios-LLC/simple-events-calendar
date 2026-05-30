@@ -45,11 +45,14 @@ abstract class Simple_Events_Tag_Base extends \Elementor\Core\DynamicTags\Tag {
      * @return int
      */
     protected function sec_event_id() {
-        $id = get_the_ID();
-        if (!$id) {
-            $id = get_queried_object_id();
+        $id = (int) get_the_ID();
+        if ($id) {
+            return $id;
         }
-        return (int) $id;
+        // Fall back to the queried object only when it is an actual post;
+        // get_queried_object_id() can be a term/user ID on archive views.
+        $queried = get_queried_object();
+        return ($queried instanceof WP_Post) ? (int) $queried->ID : 0;
     }
 
     /**
@@ -161,9 +164,12 @@ class Simple_Events_Tag_Image_Url extends \Elementor\Core\DynamicTags\Data_Tag {
         return array(\Elementor\Modules\DynamicTags\Module::URL_CATEGORY);
     }
     protected function get_value(array $options = array()) {
-        $id = get_the_ID();
+        $id = (int) get_the_ID();
         if (!$id) {
-            $id = get_queried_object_id();
+            // Only fall back to the queried object when it is an actual post;
+            // get_queried_object_id() can be a term/user ID on archive views.
+            $queried = get_queried_object();
+            $id = ($queried instanceof WP_Post) ? (int) $queried->ID : 0;
         }
         if (!$id) {
             return '';

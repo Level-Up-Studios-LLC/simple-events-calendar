@@ -257,7 +257,7 @@ class Simple_Events_Meta_Box {
                                     $full = $wp_locale ? $wp_locale->get_weekday($day) : (string) $day;
                                     $init = $wp_locale ? $wp_locale->get_weekday_initial($full) : substr($full, 0, 1);
                                     printf(
-                                        '<label class="sec-mb__day"><input type="checkbox" name="sec_event_repeat_byday[]" value="%d" %s data-sec-summary-input /><span title="%s" aria-label="%s">%s</span></label>',
+                                        '<label class="sec-mb__day"><input type="checkbox" name="sec_event_repeat_byday[]" value="%d" %s data-sec-summary-input aria-label="%s" /><span title="%s" aria-hidden="true">%s</span></label>',
                                         (int) $day,
                                         checked(in_array($day, $byday, true), true, false),
                                         esc_attr($full),

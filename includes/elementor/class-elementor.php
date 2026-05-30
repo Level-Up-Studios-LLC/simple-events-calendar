@@ -117,9 +117,12 @@ class Simple_Events_Elementor {
         if ($id && 'simple-events' === get_post_type($id)) {
             return $id;
         }
-        $queried = (int) get_queried_object_id();
-        if ($queried && 'simple-events' === get_post_type($queried)) {
-            return $queried;
+        // get_queried_object_id() can be a term/user ID on non-singular views,
+        // so only trust it when the queried object is an actual post — otherwise
+        // a term ID could collide with an unrelated simple-events post ID.
+        $queried = get_queried_object();
+        if ($queried instanceof WP_Post && 'simple-events' === $queried->post_type) {
+            return (int) $queried->ID;
         }
         return 0;
     }
