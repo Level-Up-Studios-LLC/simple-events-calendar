@@ -450,6 +450,14 @@ $sec-list-image-width: 240px;
     flex: 1 1 300px;
   }
 
+  // In list mode the Learn More reads as part of the details column: no top
+  // divider, left-aligned with the rest of the content.
+  .simple-events-calendar__post__footer {
+    border-top: 0;
+    padding-top: 0;
+    text-align: left;
+  }
+
   @media screen and (width <= 600px) {
     .simple-events-calendar__post {
       flex-direction: column;
