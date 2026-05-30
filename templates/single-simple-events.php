@@ -28,7 +28,7 @@ get_header();
         $sec_date     = simple_events_get_event_date($sec_id);
         $sec_start    = simple_events_get_event_time($sec_id, 'event_start_time');
         $sec_end      = simple_events_get_event_time($sec_id, 'event_end_time');
-        $sec_time     = ('' !== $sec_end) ? $sec_start . ' &ndash; ' . $sec_end : $sec_start;
+        $sec_time     = ('' !== $sec_end) ? $sec_start . ' – ' . $sec_end : $sec_start;
         $sec_location = (string) get_post_meta($sec_id, 'event_location', true);
         $sec_terms    = get_the_terms($sec_id, 'simple-events-cat');
         $sec_archive  = get_post_type_archive_link('simple-events');

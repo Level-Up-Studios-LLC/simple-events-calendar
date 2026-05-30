@@ -69,7 +69,11 @@ class Simple_Events_ICS {
             return;
         }
 
-        $this->output_ics($event_id);
+        if (!$this->output_ics($event_id)) {
+            // No valid calendar data (e.g. unparseable event_date) — don't emit
+            // a bogus file; let WordPress serve the request normally.
+            return;
+        }
         exit;
     }
 
@@ -77,15 +81,21 @@ class Simple_Events_ICS {
      * Send headers and echo the .ics document for an event.
      *
      * @param int $event_id Event post ID.
+     * @return bool True if a calendar file was streamed, false if there was
+     *              nothing valid to output.
      */
     private function output_ics($event_id) {
         $ics = $this->build_ics($event_id);
+        if ('' === $ics) {
+            return false;
+        }
 
         nocache_headers();
         header('Content-Type: text/calendar; charset=utf-8');
         header('Content-Disposition: attachment; filename="event-' . $event_id . '.ics"');
 
         echo $ics; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        return true;
     }
 
     /**
@@ -122,7 +132,9 @@ class Simple_Events_ICS {
             // No start time — all-day event (DTEND is exclusive, so +1 day).
             $day = DateTimeImmutable::createFromFormat('!Ymd', $date_raw, $tz);
             if (!$day instanceof DateTimeImmutable) {
-                $day = current_datetime();
+                // Missing/unparseable date — refuse rather than emit a bogus
+                // "today" event. The caller skips streaming when this is empty.
+                return '';
             }
             $dtstart_line = 'DTSTART;VALUE=DATE:' . $day->format('Ymd');
             $dtend_line   = 'DTEND;VALUE=DATE:' . $day->add(new DateInterval('P1D'))->format('Ymd');
@@ -162,8 +174,43 @@ class Simple_Events_ICS {
         $lines[] = 'END:VEVENT';
         $lines[] = 'END:VCALENDAR';
 
-        // iCalendar requires CRLF line endings.
+        // Fold any content line longer than 75 octets (RFC 5545) so strict
+        // clients accept long titles/locations/URLs/descriptions, then join
+        // with the required CRLF line endings.
+        $lines = array_map(array($this, 'fold_line'), $lines);
         return implode("\r\n", $lines) . "\r\n";
+    }
+
+    /**
+     * Fold a content line to <= 75 octets per line (RFC 5545 section 3.1).
+     *
+     * Continuation lines begin with a single space. Splitting happens on UTF-8
+     * character boundaries so multi-byte characters are never cut in half.
+     *
+     * @param string $line Unfolded content line.
+     * @return string
+     */
+    private function fold_line($line) {
+        if (strlen($line) <= 75) {
+            return $line;
+        }
+
+        $chunks = array();
+        $buffer = '';
+        foreach (preg_split('//u', $line, -1, PREG_SPLIT_NO_EMPTY) as $char) {
+            // Continuation lines reserve one octet for the leading space.
+            $cap = empty($chunks) ? 75 : 74;
+            if ('' !== $buffer && strlen($buffer . $char) > $cap) {
+                $chunks[] = $buffer;
+                $buffer   = '';
+            }
+            $buffer .= $char;
+        }
+        if ('' !== $buffer) {
+            $chunks[] = $buffer;
+        }
+
+        return implode("\r\n ", $chunks);
     }
 
     /**
