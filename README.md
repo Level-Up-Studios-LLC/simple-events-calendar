@@ -4,14 +4,14 @@ A clean, responsive WordPress plugin for displaying events with infinite scroll,
 
 ## Description
 
-Simple Events Calendar provides an elegant way to create and display events on your WordPress website. The plugin features a responsive grid layout that adapts to all screen sizes, infinite scroll loading, and automatic filtering to show only current and upcoming events. As of **v4.4.0** it also supports recurring events that repeat every N days, weeks, months, or years — each occurrence is a real post, so it Just Works with the existing shortcode, archive, and admin UI.
+Simple Events Calendar provides an elegant way to create and display events on your WordPress website. The plugin features a responsive grid layout that adapts to all screen sizes, infinite scroll loading, and automatic filtering to show only current and upcoming events. As of **v4.4.0** it also supports recurring events that repeat every N days, weeks, months, or years — each occurrence is a real post, so it Just Works with the existing shortcode, archive, and admin UI. **v5.1.0** adds the `[sec_event]` single-event shortcode, Elementor Events Grid and Single Event display widgets (usable on any page), and weekly by-day recurrence (repeat on specific weekdays, weekdays only, or weekends).
 
 ## Features
 
 ### 🎨 **Modern Design**
 
 - Responsive grid layout (3 columns desktop, 2 tablet, 1 mobile)
-- 4:3 aspect ratio featured images
+- 3:2 aspect ratio featured images (grid); new image-left list layout with light-gray bordered cards
 - Hover effects and smooth animations
 - Clean, professional card-based design
 
@@ -41,12 +41,23 @@ Simple Events Calendar provides an elegant way to create and display events on y
 ### 🔁 **Recurring Events** (v4.4.0+)
 
 - Repeat every N **days / weeks / months / years**
+- **Weekly by-day recurrence** (v5.1.0+): choose specific weekdays, **Weekdays** (Mon–Fri), **Weekend** (Sat–Sun), or **Every day** via a S–M–T–W–T–F–S day picker with a live plain-English summary
 - End conditions: after a number of occurrences, on a specific date, or **never** (with a rolling 24-month horizon that's refilled daily by WP-Cron, capped at 60 months out per series)
 - Per-occurrence editing with a **Series Edit Scope** sidebar metabox: changes apply to *this occurrence only*, *this and future*, or *the entire series*
 - Per-field overrides — customising one occurrence's location won't be overwritten by a later series-wide title change
 - Each occurrence is a real `simple-events` post, so the shortcode, archive, AJAX loader, admin filters, and the **Series** admin column all work with recurring events with no extra configuration
 - Large series generate the first 50 occurrences synchronously and finish in the background via `wp_schedule_single_event`
 - DST-safe and month-end-safe date math (Jan 31 → Feb 28 → Mar 31; Feb 29 → Feb 28 in non-leap years)
+
+### 🧩 **Display Widgets & Shortcodes (v5.1.0+)**
+
+- **`[sec_events]`** — listing shortcode with infinite scroll; attributes control count, category, order, show-past, and show_* toggles
+- **`[sec_event id="123"]`** — embed a single event anywhere in card or image-left list layout; also accepts `show_time`, `show_excerpt`, `show_location`, `show_footer`
+- **Element shortcodes** (`[sec_event_title]`, `[sec_event_date]`, `[sec_event_time]`, etc.) — one per field, for fully custom layouts in any page builder
+- **Elementor Events Grid widget** (`sec-events-grid`) — grid or image-left list of events, configurable column count, optional "Load more on scroll" infinite scroll; usable on any page
+- **Elementor Single Event widget** (`sec-single-event`) — render one event chosen from a searchable list; card or list layout; usable on any page
+- **Per-element Elementor widgets** — Event Title, Image, Date, Time, Location, Excerpt, Content, Categories, Button; designed for use inside a single-event template, event archive, or Elementor Loop Grid bound to events (previews a sample event in the editor; renders nothing on ordinary pages)
+- **In-plugin Documentation page** (Events → Documentation) — lists all shortcodes and Elementor widgets with usage context
 
 ### 🛠 **Easy to Use**
 

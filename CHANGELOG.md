@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.1.0] (2026-05-30)
+
+### Added
+
+* **`[sec_event]` shortcode** — displays a single event by ID anywhere on the site. `id` (required) is the post ID; `layout` is `card` (default) or `list` (image-left). Also accepts `show_time`, `show_excerpt`, `show_location`, `show_footer`. Rendered via `simple_events_render_single_event()` in `includes/functions.php`.
+* **Elementor Events Grid widget** (`sec-events-grid`) — standalone grid or image-left list of events; controls for layout, responsive column count, event count, category, order, show-past, and `show_*` toggles. An optional **"Load more on scroll"** (`data-sec-loadmore="1"`) enables infinite scroll off by default. The front-end script is registered in `register_assets()` so the widget can declare it via `get_script_depends()`.
+* **Elementor Single Event widget** (`sec-single-event`) — renders one event chosen from a searchable list; `card` or `list` layout.
+* **Weekly by-day recurrence** — new `event_repeat_byday` post meta (comma-separated weekday numbers, 0=Sun…6=Sat, weekly frequency only). Event Details shows a S–M–T–W–T–F–S day picker with **Weekdays / Weekend / Every day** presets. Live recurrence summary reads e.g. "Repeats every week on Mon, Wed, Fri". Implemented in `Simple_Events_Recurrence::compute_weekly_byday_dates()`.
+* **Documentation page** (`includes/class-docs.php`, `Simple_Events_Docs`) — read-only Events → Documentation page listing all shortcodes and Elementor widgets and their usage contexts. Requires `edit_posts` capability; slug `simple-events-docs`.
+* **Opt-in data deletion on uninstall** — new `delete_data_on_uninstall` setting (Events → Settings → Data, default `'no'`). Uninstall retains all events/categories/settings unless an admin explicitly opts in. Deletion never happens on deactivation.
+* Shared render helpers `simple_events_render_events_grid( array $args )` and `simple_events_render_single_event( int $post_id, array $flags, string $layout )` added to `includes/functions.php`.
+
+### Changed
+
+* **Event Details meta box** redesigned: sectioned layout with an accent bar, field icons, a "Recurring" pill, a live plain-English recurrence summary, and polished (padded/bordered) inputs. New admin stylesheet `assets/css/simple-events-admin.css` (hand-written, not part of the SCSS build).
+* **Event cards** restyled: 5 px corner radius, softer/larger drop shadow, light-gray border, 22 px `<h3>` titles. Grid thumbnails changed from 4:3 to **3:2** aspect ratio. New **list layout** (`.sec-layout-list`) with featured image left and details right.
+* **Date format setting** now uses radio-button presets + a Custom field (WordPress-General style); **Default sort order** setting now uses radio buttons. Storage unchanged — still single `date_format`/`order` strings in `simple_events_settings`.
+* **Empty-state message** is now a built-in translatable string rendered by `Simple_Events_Renderer`; the editable empty-state settings fields were removed.
+* **Per-element Elementor widgets** (Title/Image/Date/Time/Location/Excerpt/Content/Categories/Button) are gated to event-loop contexts (single-event templates, archives, Loop Grid bound to events). Outside those contexts they preview a sample event (`Simple_Events_Elementor::sample_event_id()`) in the editor and render nothing on the front end. The "Simple Events" widget category now sits just below "Basic".
+* Front-end stylesheet/script registered for on-demand loading so the display widgets and `[sec_event]` work on any page.
+
+### Fixed
+
+* AJAX "load more" cards were missing time, excerpt, location, and "Learn More" link — corrected a show-flag type mismatch between the AJAX path and the card template.
+* Infinite scroll could fail to trigger when the user scrolled straight to the bottom and stopped (leading-edge throttle dropped the resting position) — now re-checks on the trailing edge.
+* Elementor event-ID fallback guarded against term-ID collisions on taxonomy archives; weekday-picker checkboxes given full weekday names for screen readers; Events Grid columns now stack correctly to 2/1 on tablet/mobile.
+
 ## [v5.0.0] (2026-05-29)
 
 ### Removed
@@ -283,6 +310,7 @@ When `Simple_Events_Recurrence::regenerate_series()` updates an existing live ch
 - Updated CSS file
 - Updated the "No more events" message from the `simple-events-shortcode.php` file.
 
+[v5.1.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v5.0.0...v5.1.0
 [v4.4.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.3.1...v4.4.0
 [v4.3.1]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.3.0...v4.3.1
 [v4.3.0]: https://github.com/Level-Up-Studios-LLC/simple-events-calendar/compare/v4.2.4...v4.3.0

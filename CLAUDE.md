@@ -49,11 +49,12 @@ PHP code style is enforced via **phpcs.xml** (WordPress Coding Standards). Run w
 6. `class-admin-columns.php` → `Simple_Events_Admin_Columns`
 7. `class-meta-box.php` → `Simple_Events_Meta_Box` (native Event Details editing UI)
 8. `class-settings.php` → `Simple_Events_Settings` (Events → Settings page + `simple_events_settings` option)
-9. `class-templates.php` → `Simple_Events_Templates` (default single/archive/taxonomy templates via `template_include`)
-10. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
-11. `includes/elementor/class-elementor.php` → `Simple_Events_Elementor::init()` (no-op unless Elementor is active)
+9. `class-docs.php` → `Simple_Events_Docs` (read-only Events → Documentation page; capability `edit_posts`, slug `simple-events-docs`)
+10. `class-templates.php` → `Simple_Events_Templates` (default single/archive/taxonomy templates via `template_include`)
+11. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
+12. `includes/elementor/class-elementor.php` → `Simple_Events_Elementor::init()` (no-op unless Elementor is active)
 
-All component instances hang off the main singleton (`$plugin->post_type`, `->renderer`, `->shortcode`, `->ajax`, `->admin_columns`, `->meta_box`, `->settings`, `->templates`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
+All component instances hang off the main singleton (`$plugin->post_type`, `->renderer`, `->shortcode`, `->ajax`, `->admin_columns`, `->meta_box`, `->settings`, `->docs`, `->templates`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
 
 ### Settings and the display helpers
 All tunables live in one option array `simple_events_settings` (see `Simple_Events_Settings` + `simple_events_get_setting_defaults()`). Read settings via `simple_events_get_setting($key, $fallback)`. The front-end date/time format is a setting, so **never** read `event_date`/time meta raw for display — use `simple_events_get_event_date($id)` and `simple_events_get_event_time($id, $key)`, which convert the stored `Ymd` / `g:i a` values to the configured display format. Schema is built once by `simple_events_get_event_schema($id)` (returns null when the JSON-LD setting is off). Saving settings flushes the shortcode transients.
@@ -64,6 +65,8 @@ All tunables live in one option array `simple_events_settings` (see `Simple_Even
 - **Empty-state message** is now a hardcoded, translatable static string rendered by `Simple_Events_Renderer`. The editable empty-state settings fields were removed in v5.1.0 — no setting key exists for it.
 - **`delete_data_on_uninstall`** (new in v5.1.0, default `'no'`) controls whether uninstall deletes plugin data. See the "Uninstall" section below.
 
+**Documentation page** (`includes/class-docs.php`, `Simple_Events_Docs`): a read-only admin page at Events → Documentation that lists all shortcodes (`[sec_events]`, `[sec_event]`, element shortcodes) and Elementor widgets with their usage contexts. Registered on `admin_menu` with the `edit_posts` capability, slug `simple-events-docs`. It has no settings form and writes nothing to the database.
+
 ### Native fields and storage formats (critical)
 The meta box reads/writes the exact keys/formats earlier versions used via ACF, so existing data is untouched: `event_date` = `Ymd`, `event_start_time`/`event_end_time` = `g:i a`, `event_location` = text, and the rule keys `event_repeats` (int 1/0), `event_repeat_interval` (int), `event_repeat_frequency` (`daily|weekly|monthly|yearly`), `event_repeat_end_type` (`never|count|until`), `event_repeat_count` (int), `event_repeat_until` (`Ymd`). The meta box hooks `save_post_simple-events` at priority 10 (which fires before any `save_post`), so the recurrence engine at `save_post`:30 still reads the persisted rule. **The meta box bails when `$GLOBALS['sec_generating_series']` is set**, so generated children are never overwritten with the parent's submitted values.
 
@@ -72,11 +75,13 @@ The meta box reads/writes the exact keys/formats earlier versions used via ACF, 
 
 **v5.1.0 Elementor additions (in `includes/elementor/display-widgets.php`):**
 
-- **Events Grid widget** (`sec-events-grid`): Standalone grid or image-left list of events. Controls include layout (grid/list), responsive column count (via `--sec-columns` CSS custom property), event count, category filter, order, show-past toggle, and `show_time`/`show_excerpt`/`show_location`/`show_footer` toggles. Rendering is delegated to `simple_events_render_events_grid()` in `includes/functions.php`.
+- **Events Grid widget** (`sec-events-grid`): Standalone grid or image-left list of events. Controls include layout (grid/list, `render_type=template` so the editor re-renders on switch), column count (sets the `--sec-columns` CSS custom property; the SCSS still stacks to 2/1 on tablet/mobile), event count, category filter, order, show-past toggle, the `show_*` toggles, and an optional **Load more on scroll** toggle (off by default). When load-more is on the container emits `data-sec-loadmore="1"` plus the `data-*` query context and the widget pulls in the front-end script via `get_script_depends()`. Rendering is delegated to `simple_events_render_events_grid()` in `includes/functions.php`.
 
 - **Single Event widget** (`sec-single-event`): Renders one event chosen via a searchable SELECT2 picker (searches by post title). Supports `card` (default) or `list` layout plus the standard `show_*` toggles. Rendering is delegated to `simple_events_render_single_event()` in `includes/functions.php`.
 
-- **Per-element widgets (Title/Image/Date/Time/Location/Excerpt — in `includes/elementor/widgets.php`) are now gated to event-loop contexts.** The per-widget "Preview event" picker was removed in v5.1.0. These widgets now render the current loop/queried event (single event page, archive, Elementor Loop Grid item, Theme Builder single template) and show an editor-only notice elsewhere. They produce no front-end output when used outside an event context.
+- **Per-element widgets (Title/Image/Date/Time/Location/Excerpt/Content/Categories/Button — in `includes/elementor/widgets.php`) are gated to event-loop contexts.** The per-widget "Preview event" picker was removed in v5.1.0. They render the current loop/queried event (single event page, archive, Elementor Loop Grid item, Theme Builder single template). Out of context: in the Elementor **editor** they preview the actual element using a sample event (`Simple_Events_Elementor::sample_event_id()`) so the user sees real output; on the **front end** they output nothing. `resolve_event_id()` only trusts `get_queried_object()` when it is a `WP_Post` (a term ID on a taxonomy archive must not collide with a post ID).
+
+- **Widget category placement:** `register_category()` adds the "Simple Events" category, then `move_category_after()` reorders Elementor's private categories array (via reflection, fully guarded) so it sits just below the "Basic" category in the panel.
 
 **Shared render helpers** — `simple_events_render_events_grid( array $args )` (returns the grid/list HTML string) and `simple_events_render_single_event( int $post_id, array $flags, string $layout )` (returns the single-event HTML string) live in `includes/functions.php` and are the single source for the display widgets and the `[sec_event]` shortcode. Keep rendering logic there, not duplicated in widget `render()` methods.
 
@@ -92,7 +97,7 @@ The post type slug is `simple-events` and the taxonomy is `simple-events-cat`. *
 Any new archive-facing query must go through the same pattern (the `event_date` post meta, `Ymd` format) or it will not sort/filter consistently with the rest of the plugin.
 
 ### Asset enqueue gating
-`enqueue_scripts()` only enqueues CSS/JS when the current request is a `simple-events` archive/single/taxonomy, a post containing the `[sec_events]` shortcode, or a text widget. Test that this gate still holds when adding new rendering paths — silently enqueueing everywhere is a regression. The front-end stylesheet handle `simple-events-style` is registered on `wp_enqueue_scripts` (priority 1) and enqueued on demand: the shortcode class also enqueues it when the post contains `[sec_event]` (single-event shortcode), and the Elementor Events Grid and Single Event widgets pull it in via `get_style_depends()`.
+`enqueue_scripts()` only enqueues CSS/JS when the current request is a `simple-events` archive/single/taxonomy, a post containing the `[sec_events]` shortcode, or a text widget. Test that this gate still holds when adding new rendering paths — silently enqueueing everywhere is a regression. The front-end stylesheet handle `simple-events-style` is registered on `wp_enqueue_scripts` (priority 1, in `register_assets()`) and enqueued on demand: the shortcode class also enqueues it when the post contains `[sec_event]` (single-event shortcode), and the Elementor Events Grid and Single Event widgets pull it in via `get_style_depends()`. The infinite-scroll script `simple-events-script` (with `ajax_params` localized) is registered there too, so the Events Grid widget can declare it via `get_script_depends()`. The load-more JS only builds controllers for containers carrying `data-sec-loadmore="1"` — the `[sec_events]` shortcode, the archive/taxonomy templates, and the Events Grid widget when its toggle is on — so single-event cards and fixed grids are never hijacked.
 
 `wp_localize_script` exposes `ajax_params` (`ajaxurl`, `nonce`, `initial_offset`, `load_increment`) to the infinite-scroll JS. `initial_offset` and `load_increment` both come from the `load_increment` setting (default 6). The nonce action string lives in the `SIMPLE_EVENTS_NONCE_ACTION` constant (defined in the main plugin file as `'load_more_events_nonce'`) — use it everywhere, never hardcode the string. Changing any of these keys requires updating `assets/js/simple-events.js` in lockstep.
 

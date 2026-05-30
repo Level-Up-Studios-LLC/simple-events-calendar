@@ -5,7 +5,7 @@ Tags: events, calendar, shortcode, responsive, elementor
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 5.0.0
+Stable tag: 5.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,14 +19,18 @@ Simple Events Calendar is a lightweight, user-friendly events management plugin 
 
 * **Responsive Design**: Automatically adapts to different screen sizes (3 columns on desktop, 2 on tablet, 1 on mobile)
 * **No external dependencies**: Native event fields — ACF is no longer required
-* **Settings page**: Choose the front-end date/time format, display defaults, empty-state copy, cache lifetime, and more
+* **Settings page**: Choose the front-end date/time format, display defaults, cache lifetime, and more
 * **Default templates**: Built-in single, archive, and category templates (theme-, Elementor-, and block-theme-overridable)
+* **Single Event shortcode**: `[sec_event id="123"]` — display one event anywhere in card or image-left list layout
 * **Modular element shortcodes**: `[sec_event_title]`, `[sec_event_image]`, `[sec_event_date]`, and more for custom layouts
-* **Elementor integration**: Drag-and-drop "Simple Events" widgets plus Dynamic Tags
+* **Elementor display widgets**: Events Grid (grid or list, configurable columns, optional infinite scroll) and Single Event widgets usable on any page; per-element widgets for event templates and archives
+* **Weekly by-day recurrence**: Recurring events can repeat on specific weekdays, weekdays only, or weekends only — with quick presets and a live plain-English summary
 * **Infinite Scroll Loading**: Events load smoothly as users scroll down
 * **Flexible Display Options**: Control what event information to show (time, excerpt, location, etc.)
 * **Event Status Filtering**: Filter events by upcoming, today's events, or past events in admin
 * **SEO**: schema.org Event structured data on cards and single event pages
+* **In-plugin Documentation**: Events → Documentation page listing all shortcodes and Elementor widgets
+* **Opt-in data management**: Choose whether to keep or delete event data when the plugin is uninstalled (default: keep)
 * **Accessibility Ready**: Built with accessibility best practices and reduced motion support
 
 = Shortcode Usage =
@@ -56,9 +60,26 @@ For building custom layouts (including inside page builders), each event element
 
 `[sec_event_title]`, `[sec_event_image]`, `[sec_event_date]`, `[sec_event_time]`, `[sec_event_location]`, `[sec_event_excerpt]`, `[sec_event_content]`, `[sec_event_categories]`, `[sec_event_button]`
 
+= Single Event Shortcode =
+
+Display one specific event anywhere on your site:
+
+`[sec_event id="123"]`
+
+* `id` — (required) the post ID of the event to display
+* `layout` — `card` (default) or `list` (featured image on the left, details on the right)
+* `show_time`, `show_excerpt`, `show_location`, `show_footer` — same as `[sec_events]`, defaults from Settings
+
+Example: `[sec_event id="42" layout="list" show_excerpt="no"]`
+
 = Elementor =
 
-When Elementor is active, a "Simple Events" widget category provides drag-and-drop widgets for each event element, plus Dynamic Tags for binding native Elementor widgets to event fields.
+When Elementor is active, a "Simple Events" widget category (listed just below "Basic") provides:
+
+* **Events Grid** — display a configurable grid or image-left list of events on any page. Controls include layout, column count, number of events, category filter, sort order, show-past toggle, and show_time / show_excerpt / show_location / show_footer toggles. An optional "Load more on scroll" toggle enables infinite scroll.
+* **Single Event** — render one event (chosen from a searchable list) anywhere on your site; supports card or list layout.
+* **Per-element widgets** (Event Title, Image, Date, Time, Location, Excerpt, Content, Categories, Button) — intended for use inside a single-event template, event archive template, or Elementor Loop Grid bound to events. They preview a sample event in the Elementor editor but render nothing on the front end outside an event context.
+* **Dynamic Tags** — bind native Elementor widgets to event fields.
 
 = No Required Plugins =
 
@@ -93,7 +114,7 @@ Additional languages can be added using standard WordPress translation methods.
 
 = Do I need Advanced Custom Fields Pro? =
 
-No, the plugin works with both ACF Free and ACF Pro. However, ACF (Free or Pro) is required for the plugin to function.
+No. Advanced Custom Fields is not required and has not been required since v5.0.0. The plugin is fully self-contained — event date, time, location, and recurrence are all managed through a built-in "Event Details" meta box. Existing events created with earlier ACF-based versions are preserved with no migration needed; ACF can be safely deactivated or removed.
 
 = Can I customize the event display? =
 
@@ -119,6 +140,29 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 4. Shortcode parameters and usage examples
 
 == Changelog ==
+
+= 5.1.0 (2026-05-30) =
+
+**Added**
+* Single-event shortcode `[sec_event id="123" layout="card|list"]` — display one event anywhere on your site in card or image-left list layout
+* Elementor **Events Grid** widget — grid or image-left list of events usable on any page; configurable column count, category/order/show-past filters, and optional "Load more on scroll" infinite scroll
+* Elementor **Single Event** widget — render one event (chosen from a searchable list) anywhere; card or list layout
+* **Weekly by-day recurrence** — recurring weekly events can now target specific weekdays (S–M–T–W–T–F–S picker) with **Weekdays**, **Weekend**, and **Every day** presets and a live plain-English recurrence summary
+* **Documentation page** at Events → Documentation listing all shortcodes and Elementor widgets
+* **Opt-in data deletion on uninstall** (Events → Settings → Data): default keeps all events, categories, and settings on uninstall; only an explicit choice deletes them — deletion never happens on deactivation
+
+**Changed**
+* Event cards restyled: 5 px corner radius, softer drop shadow, light-gray border, 22 px event title; grid thumbnails changed from 4:3 to **3:2** aspect ratio; new image-left **list layout**
+* Event Details meta box redesigned with sectioned layout, field icons, "Recurring" pill, and a live recurrence summary
+* Date format setting now uses preset radio buttons + a Custom field (matching WordPress's General Settings style); default sort order setting now uses radio buttons
+* Empty-state "no events" message is now a built-in translatable string; the editable empty-state settings fields were removed
+* Per-element Elementor widgets (Title/Image/Date/Time/Location etc.) are now gated to event-loop contexts — they preview a sample event in the editor but render nothing on an ordinary page on the front end
+* Front-end stylesheet and script are now registered for on-demand loading so the display widgets and `[sec_event]` shortcode work on any page
+
+**Fixed**
+* AJAX "load more" event cards were missing time, excerpt, location, and "Learn More" link — fixed a show-flag type mismatch between the AJAX path and the card template
+* Infinite scroll could fail to trigger when scrolling straight to the bottom and stopping — now re-checks position on the trailing edge
+* Several code-review fixes: Elementor event-ID fallback guarded against term-ID collisions on taxonomy archives; weekday picker checkboxes given full names for screen readers; Events Grid columns stack correctly to 2/1 on tablet/mobile
 
 = 5.0.0 (2026-05-29) =
 
