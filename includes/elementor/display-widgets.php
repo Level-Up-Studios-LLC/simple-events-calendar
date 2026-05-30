@@ -54,7 +54,10 @@ class Simple_Events_Widget_Grid extends \Elementor\Widget_Base {
                 'list' => __('List (image left)', 'simple_events'),
             ),
             'default'      => 'grid',
-            'prefix_class' => 'sec-elementor-layout-',
+            // Re-render server-side on change so the PHP-set layout class on the
+            // inner container updates live in the editor. (prefix_class alone only
+            // updated the wrapper, leaving the preview stale until a refresh.)
+            'render_type'  => 'template',
         ));
 
         // Non-responsive on purpose: this sets the desktop column count, and the
@@ -221,7 +224,9 @@ class Simple_Events_Widget_Single extends \Elementor\Widget_Base {
                 'list' => __('List (image left)', 'simple_events'),
             ),
             'default'      => 'card',
-            'prefix_class' => 'sec-elementor-layout-',
+            // Re-render server-side on change so the PHP-set layout class updates
+            // live in the editor (matches the Events Grid layout control).
+            'render_type'  => 'template',
         ));
 
         foreach (array(
