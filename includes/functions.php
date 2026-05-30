@@ -825,9 +825,20 @@ function simple_events_render_events_grid($args = array()) {
 
     if (!$query->have_posts()) {
         $post = $original_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+        // Context-aware empty message, mirroring the [sec_events] shortcode.
+        if (!empty($args['category'])) {
+            /* translators: %s: category slug */
+            $message = sprintf(esc_html__('No events found in the "%s" category.', 'simple_events'), esc_html((string) $args['category']));
+        } elseif (empty($args['show_past'])) {
+            $message = esc_html__('No upcoming events scheduled. Check back soon!', 'simple_events');
+        } else {
+            $message = esc_html__('No events have been created yet.', 'simple_events');
+        }
+
         return '<div class="simple-events-calendar simple-events-no-events"><div class="simple-events-empty-state"><h3>'
             . esc_html__('No Events Found', 'simple_events') . '</h3><p>'
-            . esc_html__('No upcoming events scheduled. Check back soon!', 'simple_events')
+            . $message
             . '</p></div></div>';
     }
 

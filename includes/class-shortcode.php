@@ -351,6 +351,13 @@ class Simple_Events_Shortcode
 
         $html = simple_events_render_single_event($post_id, $flags, $layout);
         if ('' === $html) {
+            if (current_user_can('edit_posts')) {
+                return '<p class="simple-events-notice">' . sprintf(
+                    /* translators: %d: event ID */
+                    esc_html__('No published event found for ID %d. Check the "id" attribute — the event may be unpublished or deleted.', 'simple_events'),
+                    $post_id
+                ) . '</p>';
+            }
             return '';
         }
 
