@@ -113,9 +113,9 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
 
         <header class="simple-events-calendar__post__header">
             <a href="<?php echo $permalink; ?>" itemprop="url" rel="bookmark">
-                <h4 class="simple-events-calendar__post__title" itemprop="name">
+                <h3 class="simple-events-calendar__post__title" itemprop="name">
                     <?php echo $title; ?>
-                </h4>
+                </h3>
             </a>
         </header>
 
