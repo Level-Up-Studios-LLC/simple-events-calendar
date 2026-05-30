@@ -56,7 +56,11 @@ class Simple_Events_Widget_Grid extends \Elementor\Widget_Base {
             'prefix_class' => 'sec-elementor-layout-',
         ));
 
-        $this->add_responsive_control('columns', array(
+        // Non-responsive on purpose: this sets the desktop column count, and the
+        // stylesheet stacks to 2 columns on tablet and 1 on mobile (matching the
+        // default event grid). A responsive control would imply per-breakpoint
+        // values the CSS deliberately overrides.
+        $this->add_control('columns', array(
             'label'     => __('Columns', 'simple_events'),
             'type'      => \Elementor\Controls_Manager::NUMBER,
             'min'       => 1,

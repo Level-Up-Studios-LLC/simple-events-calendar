@@ -440,9 +440,11 @@ $sec-list-image-width: 240px;
     margin-bottom: 0;
   }
 
+  // No max-width here: the footer's flex-basis:100% already forces its own
+  // row, and dropping the constraint lets thumbnail-less cards use the full
+  // width instead of reserving a blank image column.
   .simple-events-calendar__post__description {
     flex: 1 1 300px;
-    max-width: calc(100% - #{$sec-list-image-width});
   }
 
   .simple-events-calendar__post__footer {
@@ -457,10 +459,6 @@ $sec-list-image-width: 240px;
     .simple-events-calendar__post__thumbnail {
       flex-basis: auto;
       width: 100%;
-    }
-
-    .simple-events-calendar__post__description {
-      max-width: 100%;
     }
   }
 }
