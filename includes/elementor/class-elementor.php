@@ -51,6 +51,73 @@ class Simple_Events_Elementor {
         add_action('elementor/elements/categories_registered', array(__CLASS__, 'register_category'));
         add_action('elementor/widgets/register', array(__CLASS__, 'register_widgets'));
         add_action('elementor/dynamic_tags/register', array(__CLASS__, 'register_tags'));
+
+        // Loop Grid query presets — set the Loop Grid's "Query ID" to one of
+        // these to order results by the event date (event_date meta) instead of
+        // the post date. `sec_events_by_date` hides past events; the `_all`
+        // variant includes them. The ASC/DESC direction follows the widget's
+        // own Order control.
+        add_action('elementor/query/sec_events_by_date', array(__CLASS__, 'query_events_by_date'));
+        add_action('elementor/query/sec_events_by_date_all', array(__CLASS__, 'query_events_by_date_all'));
+    }
+
+    /**
+     * Loop Grid query: order by event date, upcoming events only.
+     *
+     * @param WP_Query $query Elementor's loop query.
+     */
+    public static function query_events_by_date($query) {
+        self::apply_event_date_order($query, false);
+    }
+
+    /**
+     * Loop Grid query: order by event date, including past events.
+     *
+     * @param WP_Query $query Elementor's loop query.
+     */
+    public static function query_events_by_date_all($query) {
+        self::apply_event_date_order($query, true);
+    }
+
+    /**
+     * Apply event-date ordering (and optional upcoming-only filter) to a loop
+     * query. `event_date` is stored as Ymd, so it is sorted as a DATE. The
+     * ASC/DESC direction is left to the widget's Order control when set.
+     *
+     * @param WP_Query $query        Elementor's loop query.
+     * @param bool     $include_past Whether to keep past events.
+     */
+    private static function apply_event_date_order($query, $include_past) {
+        if (!($query instanceof WP_Query)) {
+            return;
+        }
+
+        $query->set('meta_key', 'event_date');
+        $query->set('orderby', 'meta_value');
+        $query->set('meta_type', 'DATE');
+        if (!$query->get('order')) {
+            $query->set('order', 'ASC');
+        }
+
+        if ($include_past) {
+            return;
+        }
+
+        $date_clause = array(
+            'key'     => 'event_date',
+            'compare' => '>=',
+            'value'   => current_time('Ymd'),
+            'type'    => 'DATE',
+        );
+
+        // Nest under AND so any existing meta_query (e.g. from the widget) is
+        // preserved rather than overwritten.
+        $existing = $query->get('meta_query');
+        if (!empty($existing) && is_array($existing)) {
+            $query->set('meta_query', array('relation' => 'AND', $existing, $date_clause));
+        } else {
+            $query->set('meta_query', array($date_clause));
+        }
     }
 
     /**

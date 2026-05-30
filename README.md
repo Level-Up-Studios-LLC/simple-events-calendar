@@ -57,6 +57,7 @@ Simple Events Calendar provides an elegant way to create and display events on y
 - **Elementor Events Grid widget** (`sec-events-grid`) — grid or image-left list of events, configurable column count, optional "Load more on scroll" infinite scroll; usable on any page
 - **Elementor Single Event widget** (`sec-single-event`) — render one event chosen from a searchable list; card or list layout; usable on any page
 - **Per-element Elementor widgets** — Event Title, Image, Date, Time, Location, Excerpt, Content, Categories, Button; designed for use inside a single-event template, event archive, or Elementor Loop Grid bound to events (previews a sample event in the editor; renders nothing on ordinary pages)
+- **Elementor Loop Grid query presets** — set a Loop Grid's *Query ID* to `sec_events_by_date` (upcoming only) or `sec_events_by_date_all` (includes past) to order it by the event date instead of the post date
 - **In-plugin Documentation page** (Events → Documentation) — lists all shortcodes and Elementor widgets with usage context
 
 ### 🛠 **Easy to Use**

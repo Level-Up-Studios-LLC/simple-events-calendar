@@ -84,6 +84,8 @@ The meta box reads/writes the exact keys/formats earlier versions used via ACF, 
 
 - **Widget category placement:** `register_category()` adds the "Simple Events" category, then `move_category_after()` reorders Elementor's private categories array (via reflection, fully guarded) so it sits just below the "Basic" category in the panel.
 
+- **Loop Grid query presets:** `init()` registers `elementor/query/sec_events_by_date` and `elementor/query/sec_events_by_date_all` (handlers `query_events_by_date()` / `query_events_by_date_all()` → `apply_event_date_order()`). Setting a Loop Grid's *Query ID* to one of these orders the loop by the `event_date` meta (`meta_value` / `meta_type=DATE`) instead of post date; the non-`_all` variant adds the upcoming-only `event_date >= today` clause (nested under `AND` to preserve any existing meta_query). Direction is left to the widget's Order control. These are plain WP actions, harmless when Elementor is absent (they simply never fire). Elementor's Loop Grid has no UI option to order by a meta key, which is why this is needed.
+
 **Shared render helpers** — `simple_events_render_events_grid( array $args )` (returns the grid/list HTML string) and `simple_events_render_single_event( int $post_id, array $flags, string $layout )` (returns the single-event HTML string) live in `includes/functions.php` and are the single source for the display widgets and the `[sec_event]` shortcode. Keep rendering logic there, not duplicated in widget `render()` methods.
 
 ### CPT and archive query

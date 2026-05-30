@@ -187,6 +187,28 @@ class Simple_Events_Docs {
             <h3><?php echo esc_html__('Dynamic Tags', 'simple_events'); ?></h3>
             <p><?php echo esc_html__('In an event template or Loop Grid, you can also bind a native Elementor widget (Heading, Text, Image, etc.) to an event field via its dynamic-tags picker, under the "Simple Events" group: Event Date, Event Time, Event Location, Event Title, Event Excerpt, Event Categories, and Event Image URL.', 'simple_events'); ?></p>
 
+            <h3><?php echo esc_html__('Loop Grid — sort by event date', 'simple_events'); ?></h3>
+            <p><?php echo esc_html__('Elementor\'s Loop Grid orders by post date by default, not by the event date. To sort a Loop Grid of events by their event date, set the widget\'s Query ID (Loop Grid → Query → Query ID) to one of these built-in IDs:', 'simple_events'); ?></p>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th><?php echo esc_html__('Query ID', 'simple_events'); ?></th>
+                        <th><?php echo esc_html__('Result', 'simple_events'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>sec_events_by_date</code></td>
+                        <td><?php echo esc_html__('Orders by event date and shows only upcoming events (hides past dates).', 'simple_events'); ?></td>
+                    </tr>
+                    <tr>
+                        <td><code>sec_events_by_date_all</code></td>
+                        <td><?php echo esc_html__('Orders by event date and includes past events too.', 'simple_events'); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><?php echo esc_html__('Set the Loop Grid\'s source to the Events post type, and use its own Order control for ascending (soonest first) or descending. No code snippet needed — the plugin wires these query IDs for you.', 'simple_events'); ?></p>
+
             <hr />
             <p>
                 <a class="button button-secondary" href="<?php echo esc_url(admin_url('edit.php?post_type=simple-events&page=' . Simple_Events_Settings::PAGE)); ?>"><?php echo esc_html__('Go to Settings', 'simple_events'); ?></a>
