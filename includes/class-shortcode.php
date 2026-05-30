@@ -200,7 +200,7 @@ class Simple_Events_Shortcode
             (int) $query->post_count
         );
 
-        echo '<div class="simple-events-calendar" data-shortcode="true" ' . $data_attrs . '>';
+        echo '<div class="simple-events-calendar" data-shortcode="true" data-sec-loadmore="1" ' . $data_attrs . '>';
 
         while ($query->have_posts()) {
             $query->the_post();

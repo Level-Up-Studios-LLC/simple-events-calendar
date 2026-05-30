@@ -27,6 +27,7 @@ $sec_settings = simple_events_get_settings();
     <?php if (have_posts()) : ?>
         <div class="simple-events-calendar"
             data-archive="true"
+            data-sec-loadmore="1"
             data-category=""
             data-show-past="<?php echo 'yes' === $sec_settings['show_past'] ? 'true' : 'false'; ?>"
             data-order="<?php echo 'DESC' === strtoupper((string) $sec_settings['order']) ? 'DESC' : 'ASC'; ?>"

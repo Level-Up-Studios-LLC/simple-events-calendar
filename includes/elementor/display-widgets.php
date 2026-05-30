@@ -38,6 +38,7 @@ class Simple_Events_Widget_Grid extends \Elementor\Widget_Base {
     public function get_categories() { return array('simple-events'); }
     public function get_keywords() { return array('event', 'events', 'calendar', 'grid', 'list'); }
     public function get_style_depends() { return array('simple-events-style'); }
+    public function get_script_depends() { return array('simple-events-script'); }
 
     protected function register_controls() {
         $this->start_controls_section('sec_grid_content', array(
@@ -116,6 +117,14 @@ class Simple_Events_Widget_Grid extends \Elementor\Widget_Base {
             ));
         }
 
+        $this->add_control('load_more', array(
+            'label'       => __('Load more on scroll', 'simple_events'),
+            'description' => __('Loads additional events automatically as the visitor scrolls (infinite scroll), starting from "Number of events". Off shows a fixed number.', 'simple_events'),
+            'type'        => \Elementor\Controls_Manager::SWITCHER,
+            'default'     => '',
+            'separator'   => 'before',
+        ));
+
         $this->end_controls_section();
     }
 
@@ -159,6 +168,7 @@ class Simple_Events_Widget_Grid extends \Elementor\Widget_Base {
             'show_excerpt'   => 'yes' === ($s['show_excerpt'] ?? 'yes'),
             'show_location'  => 'yes' === ($s['show_location'] ?? 'yes'),
             'show_footer'    => 'yes' === ($s['show_footer'] ?? 'yes'),
+            'load_more'      => 'yes' === ($s['load_more'] ?? ''),
         ));
         remove_filter('simple_events_grid_extra_class', array($this, 'grid_extra_class'));
 

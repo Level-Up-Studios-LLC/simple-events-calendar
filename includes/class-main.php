@@ -371,6 +371,34 @@ class Simple_Events_Calendar {
                 $this->version
             );
         }
+
+        // Register + localize the infinite-scroll script once so the gated
+        // page path AND Elementor widgets (via get_script_depends) share the
+        // same handle and ajax_params payload.
+        if (!wp_script_is('simple-events-script', 'registered')) {
+            wp_register_script(
+                'simple-events-script',
+                PLUGIN_ASSETS . '/js/simple-events.js',
+                array('jquery'),
+                $this->version,
+                true
+            );
+
+            $increment = max(1, (int) simple_events_get_setting('load_increment', 6));
+            wp_localize_script(
+                'simple-events-script',
+                'ajax_params',
+                array(
+                    'ajaxurl'        => admin_url('admin-ajax.php'),
+                    'nonce'          => wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION),
+                    'initial_offset' => $increment,
+                    'load_increment' => $increment,
+                    'loading_text'   => __('Loading more events...', 'simple_events'),
+                    'retry_text'     => __('Try Again', 'simple_events'),
+                    'no_more_text'   => __('No more events to load.', 'simple_events'),
+                )
+            );
+        }
     }
 
     /**
@@ -398,30 +426,9 @@ class Simple_Events_Calendar {
             return;
         }
 
+        // Enqueue the handles registered in register_assets() (priority 1).
         wp_enqueue_style('simple-events-style');
-
-        wp_enqueue_script(
-            'simple-events-script',
-            PLUGIN_ASSETS . '/js/simple-events.js',
-            array('jquery'),
-            $this->version,
-            true
-        );
-
-        $increment = max(1, (int) simple_events_get_setting('load_increment', 6));
-        wp_localize_script(
-            'simple-events-script',
-            'ajax_params',
-            array(
-                'ajaxurl' => admin_url('admin-ajax.php'),
-                'nonce'   => wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION),
-                'initial_offset' => $increment,
-                'load_increment' => $increment,
-                'loading_text'   => __('Loading more events...', 'simple_events'),
-                'retry_text'     => __('Try Again', 'simple_events'),
-                'no_more_text'   => __('No more events to load.', 'simple_events'),
-            )
-        );
+        wp_enqueue_script('simple-events-script');
     }
 
     /**

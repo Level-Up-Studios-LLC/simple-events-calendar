@@ -774,6 +774,7 @@ function simple_events_render_events_grid($args = array()) {
         'show_excerpt'   => true,
         'show_location'  => true,
         'show_footer'    => true,
+        'load_more'      => false,
     );
     $args = wp_parse_args($args, $defaults);
 
@@ -851,8 +852,28 @@ function simple_events_render_events_grid($args = array()) {
     );
 
     $extra_class = apply_filters('simple_events_grid_extra_class', '');
+
+    $container_attrs = 'class="simple-events-calendar' . esc_attr($layout_class)
+        . (('' !== $extra_class) ? ' ' . esc_attr($extra_class) : '') . '"';
+
+    // Opt into the infinite-scroll JS only when load_more is enabled: emit the
+    // marker + the query context the AJAX handler needs to continue this grid.
+    if (!empty($args['load_more'])) {
+        $container_attrs .= sprintf(
+            ' data-sec-loadmore="1" data-show-time="%s" data-show-excerpt="%s" data-show-location="%s" data-show-footer="%s" data-show-past="%s" data-order="%s" data-category="%s" data-offset="%d"',
+            $flags['show_time'] ? 'true' : 'false',
+            $flags['show_excerpt'] ? 'true' : 'false',
+            $flags['show_location'] ? 'true' : 'false',
+            $flags['show_footer'] ? 'true' : 'false',
+            !empty($args['show_past']) ? 'true' : 'false',
+            esc_attr($order),
+            esc_attr((string) $args['category']),
+            (int) $query->post_count
+        );
+    }
+
     ob_start();
-    echo '<div class="simple-events-calendar' . esc_attr($layout_class) . (('' !== $extra_class) ? ' ' . esc_attr($extra_class) : '') . '">';
+    echo '<div ' . $container_attrs . '>';
     while ($query->have_posts()) {
         $query->the_post();
         simple_events_render_event_card($flags);

@@ -36,6 +36,7 @@ $sec_slug     = ($sec_term && isset($sec_term->slug)) ? $sec_term->slug : '';
     <?php if (have_posts()) : ?>
         <div class="simple-events-calendar"
             data-archive="true"
+            data-sec-loadmore="1"
             data-category="<?php echo esc_attr($sec_slug); ?>"
             data-show-past="<?php echo 'yes' === $sec_settings['show_past'] ? 'true' : 'false'; ?>"
             data-order="<?php echo 'DESC' === strtoupper((string) $sec_settings['order']) ? 'DESC' : 'ASC'; ?>"

@@ -202,9 +202,12 @@ jQuery(document).ready(function ($) {
     };
   }
 
-  // Build a controller for every calendar, skipping empty-state containers.
+  // Build a controller only for containers that opt into load-more
+  // (data-sec-loadmore="1"): the [sec_events] shortcode, the archive/taxonomy
+  // templates, and the Events Grid widget when its toggle is on. This keeps the
+  // controller off single-event cards and fixed-count grids.
   var calendars = [];
-  $('.simple-events-calendar').not('.simple-events-no-events').each(function () {
+  $('.simple-events-calendar[data-sec-loadmore="1"]').not('.simple-events-no-events').each(function () {
     calendars.push(createCalendar($(this)));
   });
 
