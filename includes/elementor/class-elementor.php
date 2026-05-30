@@ -54,7 +54,8 @@ class Simple_Events_Elementor {
     }
 
     /**
-     * Register the "Simple Events" widget category.
+     * Register the "Simple Events" widget category and move it to the top of
+     * the editor panel so users don't have to scroll to the event widgets.
      *
      * @param \Elementor\Elements_Manager $elements_manager Elementor manager.
      */
@@ -66,6 +67,49 @@ class Simple_Events_Elementor {
                 'icon'  => 'eicon-calendar',
             )
         );
+
+        self::move_category_first($elements_manager, 'simple-events');
+    }
+
+    /**
+     * Reorder the registered categories so the given one appears first.
+     *
+     * Elementor has no public position API, so this reorders the manager's
+     * private categories array via reflection. It is best-effort and fully
+     * guarded: if Elementor's internals ever change, it silently no-ops rather
+     * than breaking the editor. Reordering only moves keys — values (titles,
+     * icons) are untouched.
+     *
+     * @param \Elementor\Elements_Manager $elements_manager Elementor manager.
+     * @param string                      $key              Category key to move first.
+     */
+    private static function move_category_first($elements_manager, $key) {
+        try {
+            if (!method_exists($elements_manager, 'get_categories')) {
+                return;
+            }
+
+            $categories = $elements_manager->get_categories();
+            if (!is_array($categories) || !isset($categories[$key]) || array_key_first($categories) === $key) {
+                return;
+            }
+
+            $moved = array($key => $categories[$key]);
+            unset($categories[$key]);
+            $reordered = $moved + $categories;
+
+            $ref = new ReflectionObject($elements_manager);
+            if (!$ref->hasProperty('categories')) {
+                return;
+            }
+
+            $prop = $ref->getProperty('categories');
+            $prop->setAccessible(true);
+            $prop->setValue($elements_manager, $reordered);
+        } catch (\Throwable $e) {
+            // Best-effort ordering only — never break the editor over panel order.
+            unset($e);
+        }
     }
 
     /**
