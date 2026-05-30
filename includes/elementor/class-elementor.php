@@ -35,6 +35,13 @@ class Simple_Events_Elementor {
     private static $event_options_cache = null;
 
     /**
+     * Cached sample event ID for editor previews (built once per request).
+     *
+     * @var int|null
+     */
+    private static $sample_event_cache = null;
+
+    /**
      * Wire Elementor hooks if Elementor is present.
      */
     public static function init() {
@@ -183,5 +190,31 @@ class Simple_Events_Elementor {
 
         self::$event_options_cache = $options;
         return $options;
+    }
+
+    /**
+     * A representative published event ID, used to preview the element widgets
+     * in the Elementor editor when they are placed outside an event context.
+     * Returns 0 when no published events exist.
+     *
+     * @return int
+     */
+    public static function sample_event_id() {
+        if (null !== self::$sample_event_cache) {
+            return self::$sample_event_cache;
+        }
+
+        $events = get_posts(array(
+            'post_type'        => 'simple-events',
+            'post_status'      => 'publish',
+            'numberposts'      => 1,
+            'orderby'          => 'date',
+            'order'            => 'DESC',
+            'fields'           => 'ids',
+            'suppress_filters' => false,
+        ));
+
+        self::$sample_event_cache = !empty($events) ? (int) $events[0] : 0;
+        return self::$sample_event_cache;
     }
 }

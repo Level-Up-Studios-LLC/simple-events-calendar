@@ -125,19 +125,29 @@ abstract class Simple_Events_Widget_Base extends \Elementor\Widget_Base {
     }
 
     /**
-     * Render the widget. Gated to event contexts: outside one, render nothing
-     * on the front end and a hint in the Elementor editor.
+     * Render the widget. Inside an event context (single-event template, event
+     * archive, or Loop Grid) it renders the current event. Outside one, the
+     * front end renders nothing; the Elementor editor previews the element with
+     * a sample event so the user sees the real output instead of placeholder
+     * text.
      */
     protected function render() {
         $post_id = Simple_Events_Elementor::resolve_event_id();
 
         if (!$post_id) {
-            if (Simple_Events_Elementor::is_edit_hint_allowed()) {
-                echo '<span class="sec-elementor-hint" style="display:block;padding:10px 12px;border:1px dashed #c3c4c7;border-radius:4px;color:#646970;font-size:12px;">'
-                    . esc_html__('Displays the current event. Use this element inside a single-event template, an event archive, or a Loop Grid.', 'simple_events')
-                    . '</span>';
+            // Front end, out of context: render nothing (gating preserved).
+            if (!Simple_Events_Elementor::is_edit_hint_allowed()) {
+                return;
             }
-            return;
+
+            // Editor preview: show the actual element using a sample event.
+            $post_id = Simple_Events_Elementor::sample_event_id();
+            if (!$post_id) {
+                echo '<span class="sec-elementor-hint" style="display:block;padding:10px 12px;border:1px dashed #c3c4c7;border-radius:4px;color:#646970;font-size:12px;">'
+                    . esc_html__('No events to preview yet. Create an event, or place this element inside a single-event template, archive, or Loop Grid.', 'simple_events')
+                    . '</span>';
+                return;
+            }
         }
 
         $method = array('Simple_Events_Renderer', $this->sec_key());
