@@ -44,10 +44,18 @@ $date = esc_html($post_data['date']);
 $start_time = !empty($post_data['start_time']) ? esc_html($post_data['start_time']) : '';
 $end_time = !empty($post_data['end_time']) ? esc_html($post_data['end_time']) : '';
 $excerpt = !empty($post_data['excerpt']) ? esc_html($post_data['excerpt']) : '';
-$show_time = ($post_data['show_time'] === 'yes') ? true : false;
-$show_excerpt = ($post_data['show_excerpt'] === 'yes') ? true : false;
-$show_location = ($post_data['show_location'] === 'yes') ? true : false;
-$show_footer = ($post_data['show_footer'] === 'yes') ? true : false;
+// Accept booleans or the 'yes'/'true'/'1' strings so every producer (shortcode,
+// archive helper, AJAX) gates details consistently (mirrors the fallback card).
+$sec_as_bool = static function ($value) {
+    if (is_bool($value)) {
+        return $value;
+    }
+    return in_array(strtolower((string) $value), array('yes', 'true', '1'), true);
+};
+$show_time = $sec_as_bool($post_data['show_time'] ?? false);
+$show_excerpt = $sec_as_bool($post_data['show_excerpt'] ?? false);
+$show_location = $sec_as_bool($post_data['show_location'] ?? false);
+$show_footer = $sec_as_bool($post_data['show_footer'] ?? false);
 
 // Generate CSS classes
 $css_classes = ['simple-events-calendar__post'];

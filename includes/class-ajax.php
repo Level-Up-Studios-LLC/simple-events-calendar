@@ -210,10 +210,13 @@ class Simple_Events_Ajax {
             'start_time' => simple_events_get_event_time($id, 'event_start_time'),
             'end_time'   => simple_events_get_event_time($id, 'event_end_time'),
             'location'   => get_post_meta($id, 'event_location', true),
-            'show_time'     => $display_options['show_time'],
-            'show_excerpt'  => $display_options['show_excerpt'],
-            'show_location' => $display_options['show_location'],
-            'show_footer'   => $display_options['show_footer']
+            // The card template gates details on the string 'yes' (matching the
+            // shortcode/archive producers); $display_options are booleans, so
+            // convert here — otherwise AJAX-loaded cards lose time/excerpt/footer.
+            'show_time'     => !empty($display_options['show_time']) ? 'yes' : 'no',
+            'show_excerpt'  => !empty($display_options['show_excerpt']) ? 'yes' : 'no',
+            'show_location' => !empty($display_options['show_location']) ? 'yes' : 'no',
+            'show_footer'   => !empty($display_options['show_footer']) ? 'yes' : 'no'
         );
     }
 
