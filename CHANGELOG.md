@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Empty-state message** is now a built-in translatable string rendered by `Simple_Events_Renderer`; the editable empty-state settings fields were removed.
 * **Per-element Elementor widgets** (Title/Image/Date/Time/Location/Excerpt/Content/Categories/Button) are gated to event-loop contexts (single-event templates, archives, Loop Grid bound to events). Outside those contexts they preview a sample event (`Simple_Events_Elementor::sample_event_id()`) in the editor and render nothing on the front end. The "Simple Events" widget category now sits just below "Basic".
 * Front-end stylesheet/script registered for on-demand loading so the display widgets and `[sec_event]` work on any page.
+* **Single & archive views now defer to Elementor Pro Theme Builder explicitly.** When a "Single" template (or "Archive" template) is assigned to events, that template displays the event(s); the plugin's default template is used only as a fallback. Detected via the Theme Builder conditions manager (`Simple_Events_Templates::elementor_has_location_template()`), not just filter priority.
 
 ### Fixed
 

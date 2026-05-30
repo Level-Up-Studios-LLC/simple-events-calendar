@@ -8,9 +8,10 @@
  *   - theme templates (single-simple-events.php, archive-simple-events.php,
  *     taxonomy-simple-events-cat.php) found via locate_template();
  *   - block (FSE) themes, which manage their own templates;
- *   - Elementor Pro Theme Builder, by running before Elementor's own
- *     template_include filter so Elementor wins whenever it has a matching
- *     template (and passes ours through when it doesn't).
+ *   - Elementor Pro Theme Builder: when a Single template (or Archive
+ *     template) is assigned to the request, the plugin defers to it. This is
+ *     checked explicitly (the conditions manager) and the filter also runs at
+ *     priority 5, before Elementor's own template_include filter.
  *
  * A site can disable the defaults entirely via the
  * `simple_events_use_default_template` filter.
@@ -75,6 +76,15 @@ class Simple_Events_Templates {
             return $template;
         }
 
+        // Defer to an Elementor Pro Theme Builder template assigned to this
+        // request (a "Single" template for single events, an "Archive" template
+        // for the archive/taxonomy views). When one exists it should display
+        // the event(s); otherwise we fall through to the plugin default.
+        $location = is_singular('simple-events') ? 'single' : 'archive';
+        if (self::elementor_has_location_template($location)) {
+            return $template;
+        }
+
         // Defer to a theme-provided template. locate_template() returns the
         // path to the first matching candidate; return that rather than the
         // already-resolved $template, so a theme's archive-simple-events.php
@@ -87,5 +97,38 @@ class Simple_Events_Templates {
 
         $plugin_template = PLUGIN_DIR . '/templates/' . $file;
         return file_exists($plugin_template) ? $plugin_template : $template;
+    }
+
+    /**
+     * Whether Elementor Pro Theme Builder has a template assigned to the
+     * current request for the given location ('single' or 'archive').
+     *
+     * Fully guarded: returns false when Elementor Pro is absent or its API
+     * differs, so the plugin simply falls back to its own default template.
+     *
+     * @param string $location Elementor theme location.
+     * @return bool
+     */
+    private static function elementor_has_location_template($location) {
+        if (!class_exists('\ElementorPro\Modules\ThemeBuilder\Module')) {
+            return false;
+        }
+
+        try {
+            $module = \ElementorPro\Modules\ThemeBuilder\Module::instance();
+            if (!$module || !method_exists($module, 'get_conditions_manager')) {
+                return false;
+            }
+
+            $conditions = $module->get_conditions_manager();
+            if (!$conditions || !method_exists($conditions, 'get_documents_for_location')) {
+                return false;
+            }
+
+            $documents = $conditions->get_documents_for_location($location);
+            return !empty($documents);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

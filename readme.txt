@@ -162,6 +162,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Empty-state "no events" message is now a built-in translatable string; the editable empty-state settings fields were removed
 * Per-element Elementor widgets (Title/Image/Date/Time/Location etc.) are now gated to event-loop contexts — they preview a sample event in the editor but render nothing on an ordinary page on the front end
 * Front-end stylesheet and script are now registered for on-demand loading so the display widgets and `[sec_event]` shortcode work on any page
+* Single event and archive views now use your Elementor Pro Theme Builder template when one is assigned to events (the plugin's default template is the fallback when no Elementor template exists)
 
 **Fixed**
 * AJAX "load more" event cards were missing time, excerpt, location, and "Learn More" link — fixed a show-flag type mismatch between the AJAX path and the card template
