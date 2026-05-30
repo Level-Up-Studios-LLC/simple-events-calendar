@@ -56,11 +56,13 @@
         }
 
         function selectedDays() {
+            // Preserve DOM order — the checkboxes are rendered in the site's
+            // start_of_week order, so the summary reads e.g. "Sat, Sun" on a
+            // Monday-start site rather than re-sorting to "Sun, Sat".
             var days = [];
             Array.prototype.forEach.call(dayBoxes, function (cb) {
                 if (cb.checked) { days.push(parseInt(cb.value, 10)); }
             });
-            days.sort(function (a, b) { return a - b; });
             return days;
         }
 

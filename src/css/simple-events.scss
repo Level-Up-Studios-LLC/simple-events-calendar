@@ -427,6 +427,13 @@ $sec-list-image-width: 240px;
   outline-offset: -2px;
 }
 
+// Single-event embed ([sec_event] / Single Event widget): one card, full
+// width of its container, not the multi-column listing grid. (Distinct from the
+// full single-event PAGE layout, which uses .simple-events-single.)
+.simple-events-calendar.simple-events-embed {
+  display: block;
+}
+
 // List layout (Elementor List mode + [sec_event layout="list"]).
 .simple-events-calendar.sec-layout-list {
   display: block;

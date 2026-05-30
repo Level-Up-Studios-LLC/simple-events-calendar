@@ -928,7 +928,7 @@ function simple_events_render_single_event($post_id, $flags = array(), $layout =
     setup_postdata($post);
 
     ob_start();
-    echo '<div class="simple-events-calendar simple-events-single' . esc_attr($layout_class) . '">';
+    echo '<div class="simple-events-calendar simple-events-embed' . esc_attr($layout_class) . '">';
     simple_events_render_event_card($flags);
     echo '</div>';
     $html = (string) ob_get_clean();
