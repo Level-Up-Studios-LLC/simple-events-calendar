@@ -63,6 +63,12 @@ class Simple_Events_ICS {
             return;
         }
 
+        // Honor WordPress password protection — never stream a protected
+        // event's title/location/description via the .ics download.
+        if (post_password_required($event)) {
+            return;
+        }
+
         $this->output_ics($event_id);
         exit;
     }

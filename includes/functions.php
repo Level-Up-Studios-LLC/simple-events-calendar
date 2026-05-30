@@ -907,6 +907,12 @@ function simple_events_render_single_event($post_id, $flags = array(), $layout =
         return '';
     }
 
+    // Don't expose a password-protected event's details when it is embedded by
+    // ID via [sec_event] or the Single Event widget without the password.
+    if (post_password_required($event)) {
+        return '';
+    }
+
     $flags = wp_parse_args($flags, array(
         'show_time'     => true,
         'show_excerpt'  => true,
