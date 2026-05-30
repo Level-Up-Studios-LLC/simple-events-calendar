@@ -31,6 +31,9 @@
         var frequency = box.querySelector('#sec_event_repeat_frequency');
         var count = box.querySelector('#sec_event_repeat_count');
         var until = box.querySelector('#sec_event_repeat_until');
+        var bydayRow = box.querySelector('[data-sec-byday]');
+        var dayBoxes = box.querySelectorAll('input[name="sec_event_repeat_byday[]"]');
+        var presets = box.querySelectorAll('[data-sec-preset]');
         var L = (typeof secMetaBox !== 'undefined') ? secMetaBox : null;
 
         function show(el, visible) {
@@ -43,6 +46,24 @@
             return String(str).replace('%d', val).replace('%s', val);
         }
 
+        var PRESETS = { weekdays: [1, 2, 3, 4, 5], weekend: [0, 6], all: [0, 1, 2, 3, 4, 5, 6] };
+
+        function applyPreset(name) {
+            var want = PRESETS[name] || [];
+            Array.prototype.forEach.call(dayBoxes, function (cb) {
+                cb.checked = want.indexOf(parseInt(cb.value, 10)) !== -1;
+            });
+        }
+
+        function selectedDays() {
+            var days = [];
+            Array.prototype.forEach.call(dayBoxes, function (cb) {
+                if (cb.checked) { days.push(parseInt(cb.value, 10)); }
+            });
+            days.sort(function (a, b) { return a - b; });
+            return days;
+        }
+
         function buildSummary() {
             if (!summary || !L) {
                 return;
@@ -52,6 +73,14 @@
             var freqKey = frequency ? frequency.value : 'weekly';
             var unit = (L.units && L.units[freqKey]) ? L.units[freqKey] : freqKey;
             parts.push(L.every + ' ' + (n > 1 ? n + ' ' : '') + unit);
+
+            if (freqKey === 'weekly' && L.onDays && L.dayNames) {
+                var days = selectedDays();
+                if (days.length) {
+                    var names = days.map(function (d) { return L.dayNames[d] || d; });
+                    parts[parts.length - 1] += ' ' + L.onDays.replace('%s', names.join(', '));
+                }
+            }
 
             var et = endType ? endType.value : 'count';
             if (et === 'count') {
@@ -70,6 +99,9 @@
             var on = repeats && repeats.checked;
             show(group, on);
 
+            var weekly = frequency && frequency.value === 'weekly';
+            show(bydayRow, on && weekly);
+
             if (on && endType) {
                 var value = endType.value;
                 show(countRow, value === 'count');
@@ -84,9 +116,14 @@
 
         if (repeats) { repeats.addEventListener('change', sync); }
         if (endType) { endType.addEventListener('change', sync); }
+        if (frequency) { frequency.addEventListener('change', sync); }
         box.querySelectorAll('[data-sec-summary-input]').forEach(function (el) {
             el.addEventListener('input', buildSummary);
             el.addEventListener('change', buildSummary);
+        });
+
+        Array.prototype.forEach.call(presets, function (btn) {
+            btn.addEventListener('click', function () { applyPreset(btn.getAttribute('data-sec-preset')); buildSummary(); });
         });
 
         sync();

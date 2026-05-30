@@ -96,6 +96,12 @@ class Simple_Events_Meta_Box {
             PLUGIN_VERSION
         );
 
+        $wp_locale = isset($GLOBALS['wp_locale']) ? $GLOBALS['wp_locale'] : null;
+        $day_names = array();
+        for ($d = 0; $d < 7; $d++) {
+            $day_names[$d] = $wp_locale ? $wp_locale->get_weekday_abbrev($wp_locale->get_weekday($d)) : (string) $d;
+        }
+
         wp_localize_script('simple-events-admin', 'secMetaBox', array(
             'every'    => __('Repeats every', 'simple_events'),
             'units'    => array(
@@ -109,6 +115,8 @@ class Simple_Events_Meta_Box {
             'never'    => __('repeats indefinitely', 'simple_events'),
             'until'    => __('until %s', 'simple_events'),
             'sep'      => ' · ',
+            'onDays'   => __('on %s', 'simple_events'),
+            'dayNames' => $day_names,
         ));
     }
 
@@ -137,6 +145,28 @@ class Simple_Events_Meta_Box {
         $count_raw   = get_post_meta($post->ID, 'event_repeat_count', true);
         $count       = ('' !== $count_raw) ? max(1, (int) $count_raw) : 10;
         $until       = (string) get_post_meta($post->ID, 'event_repeat_until', true);  // Ymd
+
+        // Selected weekdays for weekly "on these days". Defaults to the event's
+        // own weekday when nothing is stored yet, so the Weekly picker is never
+        // empty for a fresh event.
+        $byday_raw = (string) get_post_meta($post->ID, 'event_repeat_byday', true);
+        $byday = array();
+        if ('' !== $byday_raw) {
+            foreach (explode(',', $byday_raw) as $piece) {
+                $day = (int) trim($piece);
+                if ($day >= 0 && $day <= 6) {
+                    $byday[$day] = $day;
+                }
+            }
+        }
+        if (empty($byday) && 8 === strlen($date)) {
+            $start_dt = DateTimeImmutable::createFromFormat('!Ymd', $date, wp_timezone());
+            if ($start_dt) {
+                $w = (int) $start_dt->format('w');
+                $byday[$w] = $w;
+            }
+        }
+        $byday = array_values($byday);
 
         // Convert stored formats to HTML5 input formats.
         $date_input  = self::ymd_to_input($date);
@@ -213,6 +243,34 @@ class Simple_Events_Meta_Box {
                                     }
                                     ?>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div class="sec-mb__field" data-sec-byday>
+                            <span class="sec-mb__label"><?php esc_html_e('On these days', 'simple_events'); ?></span>
+                            <div class="sec-mb__days">
+                                <?php
+                                $wp_locale = isset($GLOBALS['wp_locale']) ? $GLOBALS['wp_locale'] : null;
+                                $sow = (int) get_option('start_of_week', 0);
+                                for ($i = 0; $i < 7; $i++) {
+                                    $day  = ($sow + $i) % 7;
+                                    $full = $wp_locale ? $wp_locale->get_weekday($day) : (string) $day;
+                                    $init = $wp_locale ? $wp_locale->get_weekday_initial($full) : substr($full, 0, 1);
+                                    printf(
+                                        '<label class="sec-mb__day"><input type="checkbox" name="sec_event_repeat_byday[]" value="%d" %s data-sec-summary-input /><span title="%s" aria-label="%s">%s</span></label>',
+                                        (int) $day,
+                                        checked(in_array($day, $byday, true), true, false),
+                                        esc_attr($full),
+                                        esc_attr($full),
+                                        esc_html($init)
+                                    );
+                                }
+                                ?>
+                            </div>
+                            <div class="sec-mb__presets">
+                                <button type="button" class="button button-small sec-mb__preset" data-sec-preset="weekdays"><?php esc_html_e('Weekdays', 'simple_events'); ?></button>
+                                <button type="button" class="button button-small sec-mb__preset" data-sec-preset="weekend"><?php esc_html_e('Weekend', 'simple_events'); ?></button>
+                                <button type="button" class="button button-small sec-mb__preset" data-sec-preset="all"><?php esc_html_e('Every day', 'simple_events'); ?></button>
                             </div>
                         </div>
 
@@ -336,6 +394,23 @@ class Simple_Events_Meta_Box {
             $frequency = 'weekly';
         }
         update_post_meta($post_id, 'event_repeat_frequency', $frequency);
+
+        $byday_post = (isset($_POST['sec_event_repeat_byday']) && is_array($_POST['sec_event_repeat_byday']))
+            ? wp_unslash($_POST['sec_event_repeat_byday'])
+            : array();
+        $byday = array();
+        foreach ($byday_post as $piece) {
+            $piece = (int) $piece;
+            if ($piece >= 0 && $piece <= 6) {
+                $byday[$piece] = $piece;
+            }
+        }
+        ksort($byday);
+        if (!empty($byday)) {
+            update_post_meta($post_id, 'event_repeat_byday', implode(',', array_values($byday)));
+        } else {
+            delete_post_meta($post_id, 'event_repeat_byday');
+        }
 
         $end_type = isset($_POST['sec_event_repeat_end_type']) ? sanitize_text_field(wp_unslash($_POST['sec_event_repeat_end_type'])) : 'never';
         if (!in_array($end_type, array('never', 'count', 'until'), true)) {

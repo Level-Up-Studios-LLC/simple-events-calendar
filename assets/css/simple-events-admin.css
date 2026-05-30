@@ -67,11 +67,90 @@
 .sec-mb__req { color: #b32d2e; }
 .sec-mb__opt { color: var(--sec-mut); }
 
+.sec-mb input[type="text"],
 .sec-mb input[type="date"],
 .sec-mb input[type="time"],
 .sec-mb input[type="number"],
 .sec-mb select {
-    max-width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: none;
+}
+
+.sec-mb input[type="text"],
+.sec-mb input[type="date"],
+.sec-mb input[type="time"] {
+    width: 100%;
+}
+
+.sec-mb__grid2 input {
+    width: 100%;
+}
+
+.sec-mb input[type="text"]:focus,
+.sec-mb input[type="date"]:focus,
+.sec-mb input[type="time"]:focus,
+.sec-mb input[type="number"]:focus,
+.sec-mb select:focus {
+    border-color: var(--sec-wp);
+    box-shadow: 0 0 0 1px var(--sec-wp);
+    outline: 2px solid transparent;
+}
+
+/* Weekly day-of-week picker */
+.sec-mb__days {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.sec-mb__day {
+    cursor: pointer;
+    position: relative; /* contain the visually-hidden, absolutely-positioned checkbox */
+}
+
+.sec-mb__day input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+}
+
+.sec-mb__day span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #8c8f94;
+    background: #fff;
+    color: var(--sec-ink, #1d2327);
+    font-weight: 600;
+    font-size: 12px;
+    user-select: none;
+}
+
+.sec-mb__day input:checked + span {
+    background: var(--sec-wp);
+    border-color: var(--sec-wp);
+    color: #fff;
+}
+
+.sec-mb__day input:focus + span {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sec-wp);
+}
+
+.sec-mb__presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .sec-mb__check {
