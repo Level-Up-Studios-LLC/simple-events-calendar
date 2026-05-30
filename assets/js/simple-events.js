@@ -1,345 +1,268 @@
 /**
  * Simple Events Calendar JavaScript
- * 
- * Handles infinite scroll loading of events with improved error handling
- * and user experience enhancements.
+ *
+ * Infinite-scroll loading of events. Supports multiple independent calendars
+ * on the same page (e.g. several [sec_events] shortcodes, or an archive plus a
+ * shortcode) — each container tracks its own offset/state and continues its own
+ * query context (category / order / past-events / display flags).
  */
 jQuery(document).ready(function ($) {
   'use strict';
 
-  // Configuration - use localized values if available
-  const config = {
-    initialOffset: (typeof ajax_params !== 'undefined' && ajax_params.initial_offset) ?
-      parseInt(ajax_params.initial_offset, 10) : 6,
-    loadIncrement: (typeof ajax_params !== 'undefined' && ajax_params.load_increment) ?
-      parseInt(ajax_params.load_increment, 10) : 6,
+  if (typeof ajax_params === 'undefined') {
+    return;
+  }
+
+  var config = {
+    initialOffset: parseInt(ajax_params.initial_offset, 10) || 6,
+    loadIncrement: parseInt(ajax_params.load_increment, 10) || 6,
     scrollThreshold: 100,
     maxRetries: 3,
     retryDelay: 2000
   };
 
-  // State management
-  let state = {
-    offset: config.initialOffset,
-    loading: false,
-    noMoreEvents: false,
-    retryCount: 0,
-    container: $('.simple-events-calendar')
-  };
+  /**
+   * Controller for a single calendar container.
+   *
+   * @param {jQuery} $container The .simple-events-calendar element.
+   */
+  function createCalendar($container) {
+    var ctx = {
+      category: $container.attr('data-category') || '',
+      order: ($container.attr('data-order') || 'ASC').toUpperCase(),
+      showPast: $container.attr('data-show-past') || 'false',
+      showTime: $container.attr('data-show-time') || 'true',
+      showExcerpt: $container.attr('data-show-excerpt') || 'true',
+      showLocation: $container.attr('data-show-location') || 'true',
+      showFooter: $container.attr('data-show-footer') || 'true'
+    };
 
-  // Check if we have the required elements and AJAX parameters
-  if (!state.container.length || typeof ajax_params === 'undefined') {
+    var startOffset = parseInt($container.attr('data-offset'), 10);
+
+    var state = {
+      offset: isNaN(startOffset) ? config.initialOffset : startOffset,
+      loading: false,
+      noMore: false,
+      retry: 0,
+      $loader: null
+    };
+
+    function showLoader() {
+      if (!state.$loader) {
+        state.$loader = $('<div class="simple-events-loader">' +
+          '<div class="simple-events-spinner"></div>' +
+          '<span class="simple-events-loading-text">' +
+          (ajax_params.loading_text || 'Loading more events...') +
+          '</span></div>');
+        $container.after(state.$loader);
+        state.$loader.hide().fadeIn(300);
+      }
+    }
+
+    function hideLoader() {
+      if (state.$loader) {
+        var $l = state.$loader;
+        state.$loader = null;
+        $l.fadeOut(300, function () { $(this).remove(); });
+      }
+    }
+
+    function removeMessages() {
+      // Scope to this calendar's own messages — stop at the next calendar so
+      // we never remove messages belonging to another calendar on the page.
+      $container.nextUntil('.simple-events-calendar', '.simple-events-error, .simple-events-end').remove();
+    }
+
+    function showError(message) {
+      hideLoader();
+      var $err = $('<div class="simple-events-error"><p></p>' +
+        '<button class="simple-events-retry-btn"></button></div>');
+      $err.find('p').text(message);
+      $err.find('button').text(ajax_params.retry_text || 'Try Again');
+      $container.after($err);
+      $err.find('.simple-events-retry-btn').on('click', function () {
+        $err.remove();
+        state.retry = 0;
+        load();
+      });
+    }
+
+    function showEnd() {
+      if (!$container.nextUntil('.simple-events-calendar', '.simple-events-end').length) {
+        var $end = $('<div class="simple-events-end"><p></p></div>');
+        $end.find('p').text(ajax_params.no_more_text || 'No more events to load.');
+        $container.after($end);
+        $end.hide().fadeIn(600);
+      }
+    }
+
+    function onSuccess(response) {
+      state.retry = 0;
+
+      if (!response || response.success !== true || !response.data) {
+        state.noMore = true;
+        showEnd();
+        return;
+      }
+
+      var html = typeof response.data.html === 'string' ? response.data.html : '';
+      var hasMore = response.data.has_more !== false && html.trim() !== '';
+
+      if (!hasMore) {
+        state.noMore = true;
+        showEnd();
+        return;
+      }
+
+      var $new = $(html);
+      if (!$new.length) {
+        state.noMore = true;
+        showEnd();
+        return;
+      }
+
+      $new.hide();
+      $container.append($new);
+      $new.fadeIn(600);
+      state.offset += config.loadIncrement;
+      removeMessages();
+    }
+
+    function onError(xhr, status) {
+      state.retry++;
+      var serverMessage = (xhr && xhr.responseJSON && xhr.responseJSON.data)
+        ? xhr.responseJSON.data.message : '';
+      var message = 'Unable to load more events. ';
+      if (serverMessage) {
+        message += serverMessage;
+      } else if (status === 'timeout') {
+        message += 'The request timed out.';
+      } else if (xhr.status === 403) {
+        message += 'Access denied.';
+      } else if (xhr.status >= 500) {
+        message += 'Server error occurred.';
+      } else {
+        message += 'Please check your connection.';
+      }
+
+      if (state.retry < config.maxRetries && (status === 'timeout' || xhr.status >= 500)) {
+        setTimeout(load, config.retryDelay);
+        return;
+      }
+      showError(message);
+    }
+
+    function load() {
+      if (state.loading || state.noMore) {
+        return;
+      }
+      state.loading = true;
+      showLoader();
+
+      $.ajax({
+        type: 'POST',
+        url: ajax_params.ajaxurl,
+        dataType: 'json',
+        timeout: 15000,
+        data: {
+          action: 'load_more_events',
+          nonce: ajax_params.nonce,
+          offset: state.offset,
+          category: ctx.category,
+          order: ctx.order,
+          show_past: ctx.showPast,
+          show_time: ctx.showTime,
+          show_excerpt: ctx.showExcerpt,
+          show_location: ctx.showLocation,
+          show_footer: ctx.showFooter
+        },
+        success: onSuccess,
+        error: onError,
+        complete: function () {
+          hideLoader();
+          state.loading = false;
+        }
+      });
+    }
+
+    function shouldLoad() {
+      if (state.loading || state.noMore || !$container.length) {
+        return false;
+      }
+      var containerBottom = $container.offset().top + $container.outerHeight();
+      var viewportBottom = $(window).scrollTop() + $(window).height();
+      return viewportBottom > (containerBottom - config.scrollThreshold);
+    }
+
+    return {
+      $container: $container,
+      state: state,
+      load: load,
+      shouldLoad: shouldLoad
+    };
+  }
+
+  // Build a controller for every calendar, skipping empty-state containers.
+  var calendars = [];
+  $('.simple-events-calendar').not('.simple-events-no-events').each(function () {
+    calendars.push(createCalendar($(this)));
+  });
+
+  if (!calendars.length) {
     return;
   }
 
-  /**
-   * Show loading spinner
-   */
-  function showLoader() {
-    if ($('#simple-events-loader').length === 0) {
-      const loader = $('<div id="simple-events-loader" class="simple-events-loader">' +
-        '<div class="simple-events-spinner"></div>' +
-        '<span class="simple-events-loading-text">Loading more events...</span>' +
-        '</div>');
-
-      state.container.after(loader);
-
-      // Add smooth fade-in animation
-      loader.hide().fadeIn(300);
-    }
-  }
-
-  /**
-   * Hide loading spinner
-   */
-  function hideLoader() {
-    $('#simple-events-loader').fadeOut(300, function () {
-      $(this).remove();
-    });
-  }
-
-  /**
-   * Show error message
-   */
-  function showError(message) {
-    hideLoader();
-
-    const errorDiv = $('<div id="simple-events-error" class="simple-events-error">' +
-      '<p>' + message + '</p>' +
-      '<button class="simple-events-retry-btn">Try Again</button>' +
-      '</div>');
-
-    state.container.after(errorDiv);
-
-    // Handle retry button click
-    errorDiv.find('.simple-events-retry-btn').on('click', function () {
-      $('#simple-events-error').remove();
-      state.retryCount = 0;
-      loadMoreEvents();
-    });
-  }
-
-  /**
-   * Load more events via AJAX
-   */
-  function loadMoreEvents() {
-    if (state.loading || state.noMoreEvents) {
-      return;
-    }
-
-    state.loading = true;
-    showLoader();
-
-    $.ajax({
-      type: 'POST',
-      url: ajax_params.ajaxurl,
-      dataType: 'json',
-      data: {
-        action: 'load_more_events',
-        nonce: ajax_params.nonce,
-        offset: state.offset
-      },
-      timeout: 15000, // 15 second timeout
-      success: function (response) {
-        handleLoadSuccess(response);
-      },
-      error: function (xhr, status, error) {
-        handleLoadError(xhr, status, error);
-      },
-      complete: function () {
-        hideLoader();
-        state.loading = false;
-      }
-    });
-  }
-
-  /**
-   * Handle successful AJAX response.
-   * Server returns wp_send_json_success({ html, has_more }).
-   */
-  function handleLoadSuccess(response) {
-    state.retryCount = 0;
-
-    if (!response || response.success !== true || !response.data) {
-      state.noMoreEvents = true;
-      showNoMoreEventsMessage();
-      return;
-    }
-
-    const payload = response.data;
-    const html = typeof payload.html === 'string' ? payload.html : '';
-    const hasMore = payload.has_more !== false && html.trim() !== '';
-
-    if (!hasMore) {
-      state.noMoreEvents = true;
-      showNoMoreEventsMessage();
-      return;
-    }
-
-    const $newEvents = $(html);
-    if ($newEvents.length === 0) {
-      state.noMoreEvents = true;
-      showNoMoreEventsMessage();
-      return;
-    }
-
-    $newEvents.hide();
-    state.container.append($newEvents);
-    $newEvents.fadeIn(600);
-
-    state.offset += config.loadIncrement;
-
-    $('#simple-events-error').remove();
-    $('.simple-events-load-more-info').fadeOut();
-  }
-
-  /**
-   * Handle AJAX errors with retry logic
-   */
-  function handleLoadError(xhr, status, error) {
-    console.error('Simple Events AJAX Error:', {
-      status: status,
-      error: error,
-      responseText: xhr.responseText
-    });
-
-    state.retryCount++;
-
-    const serverMessage = xhr && xhr.responseJSON && xhr.responseJSON.data
-      ? xhr.responseJSON.data.message
-      : '';
-
-    let errorMessage = 'Unable to load more events. ';
-
-    if (serverMessage) {
-      errorMessage += serverMessage;
-    } else if (status === 'timeout') {
-      errorMessage += 'The request timed out.';
-    } else if (status === 'parsererror') {
-      errorMessage += 'Invalid response from server.';
-    } else if (xhr.status === 403) {
-      errorMessage += 'Access denied.';
-    } else if (xhr.status >= 500) {
-      errorMessage += 'Server error occurred.';
-    } else {
-      errorMessage += 'Please check your connection.';
-    }
-
-    // Auto-retry for certain errors (up to max retries)
-    if (state.retryCount < config.maxRetries && (status === 'timeout' || xhr.status >= 500)) {
-      setTimeout(function () {
-        loadMoreEvents();
-      }, config.retryDelay);
-      return;
-    }
-
-    // Show error message with retry button
-    showError(errorMessage);
-  }
-
-  /**
-   * Show "no more events" message
-   */
-  function showNoMoreEventsMessage() {
-    if ($('#simple-events-end').length === 0) {
-      const endMessage = $('<div id="simple-events-end" class="simple-events-end">' +
-        '<p>You\'ve seen all our upcoming events!</p>' +
-        '<p>Check back soon for new events.</p>' +
-        '</div>');
-
-      state.container.after(endMessage);
-      endMessage.hide().fadeIn(600);
-    }
-
-    // Remove the scroll hint if it exists
-    $('.simple-events-load-more-info').fadeOut();
-  }
-
-  /**
-   * Check if user has scrolled near bottom of page
-   */
-  function isNearBottom() {
-    const scrollTop = $(window).scrollTop();
-    const windowHeight = $(window).height();
-    const documentHeight = $(document).height();
-
-    return (scrollTop + windowHeight) > (documentHeight - config.scrollThreshold);
-  }
-
-  /**
-   * Check if user has scrolled past the events container
-   */
-  function isScrolledPastEvents() {
-    if (!state.container.length) return false;
-
-    const containerBottom = state.container.offset().top + state.container.outerHeight();
-    const scrollPosition = $(window).scrollTop() + $(window).height();
-
-    return scrollPosition > (containerBottom - config.scrollThreshold);
-  }
-
-  /**
-   * Throttle function to limit scroll event frequency
-   */
-  function throttle(func, limit) {
-    let inThrottle;
+  function throttle(fn, limit) {
+    var inThrottle;
     return function () {
-      const args = arguments;
-      const context = this;
       if (!inThrottle) {
-        func.apply(context, args);
+        fn.apply(this, arguments);
         inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
+        setTimeout(function () { inThrottle = false; }, limit);
       }
     };
   }
 
-  /**
-   * Handle scroll events (throttled)
-   */
-  const handleScroll = throttle(function () {
-    // Use the more specific scroll detection for better UX
-    if ((isNearBottom() || isScrolledPastEvents()) && !state.loading && !state.noMoreEvents) {
-      loadMoreEvents();
-    }
+  var handleScroll = throttle(function () {
+    calendars.forEach(function (cal) {
+      if (cal.shouldLoad()) {
+        cal.load();
+      }
+    });
   }, 250);
 
-  /**
-   * Handle load more button clicks (for shortcode implementation)
-   */
-  function handleLoadMoreButton() {
-    $(document).on('click', '.simple-events-load-more', function (e) {
-      e.preventDefault();
+  $(window).on('scroll', handleScroll);
 
-      const $button = $(this);
-      const offset = parseInt($button.data('offset'), 10) || state.offset;
-
-      // Update state offset if different
-      if (offset !== state.offset) {
-        state.offset = offset;
+  // Optional "load more" button: drive the nearest preceding calendar.
+  $(document).on('click', '.simple-events-load-more', function (e) {
+    e.preventDefault();
+    var $btn = $(this);
+    var $cal = $btn.prevAll('.simple-events-calendar').first();
+    if (!$cal.length) {
+      $cal = $btn.closest('.simple-events-load-more-container').prevAll('.simple-events-calendar').first();
+    }
+    calendars.forEach(function (cal) {
+      if (cal.$container.is($cal)) {
+        cal.load();
       }
-
-      // Load more events
-      loadMoreEvents();
-
-      // Hide the button after clicking
-      $button.closest('.simple-events-load-more-container').fadeOut();
     });
-  }
+    $btn.closest('.simple-events-load-more-container').fadeOut();
+  });
 
-  /**
-   * Initialize scroll listener
-   */
-  function initScrollListener() {
-    // Only attach scroll listener if we have events container
-    if (state.container.length > 0) {
-      $(window).on('scroll', handleScroll);
+  $('body').addClass('simple-events-js-enabled');
+
+  // If the initial content is shorter than the viewport, prime each calendar.
+  setTimeout(function () {
+    if ($(document).height() <= $(window).height()) {
+      calendars.forEach(function (cal) { cal.load(); });
     }
-  }
+  }, 100);
 
-  /**
-   * Initialize the plugin
-   */
-  function init() {
-    // Set up event listeners
-    initScrollListener();
-    handleLoadMoreButton();
-
-    // Add CSS classes for styling
-    $('body').addClass('simple-events-js-enabled');
-
-    // Initial check if content is shorter than viewport
-    setTimeout(function () {
-      if ($(document).height() <= $(window).height() && !state.noMoreEvents) {
-        loadMoreEvents();
-      }
-    }, 100);
-  }
-
-  /**
-   * Cleanup function for page unload
-   */
-  function cleanup() {
-    $(window).off('scroll', handleScroll);
-    $('#simple-events-loader, #simple-events-error, #simple-events-end').remove();
-  }
-
-  // Initialize when DOM is ready
-  init();
-
-  // Cleanup on page unload
-  $(window).on('beforeunload', cleanup);
-
-  // Expose public methods for external use
+  // Public API.
   window.SimpleEventsCalendar = {
-    loadMore: loadMoreEvents,
-    reset: function () {
-      state.offset = config.initialOffset;
-      state.loading = false;
-      state.noMoreEvents = false;
-      state.retryCount = 0;
-      cleanup();
-      init();
-    }
+    loadMore: function () {
+      calendars.forEach(function (cal) { cal.load(); });
+    },
+    calendars: calendars
   };
 });

@@ -1561,12 +1561,10 @@ class Simple_Events_Recurrence
             return 0;
         }
 
-        // wp_insert_post runs inside the parent's save_post chain, so ACF's
-        // save_post handler fires for the new child WITH the parent's
-        // $_POST['acf'] payload and writes every recurrence field
-        // (event_repeats=1, frequency, count/until, ...) onto the child.
-        // Strip those keys + their ACF sibling refs so each generated
-        // occurrence is a leaf, not a phantom series-parent.
+        // Defensive: ensure no recurrence-rule meta lingers on a generated
+        // occurrence so each child is a leaf, not a phantom series-parent.
+        // (The native meta box bails during generation, so it won't write
+        // these — this guards against meta leaking in via other paths.)
         foreach (array(
             'event_repeats',
             'event_repeat_frequency',
@@ -1576,7 +1574,6 @@ class Simple_Events_Recurrence
             'event_repeat_until',
         ) as $recur_key) {
             delete_post_meta($child_id, $recur_key);
-            delete_post_meta($child_id, '_' . $recur_key);
         }
 
         if (in_array('_thumbnail_id', $copyable, true)) {
@@ -1596,18 +1593,9 @@ class Simple_Events_Recurrence
                 ? $effective[$acf_key]
                 : get_post_meta($parent_id, $acf_key, true);
             update_post_meta($child_id, $acf_key, $value);
-
-            $field_key_ref = get_post_meta($parent_id, '_' . $acf_key, true);
-            if ($field_key_ref) {
-                update_post_meta($child_id, '_' . $acf_key, $field_key_ref);
-            }
         }
 
         update_post_meta($child_id, 'event_date', $ymd);
-        $event_date_field_key = get_post_meta($parent_id, '_event_date', true);
-        if ($event_date_field_key) {
-            update_post_meta($child_id, '_event_date', $event_date_field_key);
-        }
 
         $terms = wp_get_object_terms($parent_id, 'simple-events-cat', array('fields' => 'ids'));
         if (!is_wp_error($terms) && !empty($terms)) {

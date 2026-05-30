@@ -61,15 +61,16 @@ Simple Events Calendar provides an elegant way to create and display events on y
 
 - **WordPress**: 6.0 or higher
 - **PHP**: 7.4 or higher
-- **Advanced Custom Fields**: Free or Pro version required
+- **No plugin dependencies** (Elementor is optional, for the bundled widgets/dynamic tags)
 
 ## Installation
 
 1. Download the plugin files
 2. Upload to `/wp-content/plugins/simple-events-calendar/`
-3. Install and activate **Advanced Custom Fields** (Free or Pro)
-4. Activate the **Simple Events Calendar** plugin
-5. Start creating events!
+3. Activate the **Simple Events Calendar** plugin
+4. Start creating events! (Event date/time/location are entered in the "Event Details" box; adjust formatting under Events → Settings.)
+
+> **Upgrading from 4.x (ACF-based)?** No action needed. v5.0.0 removed the Advanced Custom Fields dependency; existing event data is preserved with no migration, and ACF can be deactivated.
 
 ## Usage
 
@@ -127,20 +128,20 @@ Events automatically appear on:
 
 ## Event Fields
 
-Each event includes these custom fields, all registered on the `group_event_details` ACF field group (`includes/acf-settings-page.php`):
+Each event includes these fields, edited in the native **Event Details** meta box (`includes/class-meta-box.php`) and stored as plain post meta:
 
-| Field                  | Type        | Required        | Description                                                                |
+| Field                  | Input       | Required        | Description                                                                |
 | ---------------------- | ----------- | --------------- | -------------------------------------------------------------------------- |
-| Event Date             | Date Picker | Yes             | When the event takes place                                                 |
-| Event Start Time       | Time Picker | Yes             | Event start time                                                           |
-| Event End Time         | Time Picker | No              | Event end time                                                             |
+| Event Date             | Date        | Yes             | When the event takes place                                                 |
+| Event Start Time       | Time        | Recommended     | Event start time                                                           |
+| Event End Time         | Time        | No              | Event end time                                                             |
 | Event Location         | Text        | No              | Where the event takes place                                                |
-| This event repeats     | True/False  | No              | Turns the event into a recurring series                                    |
+| This event repeats     | Checkbox    | No              | Turns the event into a recurring series                                    |
 | Repeat Every           | Number      | Conditional     | Repeat interval (e.g., every **2** weeks); shown when *repeats* is checked |
 | Frequency              | Select      | Conditional     | `daily` / `weekly` / `monthly` / `yearly`                                  |
 | Ends                   | Select      | Conditional     | `never` / `count` / `until`                                                |
 | Number of Occurrences  | Number      | Conditional     | Total occurrences (including the first event); shown when *Ends = count*   |
-| End Date               | Date Picker | When *until*    | Final date a recurrence may fall on; required when *Ends = on a specific date* |
+| End Date               | Date        | When *until*    | Final date a recurrence may fall on; if left blank, *Ends* falls back to *never* |
 
 ## Admin Features
 
@@ -152,7 +153,7 @@ Each event includes these custom fields, all registered on the `group_event_deta
 - **Series Edit Scope**: When editing an occurrence in a recurring series, a sidebar metabox lets you choose whether changes apply to just this occurrence, this and future occurrences, or the whole series
 - **Trash-safe Cascade**: Trashing a parent cascades to its children; restoring the parent restores the children that were cascade-trashed with it (children individually trashed by the user before the parent operation stay in trash)
 - **Duplicate Prevention**: Admin columns prevent duplicate content display
-- **ACF Dependency Check**: Clear error messages with download links if ACF is missing
+- **Native Event Details**: Date/time/location and recurrence edited in a built-in meta box — no external field plugin
 
 ## Responsive Breakpoints
 
@@ -247,21 +248,26 @@ simple-events-calendar/
 │   │   ├── simple-events.css          # Compiled styles (production)
 │   │   └── simple-events.css.map      # Source map (development)
 │   └── js/
-│       ├── simple-events.js           # Main JavaScript
+│       ├── simple-events.js           # Main JavaScript (infinite scroll)
+│       ├── simple-events-admin.js     # Edit-screen conditional logic
 │       └── simple-events-shortcode.js # Shortcode-specific JS
 ├── includes/
-│   ├── acf-json.php                   # ACF local-JSON sync wiring
-│   ├── acf-settings-page.php          # Field group + recurrence field definitions
 │   ├── class-admin-columns.php        # Admin list-table columns + Series indicator
 │   ├── class-ajax.php                 # AJAX infinite-scroll handler
 │   ├── class-main.php                 # Main plugin class + bootstrap + cron registration
-│   ├── class-post-type.php            # Post type + taxonomy registration
-│   ├── class-recurrence.php           # Recurring-events engine (v4.4.0+)
+│   ├── class-meta-box.php             # Native Event Details meta box
+│   ├── class-post-type.php            # Post type + taxonomy registration + single-page schema
+│   ├── class-renderer.php             # Shared element renderer + [sec_event_*] shortcodes
+│   ├── class-settings.php             # Settings page (simple_events_settings)
 │   ├── class-shortcode.php            # [sec_events] shortcode + transient cache
-│   └── functions.php                  # Shared utility functions + series helpers
+│   ├── class-templates.php            # Default single/archive/taxonomy templates
+│   ├── class-recurrence.php           # Recurring-events engine (v4.4.0+)
+│   ├── elementor/                     # Elementor widgets + dynamic tags (optional)
+│   └── functions.php                  # Utility + display/schema + series helpers
 ├── languages/                         # Translation files
 ├── src/                               # Source files for build system
 │   └── css/                           # SCSS source files
+├── templates/                         # Default front-end templates (theme-overridable)
 ├── template-parts/
 │   └── content-event-card.php         # Event card template
 ├── dist/                              # Distribution folder (generated)

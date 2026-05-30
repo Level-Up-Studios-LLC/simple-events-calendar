@@ -67,6 +67,34 @@ class Simple_Events_Calendar {
     public $recurrence;
 
     /**
+     * Settings handler
+     *
+     * @var Simple_Events_Settings
+     */
+    public $settings;
+
+    /**
+     * Element renderer / element shortcodes
+     *
+     * @var Simple_Events_Renderer
+     */
+    public $renderer;
+
+    /**
+     * Edit-screen meta box
+     *
+     * @var Simple_Events_Meta_Box
+     */
+    public $meta_box;
+
+    /**
+     * Front-end template loader
+     *
+     * @var Simple_Events_Templates
+     */
+    public $templates;
+
+    /**
      * Guard to prevent init() from running twice
      *
      * @var bool
@@ -98,8 +126,6 @@ class Simple_Events_Calendar {
      */
     private function init_hooks() {
         add_action('plugins_loaded', array($this, 'init'), 20);
-        add_action('acf/init', array($this, 'init'));
-        add_action('admin_init', array($this, 'admin_init'));
         add_action('init', array($this, 'load_textdomain'));
 
         // Activation/Deactivation hooks
@@ -111,16 +137,10 @@ class Simple_Events_Calendar {
     /**
      * Initialize plugin
      *
-     * Hooked on both `plugins_loaded` (priority 20) and `acf/init`, so it can
-     * run twice. Guarded to only run once.
+     * Hooked on `plugins_loaded` (priority 20). Guarded to only run once.
      */
     public function init() {
         if ($this->initialized) {
-            return;
-        }
-
-        // Runtime dependency check
-        if (!$this->runtime_dependency_check()) {
             return;
         }
 
@@ -128,9 +148,6 @@ class Simple_Events_Calendar {
 
         // Load components
         $this->load_components();
-
-        // Ensure field groups are registered after a short delay
-        add_action('wp_loaded', array($this, 'ensure_field_groups'));
 
         // Initialize query modifications
         add_action('pre_get_posts', array($this, 'modify_archive_query'));
@@ -144,15 +161,6 @@ class Simple_Events_Calendar {
     }
 
     /**
-     * Admin initialization
-     */
-    public function admin_init() {
-        if (is_admin() && current_user_can('activate_plugins')) {
-            $this->runtime_dependency_check();
-        }
-    }
-
-    /**
      * Load plugin components
      */
     private function load_components() {
@@ -161,21 +169,29 @@ class Simple_Events_Calendar {
 
         // Load class files
         require_once PLUGIN_DIR . '/includes/class-post-type.php';
+        require_once PLUGIN_DIR . '/includes/class-renderer.php';
         require_once PLUGIN_DIR . '/includes/class-shortcode.php';
         require_once PLUGIN_DIR . '/includes/class-ajax.php';
         require_once PLUGIN_DIR . '/includes/class-admin-columns.php';
+        require_once PLUGIN_DIR . '/includes/class-meta-box.php';
+        require_once PLUGIN_DIR . '/includes/class-settings.php';
+        require_once PLUGIN_DIR . '/includes/class-templates.php';
         require_once PLUGIN_DIR . '/includes/class-recurrence.php';
 
         // Initialize component classes
         $this->post_type = new Simple_Events_Post_Type();
+        $this->renderer = new Simple_Events_Renderer();
         $this->shortcode = new Simple_Events_Shortcode();
         $this->ajax = new Simple_Events_Ajax();
         $this->admin_columns = new Simple_Events_Admin_Columns();
+        $this->meta_box = new Simple_Events_Meta_Box();
+        $this->settings = new Simple_Events_Settings();
+        $this->templates = new Simple_Events_Templates();
         $this->recurrence = new Simple_Events_Recurrence();
 
-        // Load required components
-        require_once PLUGIN_DIR . '/includes/acf-json.php';
-        require_once PLUGIN_DIR . '/includes/acf-settings-page.php';
+        // Elementor integration (no-op unless Elementor is active).
+        require_once PLUGIN_DIR . '/includes/elementor/class-elementor.php';
+        Simple_Events_Elementor::init();
     }
 
     /**
@@ -190,32 +206,6 @@ class Simple_Events_Calendar {
     }
 
     /**
-     * Check ACF dependency
-     *
-     * @return bool
-     */
-    public function check_acf_dependency() {
-        return function_exists('acf_get_setting') ||
-               function_exists('acf_add_local_field_group') ||
-               defined('ACF_VERSION') ||
-               class_exists('ACF');
-    }
-
-    /**
-     * Runtime dependency check
-     *
-     * @return bool
-     */
-    private function runtime_dependency_check() {
-        if (!$this->check_acf_dependency()) {
-            deactivate_plugins(plugin_basename(SIMPLE_EVENTS_PLUGIN_FILE));
-            add_action('admin_notices', array($this, 'acf_dependency_notice'));
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * Plugin activation check
      */
     public function activation_check() {
@@ -223,12 +213,6 @@ class Simple_Events_Calendar {
             wp_clean_plugins_cache();
         }
 
-        if (!$this->check_acf_dependency()) {
-            deactivate_plugins(plugin_basename(SIMPLE_EVENTS_PLUGIN_FILE));
-            $this->activation_error();
-        }
-
-        $this->create_acf_json_directory();
         $this->init();
 
         if (class_exists('Simple_Events_Recurrence')) {
@@ -284,43 +268,15 @@ class Simple_Events_Calendar {
         global $wpdb;
         $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_simple_events_%'));
         $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_simple_events_%'));
+        delete_option('simple_events_settings');
 
         flush_rewrite_rules();
     }
 
     /**
-     * Create ACF JSON directory
-     */
-    private function create_acf_json_directory() {
-        $json_dir = PLUGIN_DIR . '/includes/acf-json';
-
-        if (!file_exists($json_dir)) {
-            wp_mkdir_p($json_dir);
-
-            $index_file = $json_dir . '/index.php';
-            if (!file_exists($index_file)) {
-                file_put_contents($index_file, '<?php // Silence is golden.');
-            }
-        }
-    }
-
-    /**
-     * Ensure field groups are properly registered
-     */
-    public function ensure_field_groups() {
-        if (function_exists('acf_add_local_field_group') && function_exists('register_event_details_fields')) {
-            register_event_details_fields();
-        }
-    }
-
-    /**
-     * Ensure ACF fields are accessible to non-logged-in users
+     * Ensure the post type is publicly queryable on the front end.
      */
     public function ensure_public_access() {
-        if (function_exists('acf_add_options_page')) {
-            add_filter('acf/settings/show_admin', '__return_true');
-        }
-
         global $wp_post_types;
         if (isset($wp_post_types['simple-events'])) {
             $wp_post_types['simple-events']->public = true;
@@ -345,43 +301,52 @@ class Simple_Events_Calendar {
 
         $today = current_time('Ymd');
 
+        // Honor the display-default settings so archives match the documented
+        // behavior (and the [sec_events] defaults).
+        $order = strtoupper((string) simple_events_get_setting('order', 'ASC'));
+        $order = in_array($order, array('ASC', 'DESC'), true) ? $order : 'ASC';
+        $show_past = ('yes' === (string) simple_events_get_setting('show_past', 'no'));
+
         $query->set('orderby', 'meta_value');
-        $query->set('order', 'ASC');
+        $query->set('order', $order);
         $query->set('meta_key', 'event_date');
         $query->set('meta_type', 'DATE');
         $query->set('suppress_filters', false);
 
-        $date_clause = array(
-            'key'     => 'event_date',
-            'compare' => '>=',
-            'value'   => $today,
-            'type'    => 'DATE',
-        );
+        // Match the first batch size to the "load more" increment so infinite
+        // scroll offsets line up with what the archive template rendered.
+        $query->set('posts_per_page', max(1, (int) simple_events_get_setting('load_increment', 6)));
 
-        $existing_meta_query = $query->get('meta_query');
-
-        if (!empty($existing_meta_query) && is_array($existing_meta_query)) {
-            // Nest rather than merge, so existing relation/clauses are preserved intact.
-            $meta_query = array(
-                'relation' => 'AND',
-                $existing_meta_query,
-                $date_clause,
+        // Only hide past events when the setting says so.
+        if (!$show_past) {
+            $date_clause = array(
+                'key'     => 'event_date',
+                'compare' => '>=',
+                'value'   => $today,
+                'type'    => 'DATE',
             );
-        } else {
-            $meta_query = array($date_clause);
-        }
 
-        $query->set('meta_query', $meta_query);
+            $existing_meta_query = $query->get('meta_query');
+
+            if (!empty($existing_meta_query) && is_array($existing_meta_query)) {
+                // Nest rather than merge, so existing relation/clauses are preserved intact.
+                $meta_query = array(
+                    'relation' => 'AND',
+                    $existing_meta_query,
+                    $date_clause,
+                );
+            } else {
+                $meta_query = array($date_clause);
+            }
+
+            $query->set('meta_query', $meta_query);
+        }
     }
 
     /**
      * Enqueue scripts and styles
      */
     public function enqueue_scripts() {
-        if (!$this->check_acf_dependency()) {
-            return;
-        }
-
         global $post;
         $should_load = false;
 
@@ -418,14 +383,18 @@ class Simple_Events_Calendar {
             true
         );
 
+        $increment = max(1, (int) simple_events_get_setting('load_increment', 6));
         wp_localize_script(
             'simple-events-script',
             'ajax_params',
             array(
                 'ajaxurl' => admin_url('admin-ajax.php'),
                 'nonce'   => wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION),
-                'initial_offset' => 6,
-                'load_increment' => 6
+                'initial_offset' => $increment,
+                'load_increment' => $increment,
+                'loading_text'   => __('Loading more events...', 'simple_events'),
+                'retry_text'     => __('Try Again', 'simple_events'),
+                'no_more_text'   => __('No more events to load.', 'simple_events'),
             )
         );
     }
@@ -437,83 +406,11 @@ class Simple_Events_Calendar {
      * @return array
      */
     public function action_links($links) {
-        if (!$this->check_acf_dependency()) {
-            return $links;
-        }
-
         $plugin_links = array(
-            '<a href="' . admin_url('edit.php?post_type=simple-events') . '">Events</a>',
-            '<a href="' . admin_url('edit.php?post_type=acf-field-group') . '">Field Groups</a>',
+            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events')) . '">' . esc_html__('Events', 'simple_events') . '</a>',
+            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events&page=' . Simple_Events_Settings::PAGE)) . '">' . esc_html__('Settings', 'simple_events') . '</a>',
         );
 
         return array_merge($plugin_links, $links);
-    }
-
-    /**
-     * Display ACF dependency notice
-     */
-    public function acf_dependency_notice() {
-        if (!current_user_can('activate_plugins')) {
-            return;
-        }
-
-        $status = simple_events_get_acf_status();
-        $install_url = admin_url('plugin-install.php?s=advanced+custom+fields&tab=search&type=term');
-        $plugins_url = admin_url('plugins.php');
-
-        ?>
-        <div class="notice notice-error">
-            <h3>Simple Events Calendar</h3>
-
-            <?php if (!$status['pro_installed'] && !$status['free_installed']): ?>
-                <p><strong>Simple Events Calendar requires Advanced Custom Fields (ACF) plugin to be installed and activated.</strong></p>
-                <p>
-                    <a href="<?php echo esc_url($install_url); ?>" class="button button-primary">Download ACF Free Plugin</a>
-                    <a href="https://www.advancedcustomfields.com/pro/" class="button" target="_blank">Get ACF Pro</a>
-                </p>
-
-            <?php elseif (($status['pro_installed'] && !$status['pro_active']) || ($status['free_installed'] && !$status['free_active'])): ?>
-                <p><strong>Simple Events Calendar requires Advanced Custom Fields (ACF) plugin to be installed and activated.</strong></p>
-                <p>ACF is installed but needs to be activated.</p>
-                <p>
-                    <a href="<?php echo esc_url($plugins_url); ?>" class="button button-primary">Activate ACF Plugin</a>
-                </p>
-
-            <?php else: ?>
-                <p><strong>Advanced Custom Fields appears to be installed but is not loading properly.</strong></p>
-                <p>This could be due to a plugin conflict or loading order issue.</p>
-            <?php endif; ?>
-        </div>
-        <?php
-    }
-
-    /**
-     * Activation error message
-     */
-    private function activation_error() {
-        $status = simple_events_get_acf_status();
-
-        $error_message = '<h1>Plugin Activation Error</h1>';
-        $error_message .= '<p><strong>Simple Events Calendar</strong> requires Advanced Custom Fields to function.</p>';
-
-        if (!$status['pro_installed'] && !$status['free_installed']) {
-            $error_message .= '<p>ACF is not installed. Please install ACF first:</p>';
-            $error_message .= '<ul>';
-            $error_message .= '<li><a href="' . admin_url('plugin-install.php?s=advanced+custom+fields&tab=search&type=term') . '">Install ACF Free</a></li>';
-            $error_message .= '<li><a href="https://www.advancedcustomfields.com/pro/" target="_blank">Get ACF Pro</a></li>';
-            $error_message .= '</ul>';
-        } elseif (($status['pro_installed'] && !$status['pro_active']) || ($status['free_installed'] && !$status['free_active'])) {
-            $error_message .= '<p>ACF is installed but not activated. Please <a href="' . admin_url('plugins.php') . '">activate ACF</a> first.</p>';
-        } else {
-            $error_message .= '<p>ACF appears to be installed but is not loading properly. Please check for plugin conflicts.</p>';
-        }
-
-        $error_message .= '<p><a href="' . admin_url('plugins.php') . '">Return to Plugins</a></p>';
-
-        wp_die(
-            $error_message,
-            'Plugin Dependency Error',
-            array('back_link' => true)
-        );
     }
 }

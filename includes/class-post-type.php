@@ -30,6 +30,30 @@ class Simple_Events_Post_Type {
     private function init_hooks() {
         add_action('init', array($this, 'register_post_type'), 10);
         add_action('init', array($this, 'register_taxonomies'), 10);
+        add_action('wp_head', array($this, 'output_single_schema'));
+    }
+
+    /**
+     * Emit schema.org Event JSON-LD on single event pages.
+     *
+     * Guarantees structured data on every event permalink regardless of the
+     * active theme/template. Cards emit their own inline schema, so this is
+     * gated to the singular view to avoid duplicate emission on archives or
+     * shortcode listings.
+     *
+     * @return void
+     */
+    public function output_single_schema() {
+        if (!is_singular('simple-events') || !function_exists('simple_events_get_event_schema')) {
+            return;
+        }
+
+        $schema = simple_events_get_event_schema(get_queried_object_id());
+        if (!is_array($schema)) {
+            return;
+        }
+
+        echo '<script type="application/ld+json">' . wp_json_encode($schema, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . '</script>' . "\n";
     }
 
     /**
