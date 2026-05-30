@@ -483,3 +483,172 @@ $sec-list-image-width: 240px;
     grid-template-columns: 1fr;
   }
 }
+
+// Single event page (default template). Featured image + content on the left,
+// a sticky "Event Details" card on the right; stacks on small screens with the
+// details card above the content.
+.simple-events-single {
+  $sec-single-accent: #2271b1;
+
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+
+  &__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: $sec-single-accent;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__title {
+    font-size: clamp(28px, 4vw, 36px);
+    line-height: 1.15;
+    margin: 0 0 24px;
+  }
+
+  &__layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-areas: "image details" "content details";
+    gap: 32px;
+    align-items: start;
+  }
+
+  &__image {
+    grid-area: image;
+    margin: 0;
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+  }
+
+  &__content {
+    grid-area: content;
+
+    > :first-child {
+      margin-top: 0;
+    }
+  }
+
+  &__details {
+    grid-area: details;
+  }
+
+  &__card {
+    position: sticky;
+    top: 32px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+  }
+
+  &__card-title {
+    margin: 0;
+    padding: 12px 16px;
+    background: $sec-single-accent;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__row {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eef0f2;
+
+    &:last-of-type {
+      border-bottom: 0;
+    }
+  }
+
+  &__row-icon {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: $sec-single-accent;
+  }
+
+  &__row-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #646970;
+    margin-bottom: 1px;
+  }
+
+  &__row-value {
+    display: block;
+    font-weight: 600;
+  }
+
+  &__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  &__pill {
+    background: #f0f6fc;
+    color: $sec-single-accent;
+    border: 1px solid #cfe0f0;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      background: #e2eefb;
+    }
+  }
+
+  &__add-to-cal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 14px 16px 16px;
+    padding: 11px 14px;
+    background: $sec-single-accent;
+    color: #fff;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+
+    &:hover {
+      background: #135e96;
+      color: #fff;
+    }
+  }
+
+  @media screen and (width <= 880px) {
+    &__layout {
+      grid-template-columns: 1fr;
+      grid-template-areas: "image" "details" "content";
+    }
+
+    &__card {
+      position: static;
+    }
+  }
+}

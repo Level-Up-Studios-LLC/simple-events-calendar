@@ -81,6 +81,13 @@ class Simple_Events_Calendar {
     public $docs;
 
     /**
+     * "Add to Calendar" .ics generator
+     *
+     * @var Simple_Events_ICS
+     */
+    public $ics;
+
+    /**
      * Element renderer / element shortcodes
      *
      * @var Simple_Events_Renderer
@@ -184,6 +191,7 @@ class Simple_Events_Calendar {
         require_once PLUGIN_DIR . '/includes/class-meta-box.php';
         require_once PLUGIN_DIR . '/includes/class-settings.php';
         require_once PLUGIN_DIR . '/includes/class-docs.php';
+        require_once PLUGIN_DIR . '/includes/class-ics.php';
         require_once PLUGIN_DIR . '/includes/class-templates.php';
         require_once PLUGIN_DIR . '/includes/class-recurrence.php';
 
@@ -196,6 +204,7 @@ class Simple_Events_Calendar {
         $this->meta_box = new Simple_Events_Meta_Box();
         $this->settings = new Simple_Events_Settings();
         $this->docs = new Simple_Events_Docs();
+        $this->ics = new Simple_Events_ICS();
         $this->templates = new Simple_Events_Templates();
         $this->recurrence = new Simple_Events_Recurrence();
 
