@@ -1,7 +1,7 @@
 /**
  * Simple Events Calendar — settings page.
  *
- * Toggles the custom date-format field when "Custom…" is selected and keeps the
+ * Toggles the custom date-format field when "Custom" is selected and keeps the
  * live preview roughly in sync. No build step; plain DOM APIs.
  */
 (function () {
@@ -16,19 +16,21 @@
     }
 
     ready(function () {
-        var preset = document.getElementById('sec-date-format-preset');
-        var wrap = document.getElementById('sec-date-format-custom-wrap');
+        var radios = document.querySelectorAll('input[name$="[date_format_preset]"]');
         var custom = document.getElementById('sec-date-format-custom');
+        var customRadio = document.getElementById('sec-date-format-custom-radio');
         var preview = document.getElementById('sec-date-format-preview');
-        if (!preset || !wrap) {
+
+        if (!radios.length || !custom) {
             return;
         }
 
         function activeFormat() {
-            if (preset.value === 'custom') {
-                return custom ? custom.value : '';
+            if (customRadio && customRadio.checked) {
+                return custom.value;
             }
-            return preset.value;
+            var checked = document.querySelector('input[name$="[date_format_preset]"]:checked');
+            return checked ? checked.value : '';
         }
 
         // Lightweight client-side preview for the common single-letter tokens.
@@ -58,17 +60,25 @@
         }
 
         function sync() {
-            var isCustom = preset.value === 'custom';
-            wrap.style.display = isCustom ? '' : 'none';
+            var isCustom = customRadio && customRadio.checked;
+            custom.disabled = !isCustom;
             if (preview) {
                 preview.textContent = previewFor(activeFormat());
             }
         }
 
-        preset.addEventListener('change', sync);
-        if (custom) {
-            custom.addEventListener('input', sync);
+        for (var i = 0; i < radios.length; i++) {
+            radios[i].addEventListener('change', (function (radio) {
+                return function () {
+                    if (customRadio && radio === customRadio) {
+                        custom.focus();
+                    }
+                    sync();
+                };
+            }(radios[i])));
         }
+
+        custom.addEventListener('input', sync);
         sync();
     });
 })();

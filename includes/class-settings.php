@@ -230,32 +230,36 @@ class Simple_Events_Settings {
                                 'm/d/Y'     => __('MM/DD/YYYY', 'simple_events'),
                                 'M j, Y'    => __('Abbreviated Month Day, Year', 'simple_events'),
                             );
-                            $current  = (string) $settings['date_format'];
+                            $current   = (string) $settings['date_format'];
                             $is_preset = array_key_exists($current, $presets);
                             ?>
-                            <select id="sec-date-format-preset" name="<?php echo esc_attr(self::OPTION); ?>[date_format_preset]">
+                            <fieldset id="sec-date-format" class="sec-date-format">
+                                <legend class="screen-reader-text"><?php echo esc_html__('Date format', 'simple_events'); ?></legend>
                                 <?php foreach ($presets as $fmt => $label) : ?>
-                                    <option value="<?php echo esc_attr($fmt); ?>" <?php selected($is_preset && $current === $fmt); ?>>
-                                        <?php echo esc_html($label . ' — ' . wp_date($fmt)); ?>
-                                    </option>
+                                    <label>
+                                        <input type="radio" name="<?php echo esc_attr(self::OPTION); ?>[date_format_preset]" value="<?php echo esc_attr($fmt); ?>" <?php checked($is_preset && $current === $fmt); ?> />
+                                        <span class="date-time-text format-i18n"><?php echo esc_html(wp_date($fmt)); ?></span>
+                                        <code><?php echo esc_html($fmt); ?></code>
+                                    </label><br />
                                 <?php endforeach; ?>
-                                <option value="custom" <?php selected(!$is_preset); ?>><?php echo esc_html__('Custom…', 'simple_events'); ?></option>
-                            </select>
-                            <span id="sec-date-format-custom-wrap" style="<?php echo esc_attr($is_preset ? 'display:none;' : ''); ?>">
-                                <input type="text" id="sec-date-format-custom" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[date_format_custom]" value="<?php echo esc_attr(!$is_preset ? $current : ''); ?>" placeholder="l, F j, Y" />
-                            </span>
-                            <p class="description">
-                                <?php
-                                printf(
-                                    /* translators: %s: example formatted date */
-                                    esc_html__('Preview: %s', 'simple_events'),
-                                    '<strong id="sec-date-format-preview">' . esc_html(wp_date($current)) . '</strong>'
-                                );
-                                ?>
-                                <br />
-                                <?php echo esc_html__('Choose a preset, or pick "Custom…" to enter a PHP date format.', 'simple_events'); ?>
-                                <a href="https://wordpress.org/documentation/article/customize-date-and-time-format/" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Format reference', 'simple_events'); ?></a>
-                            </p>
+                                <label>
+                                    <input type="radio" id="sec-date-format-custom-radio" name="<?php echo esc_attr(self::OPTION); ?>[date_format_preset]" value="custom" <?php checked(!$is_preset); ?> />
+                                    <span class="date-time-text"><?php echo esc_html__('Custom:', 'simple_events'); ?></span>
+                                </label>
+                                <input type="text" id="sec-date-format-custom" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[date_format_custom]" value="<?php echo esc_attr(!$is_preset ? $current : ''); ?>" placeholder="l, F j, Y" aria-label="<?php esc_attr_e('Custom date format', 'simple_events'); ?>" />
+                                <p class="description">
+                                    <?php
+                                    printf(
+                                        /* translators: %s: example formatted date */
+                                        esc_html__('Preview: %s', 'simple_events'),
+                                        '<strong id="sec-date-format-preview">' . esc_html(wp_date($current)) . '</strong>'
+                                    );
+                                    ?>
+                                    <br />
+                                    <?php echo esc_html__('Choose a preset, or pick "Custom" to enter a PHP date format.', 'simple_events'); ?>
+                                    <a href="https://wordpress.org/documentation/article/customize-date-and-time-format/" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Format reference', 'simple_events'); ?></a>
+                                </p>
+                            </fieldset>
                         </td>
                     </tr>
                     <tr>
@@ -277,10 +281,8 @@ class Simple_Events_Settings {
                     <tr>
                         <th scope="row"><?php echo esc_html__('Default sort order', 'simple_events'); ?></th>
                         <td>
-                            <select name="<?php echo esc_attr(self::OPTION); ?>[order]">
-                                <option value="ASC" <?php selected($settings['order'], 'ASC'); ?>><?php echo esc_html__('Ascending (soonest first)', 'simple_events'); ?></option>
-                                <option value="DESC" <?php selected($settings['order'], 'DESC'); ?>><?php echo esc_html__('Descending (latest first)', 'simple_events'); ?></option>
-                            </select>
+                            <label><input type="radio" name="<?php echo esc_attr(self::OPTION); ?>[order]" value="ASC" <?php checked($settings['order'], 'ASC'); ?> /> <?php echo esc_html__('Ascending (soonest first)', 'simple_events'); ?></label><br />
+                            <label><input type="radio" name="<?php echo esc_attr(self::OPTION); ?>[order]" value="DESC" <?php checked($settings['order'], 'DESC'); ?> /> <?php echo esc_html__('Descending (latest first)', 'simple_events'); ?></label>
                         </td>
                     </tr>
                     <?php
