@@ -54,8 +54,8 @@ class Simple_Events_Elementor {
     }
 
     /**
-     * Register the "Simple Events" widget category and move it to the top of
-     * the editor panel so users don't have to scroll to the event widgets.
+     * Register the "Simple Events" widget category and move it just below the
+     * "Basic" category so users don't have to scroll to the event widgets.
      *
      * @param \Elementor\Elements_Manager $elements_manager Elementor manager.
      */
@@ -68,35 +68,49 @@ class Simple_Events_Elementor {
             )
         );
 
-        self::move_category_first($elements_manager, 'simple-events');
+        self::move_category_after($elements_manager, 'simple-events', 'basic');
     }
 
     /**
-     * Reorder the registered categories so the given one appears first.
+     * Reorder the registered categories so $key sits immediately after $after.
      *
      * Elementor has no public position API, so this reorders the manager's
      * private categories array via reflection. It is best-effort and fully
      * guarded: if Elementor's internals ever change, it silently no-ops rather
      * than breaking the editor. Reordering only moves keys — values (titles,
-     * icons) are untouched.
+     * icons) are untouched. When $after is missing, $key is placed first.
      *
      * @param \Elementor\Elements_Manager $elements_manager Elementor manager.
-     * @param string                      $key              Category key to move first.
+     * @param string                      $key              Category key to move.
+     * @param string                      $after            Category key to place it after.
      */
-    private static function move_category_first($elements_manager, $key) {
+    private static function move_category_after($elements_manager, $key, $after) {
         try {
             if (!method_exists($elements_manager, 'get_categories')) {
                 return;
             }
 
             $categories = $elements_manager->get_categories();
-            if (!is_array($categories) || !isset($categories[$key]) || array_key_first($categories) === $key) {
+            if (!is_array($categories) || !isset($categories[$key])) {
                 return;
             }
 
-            $moved = array($key => $categories[$key]);
+            $entry = $categories[$key];
             unset($categories[$key]);
-            $reordered = $moved + $categories;
+
+            $reordered = array();
+            $inserted  = false;
+            foreach ($categories as $cat_key => $cat_value) {
+                $reordered[$cat_key] = $cat_value;
+                if ($cat_key === $after) {
+                    $reordered[$key] = $entry;
+                    $inserted        = true;
+                }
+            }
+            if (!$inserted) {
+                // $after not present — fall back to placing it first.
+                $reordered = array($key => $entry) + $reordered;
+            }
 
             $ref = new ReflectionObject($elements_manager);
             if (!$ref->hasProperty('categories')) {
