@@ -169,6 +169,9 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Infinite scroll could fail to trigger when scrolling straight to the bottom and stopping — now re-checks position on the trailing edge
 * Several code-review fixes: Elementor event-ID fallback guarded against term-ID collisions on taxonomy archives; weekday picker checkboxes given full names for screen readers; Events Grid columns stack correctly to 2/1 on tablet/mobile
 
+**Compatibility**
+* Events from much older versions (stored under the `events` post type / `events-cat` taxonomy) are automatically migrated to `simple-events` / `simple-events-cat` on upgrade, so they keep working. Times stored in 24-hour `H:i:s` form are now read and edited correctly too. **Back up your database and test on a staging site before upgrading production.**
+
 = 5.0.0 (2026-05-29) =
 
 **Removed**
@@ -321,6 +324,9 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Event ordering consistency
 
 == Upgrade Notice ==
+
+= 5.1.0 =
+Adds display widgets, single-event/Add-to-Calendar features, and a one-time migration that renames very old `events`/`events-cat` data to `simple-events`/`simple-events-cat` so existing events keep working. Back up your database and test on staging before upgrading a production site.
 
 = 5.0.0 =
 Advanced Custom Fields is no longer required. Your existing events are preserved with no migration needed, and ACF can be deactivated after upgrading. Event date/time/location are now edited in the built-in "Event Details" box.

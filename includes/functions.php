@@ -279,7 +279,7 @@ function simple_events_get_event_time($post_id, $key) {
         return '';
     }
 
-    $dt = DateTimeImmutable::createFromFormat('g:i a', (string) $raw, wp_timezone());
+    $dt = simple_events_parse_time_of_day((string) $raw);
     if (!$dt) {
         // Unparseable — return the stored value unchanged.
         return (string) $raw;
@@ -287,6 +287,39 @@ function simple_events_get_event_time($post_id, $key) {
 
     $format = ('24' === (string) simple_events_get_setting('time_format', '12')) ? 'H:i' : 'g:i a';
     return $dt->format($format);
+}
+
+/**
+ * Parse a stored event time-of-day string into a DateTimeImmutable.
+ *
+ * Tolerant of multiple stored formats: the native meta box writes `g:i a`
+ * (e.g. "2:30 pm"), but events imported from older ACF-based versions may be
+ * stored as `H:i:s` (e.g. "14:30:00") or `H:i`. Only the time component is
+ * meaningful (the date is reset to the epoch). Returns false when none match.
+ *
+ * @param string             $raw Stored time string.
+ * @param DateTimeZone|null  $tz  Timezone (defaults to wp_timezone()).
+ * @return DateTimeImmutable|false
+ */
+function simple_events_parse_time_of_day($raw, $tz = null) {
+    $raw = trim((string) $raw);
+    if ('' === $raw) {
+        return false;
+    }
+
+    if (!$tz instanceof DateTimeZone) {
+        $tz = wp_timezone();
+    }
+
+    // Order matters: the current `g:i a` format first, then legacy 24-hour.
+    foreach (array('g:i a', 'g:i A', 'H:i:s', 'H:i') as $format) {
+        $dt = DateTimeImmutable::createFromFormat('!' . $format, $raw, $tz);
+        if ($dt instanceof DateTimeImmutable) {
+            return $dt;
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -311,11 +344,26 @@ function simple_events_get_event_datetime_iso($post_id, $time_key = 'event_start
     $tz       = wp_timezone();
     $time_raw = (string) get_post_meta($post_id, $time_key, true);
 
-    $dt = ('' !== $time_raw)
-        ? DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $time_raw, $tz)
-        : DateTimeImmutable::createFromFormat('!Ymd', (string) $date_raw, $tz);
+    // Parse the date, then layer on the time-of-day (tolerant of g:i a / H:i:s
+    // / H:i) so imported legacy times still produce a valid ISO datetime.
+    $date = DateTimeImmutable::createFromFormat('!Ymd', (string) $date_raw, $tz);
+    $dt   = false;
+    if ($date instanceof DateTimeImmutable) {
+        if ('' !== $time_raw) {
+            $time = simple_events_parse_time_of_day($time_raw, $tz);
+            if ($time instanceof DateTimeImmutable) {
+                $dt = $date->setTime(
+                    (int) $time->format('H'),
+                    (int) $time->format('i'),
+                    (int) $time->format('s')
+                );
+            }
+        } else {
+            $dt = $date;
+        }
+    }
 
-    if ($dt) {
+    if ($dt instanceof DateTimeImmutable) {
         return $dt->format('c');
     }
 

@@ -59,3 +59,6 @@ wp-config.php
 
 # Superpowers brainstorming scratch files (local development only)
 .superpowers/
+
+# WordPress export / site-data files (never commit real site content)
+*.WordPress.*.xml

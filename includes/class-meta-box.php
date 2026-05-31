@@ -476,8 +476,13 @@ class Simple_Events_Meta_Box {
         if ('' === (string) $time) {
             return '';
         }
-        $dt = DateTimeImmutable::createFromFormat('g:i a', (string) $time);
-        return $dt ? $dt->format('H:i') : '';
+        // Tolerant of g:i a (native) and legacy H:i:s / H:i (ACF imports), so
+        // editing an imported event populates the time field instead of
+        // blanking it (which would erase the time on the next save).
+        $dt = function_exists('simple_events_parse_time_of_day')
+            ? simple_events_parse_time_of_day((string) $time)
+            : DateTimeImmutable::createFromFormat('g:i a', (string) $time);
+        return ($dt instanceof DateTimeImmutable) ? $dt->format('H:i') : '';
     }
 
     /**

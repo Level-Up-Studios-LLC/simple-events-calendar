@@ -107,21 +107,30 @@ class Simple_Events_ICS {
     private function build_ics($event_id) {
         $tz       = wp_timezone();
         $utc      = new DateTimeZone('UTC');
-        $date_raw = (string) get_post_meta($event_id, 'event_date', true);       // Ymd
-        $start_raw = (string) get_post_meta($event_id, 'event_start_time', true); // g:i a
-        $end_raw   = (string) get_post_meta($event_id, 'event_end_time', true);   // g:i a
+        $date_raw = (string) get_post_meta($event_id, 'event_date', true);        // Ymd
+        $start_raw = (string) get_post_meta($event_id, 'event_start_time', true); // g:i a (or legacy H:i:s)
+        $end_raw   = (string) get_post_meta($event_id, 'event_end_time', true);   // g:i a (or legacy H:i:s)
+
+        // A valid event_date is required; refuse rather than emit a bogus
+        // "today" event. The caller skips streaming when this returns ''.
+        $date = DateTimeImmutable::createFromFormat('!Ymd', $date_raw, $tz);
+        if (!$date instanceof DateTimeImmutable) {
+            return '';
+        }
 
         $dtstart_line = '';
         $dtend_line   = '';
 
-        $start = ('' !== $start_raw)
-            ? DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $start_raw, $tz)
-            : false;
+        // Tolerant time parsing (g:i a native, plus legacy H:i:s / H:i imports).
+        $start_time = ('' !== $start_raw) ? simple_events_parse_time_of_day($start_raw, $tz) : false;
 
-        if ($start instanceof DateTimeImmutable) {
+        if ($start_time instanceof DateTimeImmutable) {
             // Timed event — emit UTC instants.
-            $end = ('' !== $end_raw)
-                ? DateTimeImmutable::createFromFormat('Ymd g:i a', $date_raw . ' ' . $end_raw, $tz)
+            $start = $date->setTime((int) $start_time->format('H'), (int) $start_time->format('i'), (int) $start_time->format('s'));
+
+            $end_time = ('' !== $end_raw) ? simple_events_parse_time_of_day($end_raw, $tz) : false;
+            $end      = ($end_time instanceof DateTimeImmutable)
+                ? $date->setTime((int) $end_time->format('H'), (int) $end_time->format('i'), (int) $end_time->format('s'))
                 : false;
             if (!$end instanceof DateTimeImmutable || $end <= $start) {
                 $end = $start->add(new DateInterval('PT1H'));
@@ -129,15 +138,9 @@ class Simple_Events_ICS {
             $dtstart_line = 'DTSTART:' . $start->setTimezone($utc)->format('Ymd\THis\Z');
             $dtend_line   = 'DTEND:' . $end->setTimezone($utc)->format('Ymd\THis\Z');
         } else {
-            // No start time — all-day event (DTEND is exclusive, so +1 day).
-            $day = DateTimeImmutable::createFromFormat('!Ymd', $date_raw, $tz);
-            if (!$day instanceof DateTimeImmutable) {
-                // Missing/unparseable date — refuse rather than emit a bogus
-                // "today" event. The caller skips streaming when this is empty.
-                return '';
-            }
-            $dtstart_line = 'DTSTART;VALUE=DATE:' . $day->format('Ymd');
-            $dtend_line   = 'DTEND;VALUE=DATE:' . $day->add(new DateInterval('P1D'))->format('Ymd');
+            // No (parseable) start time — all-day event (DTEND is exclusive).
+            $dtstart_line = 'DTSTART;VALUE=DATE:' . $date->format('Ymd');
+            $dtend_line   = 'DTEND;VALUE=DATE:' . $date->add(new DateInterval('P1D'))->format('Ymd');
         }
 
         $summary     = $this->escape_text(get_the_title($event_id));

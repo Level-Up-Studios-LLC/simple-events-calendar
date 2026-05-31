@@ -88,6 +88,13 @@ class Simple_Events_Calendar {
     public $ics;
 
     /**
+     * One-time data migrations
+     *
+     * @var Simple_Events_Migrations
+     */
+    public $migrations;
+
+    /**
      * Element renderer / element shortcodes
      *
      * @var Simple_Events_Renderer
@@ -183,6 +190,7 @@ class Simple_Events_Calendar {
         require_once PLUGIN_DIR . '/includes/functions.php';
 
         // Load class files
+        require_once PLUGIN_DIR . '/includes/class-migrations.php';
         require_once PLUGIN_DIR . '/includes/class-post-type.php';
         require_once PLUGIN_DIR . '/includes/class-renderer.php';
         require_once PLUGIN_DIR . '/includes/class-shortcode.php';
@@ -196,6 +204,7 @@ class Simple_Events_Calendar {
         require_once PLUGIN_DIR . '/includes/class-recurrence.php';
 
         // Initialize component classes
+        $this->migrations = new Simple_Events_Migrations();
         $this->post_type = new Simple_Events_Post_Type();
         $this->renderer = new Simple_Events_Renderer();
         $this->shortcode = new Simple_Events_Shortcode();

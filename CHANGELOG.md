@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Infinite scroll could fail to trigger when the user scrolled straight to the bottom and stopped (leading-edge throttle dropped the resting position) — now re-checks on the trailing edge.
 * Elementor event-ID fallback guarded against term-ID collisions on taxonomy archives; weekday-picker checkboxes given full weekday names for screen readers; Events Grid columns now stack correctly to 2/1 on tablet/mobile.
 
+### Migration / compatibility
+
+* **Automatic legacy-slug migration.** Events created on older versions used the post type `events` and taxonomy `events-cat`; v5.x uses `simple-events` / `simple-events-cat`. On upgrade, a one-time, idempotent migration (`includes/class-migrations.php`, version-flagged via the `simple_events_db_version` option) renames them so existing events and their category assignments keep working. The post-type rename is scoped to posts carrying our `event_date` meta, so an unrelated `events` CPT from another plugin is left alone. **Back up your database and test on staging before upgrading a production site.**
+* **Tolerant time parsing.** Event times imported from older ACF-based installs may be stored as `H:i:s` (e.g. `14:30:00`) rather than the native `g:i a`. `simple_events_parse_time_of_day()` now reads `g:i a`, `H:i:s`, and `H:i`, so legacy times display correctly, populate the editor (no longer blanked — which previously risked erasing the time on re-save), and feed the `.ics`/schema output. New saves continue to normalize to `g:i a`. Event dates (`Ymd`) and locations need no migration.
+
 ## [v5.0.0] (2026-05-29)
 
 ### Removed
