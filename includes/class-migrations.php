@@ -54,6 +54,37 @@ class Simple_Events_Migrations {
         // Early on init (before the CPT registers at priority 10) and guarded by
         // a version option, so it runs once then becomes a cheap no-op.
         add_action('init', array($this, 'maybe_migrate'), 1);
+
+        // WXR import compatibility: the WordPress Importer rejects unknown post
+        // types ("Invalid post type events") before inserting, so the in-DB
+        // migration above can't help an import of an old export. Remap each
+        // item to the current slugs as it is read. Only fires during an import.
+        add_filter('wp_import_post_data_raw', array($this, 'remap_imported_post'));
+    }
+
+    /**
+     * Remap a WXR item from the legacy `events` / `events-cat` slugs to the
+     * current ones as the WordPress Importer reads it, so old exports import
+     * directly as `simple-events` with `simple-events-cat` categories.
+     *
+     * @param array $post Raw post data from the importer.
+     * @return array
+     */
+    public function remap_imported_post($post) {
+        if (isset($post['post_type']) && self::LEGACY_POST_TYPE === $post['post_type']) {
+            $post['post_type'] = self::POST_TYPE;
+        }
+
+        if (!empty($post['terms']) && is_array($post['terms'])) {
+            foreach ($post['terms'] as &$term) {
+                if (isset($term['domain']) && self::LEGACY_TAXONOMY === $term['domain']) {
+                    $term['domain'] = self::TAXONOMY;
+                }
+            }
+            unset($term);
+        }
+
+        return $post;
     }
 
     /**
