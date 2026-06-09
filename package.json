@@ -1,6 +1,6 @@
 {
   "name": "simple-events-calendar",
-  "version": "4.4.0",
+  "version": "5.1.0",
   "description": "A simple events calendar plugin for WordPress",
   "main": "assets/js/simple-events.js",
   "scripts": {
