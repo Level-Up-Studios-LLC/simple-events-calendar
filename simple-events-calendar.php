@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Simple Events Calendar
  * Plugin URI: https://github.com/Level-Up-Studios-LLC/simple-events-calendar
- * Description: A simple events calendar plugin for WordPress. Self-contained — no external field plugins required.
+ * Description: A simple, responsive events calendar for WordPress. Easily create one-time or recurring events and display them anywhere with shortcodes, Elementor widgets, and one-click Add to Calendar.
  * Version: 5.1.0
  * Requires at least: 6.0
  * Requires PHP: 7.4

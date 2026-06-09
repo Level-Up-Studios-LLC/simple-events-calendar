@@ -9,11 +9,11 @@ Stable tag: 5.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A simple, responsive, self-contained events calendar plugin for WordPress. No external field plugins required.
+A simple, responsive events calendar for WordPress. Create one-time or recurring events and display them with shortcodes or Elementor.
 
 == Description ==
 
-Simple Events Calendar is a lightweight, user-friendly events management plugin that creates beautiful, responsive event displays on your WordPress site. It is fully self-contained — event fields are edited through a native meta box, with no dependency on Advanced Custom Fields or any other plugin.
+Simple Events Calendar is a lightweight, user-friendly plugin that creates beautiful, responsive event displays on your WordPress site. Easily create one-time or recurring events and display them anywhere with shortcodes, Elementor widgets, and one-click Add to Calendar — all managed through a simple, built-in Event Details editor.
 
 = Key Features =
 
