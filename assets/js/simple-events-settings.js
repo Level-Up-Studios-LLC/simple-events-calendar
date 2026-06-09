@@ -4,7 +4,7 @@
  * Toggles the custom date-format field when "Custom" is selected and keeps the
  * live preview roughly in sync. No build step; plain DOM APIs.
  */
-(function () {
+(() => {
     'use strict';
 
     function ready(fn) {
@@ -15,21 +15,21 @@
         }
     }
 
-    ready(function () {
-        var radios = document.querySelectorAll('input[name$="[date_format_preset]"]');
-        var custom = document.getElementById('sec-date-format-custom');
-        var customRadio = document.getElementById('sec-date-format-custom-radio');
-        var preview = document.getElementById('sec-date-format-preview');
+    ready(() => {
+        const radios = document.querySelectorAll('input[name$="[date_format_preset]"]');
+        const custom = document.getElementById('sec-date-format-custom');
+        const customRadio = document.getElementById('sec-date-format-custom-radio');
+        const preview = document.getElementById('sec-date-format-preview');
 
         if (!radios.length || !custom) {
             return;
         }
 
         function activeFormat() {
-            if (customRadio && customRadio.checked) {
+            if (customRadio?.checked) {
                 return custom.value;
             }
-            var checked = document.querySelector('input[name$="[date_format_preset]"]:checked');
+            const checked = document.querySelector('input[name$="[date_format_preset]"]:checked');
             return checked ? checked.value : '';
         }
 
@@ -37,11 +37,11 @@
         // Escape sequences and less-common tokens are not fully handled; the
         // server renders the authoritative preview on save — this is just a hint.
         function previewFor(fmt) {
-            var d = new Date();
-            var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            var pad = function (n) { return (n < 10 ? '0' : '') + n; };
-            var map = {
+            const d = new Date();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const pad = (n) => `${n < 10 ? '0' : ''}${n}`;
+            const map = {
                 l: days[d.getDay()],
                 D: days[d.getDay()].slice(0, 3),
                 F: months[d.getMonth()],
@@ -51,31 +51,29 @@
                 n: d.getMonth() + 1,
                 m: pad(d.getMonth() + 1),
                 Y: d.getFullYear(),
-                y: String(d.getFullYear()).slice(-2)
+                y: String(d.getFullYear()).slice(-2),
             };
-            return String(fmt).replace(/\\?([a-zA-Z])/g, function (match, ch) {
+            return String(fmt).replace(/\\?([a-zA-Z])/g, (match, ch) => {
                 if (match.charAt(0) === '\\') { return ch; }
-                return Object.prototype.hasOwnProperty.call(map, ch) ? map[ch] : ch;
+                return Object.hasOwn(map, ch) ? map[ch] : ch;
             });
         }
 
         function sync() {
-            var isCustom = customRadio && customRadio.checked;
+            const isCustom = customRadio?.checked ?? false;
             custom.disabled = !isCustom;
             if (preview) {
                 preview.textContent = previewFor(activeFormat());
             }
         }
 
-        for (var i = 0; i < radios.length; i++) {
-            radios[i].addEventListener('change', (function (radio) {
-                return function () {
-                    if (customRadio && radio === customRadio) {
-                        custom.focus();
-                    }
-                    sync();
-                };
-            }(radios[i])));
+        for (const radio of radios) {
+            radio.addEventListener('change', () => {
+                if (customRadio && radio === customRadio) {
+                    custom.focus();
+                }
+                sync();
+            });
         }
 
         custom.addEventListener('input', sync);

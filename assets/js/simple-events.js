@@ -6,19 +6,19 @@
  * shortcode) — each container tracks its own offset/state and continues its own
  * query context (category / order / past-events / display flags).
  */
-jQuery(document).ready(function ($) {
+jQuery(document).ready(($) => {
   'use strict';
 
   if (typeof ajax_params === 'undefined') {
     return;
   }
 
-  var config = {
-    initialOffset: parseInt(ajax_params.initial_offset, 10) || 6,
-    loadIncrement: parseInt(ajax_params.load_increment, 10) || 6,
+  const config = {
+    initialOffset: Number.parseInt(ajax_params.initial_offset, 10) || 6,
+    loadIncrement: Number.parseInt(ajax_params.load_increment, 10) || 6,
     scrollThreshold: 100,
     maxRetries: 3,
-    retryDelay: 2000
+    retryDelay: 2000,
   };
 
   /**
@@ -27,33 +27,35 @@ jQuery(document).ready(function ($) {
    * @param {jQuery} $container The .simple-events-calendar element.
    */
   function createCalendar($container) {
-    var ctx = {
+    const ctx = {
       category: $container.attr('data-category') || '',
       order: ($container.attr('data-order') || 'ASC').toUpperCase(),
       showPast: $container.attr('data-show-past') || 'false',
       showTime: $container.attr('data-show-time') || 'true',
       showExcerpt: $container.attr('data-show-excerpt') || 'true',
       showLocation: $container.attr('data-show-location') || 'true',
-      showFooter: $container.attr('data-show-footer') || 'true'
+      showFooter: $container.attr('data-show-footer') || 'true',
     };
 
-    var startOffset = parseInt($container.attr('data-offset'), 10);
+    const startOffset = Number.parseInt($container.attr('data-offset'), 10);
 
-    var state = {
-      offset: isNaN(startOffset) ? config.initialOffset : startOffset,
+    const state = {
+      offset: Number.isNaN(startOffset) ? config.initialOffset : startOffset,
       loading: false,
       noMore: false,
       retry: 0,
-      $loader: null
+      $loader: null,
     };
 
     function showLoader() {
       if (!state.$loader) {
-        state.$loader = $('<div class="simple-events-loader">' +
-          '<div class="simple-events-spinner"></div>' +
-          '<span class="simple-events-loading-text">' +
-          (ajax_params.loading_text || 'Loading more events...') +
-          '</span></div>');
+        const loadingText = ajax_params.loading_text || 'Loading more events...';
+        state.$loader = $(
+          `<div class="simple-events-loader">` +
+            `<div class="simple-events-spinner"></div>` +
+            `<span class="simple-events-loading-text">${loadingText}</span>` +
+            `</div>`
+        );
         $container.after(state.$loader);
         state.$loader.hide().fadeIn(300);
       }
@@ -61,7 +63,7 @@ jQuery(document).ready(function ($) {
 
     function hideLoader() {
       if (state.$loader) {
-        var $l = state.$loader;
+        const $l = state.$loader;
         state.$loader = null;
         $l.fadeOut(300, function () { $(this).remove(); });
       }
@@ -75,12 +77,14 @@ jQuery(document).ready(function ($) {
 
     function showError(message) {
       hideLoader();
-      var $err = $('<div class="simple-events-error"><p></p>' +
-        '<button class="simple-events-retry-btn"></button></div>');
+      const $err = $(
+        `<div class="simple-events-error"><p></p>` +
+          `<button class="simple-events-retry-btn"></button></div>`
+      );
       $err.find('p').text(message);
       $err.find('button').text(ajax_params.retry_text || 'Try Again');
       $container.after($err);
-      $err.find('.simple-events-retry-btn').on('click', function () {
+      $err.find('.simple-events-retry-btn').on('click', () => {
         $err.remove();
         state.retry = 0;
         load();
@@ -89,7 +93,7 @@ jQuery(document).ready(function ($) {
 
     function showEnd() {
       if (!$container.nextUntil('.simple-events-calendar', '.simple-events-end').length) {
-        var $end = $('<div class="simple-events-end"><p></p></div>');
+        const $end = $('<div class="simple-events-end"><p></p></div>');
         $end.find('p').text(ajax_params.no_more_text || 'No more events to load.');
         $container.after($end);
         $end.hide().fadeIn(600);
@@ -105,8 +109,8 @@ jQuery(document).ready(function ($) {
         return;
       }
 
-      var html = typeof response.data.html === 'string' ? response.data.html : '';
-      var hasMore = response.data.has_more !== false && html.trim() !== '';
+      const html = typeof response.data.html === 'string' ? response.data.html : '';
+      const hasMore = response.data.has_more !== false && html.trim() !== '';
 
       if (!hasMore) {
         state.noMore = true;
@@ -114,7 +118,7 @@ jQuery(document).ready(function ($) {
         return;
       }
 
-      var $new = $(html);
+      const $new = $(html);
       if (!$new.length) {
         state.noMore = true;
         showEnd();
@@ -130,9 +134,8 @@ jQuery(document).ready(function ($) {
 
     function onError(xhr, status) {
       state.retry++;
-      var serverMessage = (xhr && xhr.responseJSON && xhr.responseJSON.data)
-        ? xhr.responseJSON.data.message : '';
-      var message = 'Unable to load more events. ';
+      const serverMessage = xhr?.responseJSON?.data?.message ?? '';
+      let message = 'Unable to load more events. ';
       if (serverMessage) {
         message += serverMessage;
       } else if (status === 'timeout') {
@@ -174,14 +177,14 @@ jQuery(document).ready(function ($) {
           show_time: ctx.showTime,
           show_excerpt: ctx.showExcerpt,
           show_location: ctx.showLocation,
-          show_footer: ctx.showFooter
+          show_footer: ctx.showFooter,
         },
         success: onSuccess,
         error: onError,
-        complete: function () {
+        complete: () => {
           hideLoader();
           state.loading = false;
-        }
+        },
       });
     }
 
@@ -189,26 +192,21 @@ jQuery(document).ready(function ($) {
       if (state.loading || state.noMore || !$container.length) {
         return false;
       }
-      var containerBottom = $container.offset().top + $container.outerHeight();
-      var viewportBottom = $(window).scrollTop() + $(window).height();
+      const containerBottom = $container.offset().top + $container.outerHeight();
+      const viewportBottom = $(window).scrollTop() + $(window).height();
       return viewportBottom > (containerBottom - config.scrollThreshold);
     }
 
-    return {
-      $container: $container,
-      state: state,
-      load: load,
-      shouldLoad: shouldLoad
-    };
+    return { $container, state, load, shouldLoad };
   }
 
   // Build a controller only for containers that opt into load-more
   // (data-sec-loadmore="1"): the [sec_events] shortcode, the archive/taxonomy
   // templates, and the Events Grid widget when its toggle is on. This keeps the
   // controller off single-event cards and fixed-count grids.
-  var calendars = [];
-  $('.simple-events-calendar[data-sec-loadmore="1"]').not('.simple-events-no-events').each(function () {
-    calendars.push(createCalendar($(this)));
+  const calendars = [];
+  $('.simple-events-calendar[data-sec-loadmore="1"]').not('.simple-events-no-events').each((_, el) => {
+    calendars.push(createCalendar($(el)));
   });
 
   if (!calendars.length) {
@@ -220,32 +218,30 @@ jQuery(document).ready(function ($) {
   // the resting position is never re-checked (load-more never fires until the
   // next scroll). The trailing call re-evaluates the final position.
   function throttle(fn, limit) {
-    var lastRun = 0;
-    var timer = null;
-    return function () {
-      var context = this;
-      var args = arguments;
-      var now = Date.now();
-      var remaining = limit - (now - lastRun);
+    let lastRun = 0;
+    let timer = null;
+    return function (...args) {
+      const now = Date.now();
+      const remaining = limit - (now - lastRun);
       if (remaining <= 0) {
         if (timer) {
           clearTimeout(timer);
           timer = null;
         }
         lastRun = now;
-        fn.apply(context, args);
+        fn.apply(this, args);
       } else if (!timer) {
-        timer = setTimeout(function () {
+        timer = setTimeout(() => {
           lastRun = Date.now();
           timer = null;
-          fn.apply(context, args);
+          fn.apply(this, args);
         }, remaining);
       }
     };
   }
 
-  var handleScroll = throttle(function () {
-    calendars.forEach(function (cal) {
+  const handleScroll = throttle(() => {
+    calendars.forEach((cal) => {
       if (cal.shouldLoad()) {
         cal.load();
       }
@@ -255,14 +251,14 @@ jQuery(document).ready(function ($) {
   $(window).on('scroll', handleScroll);
 
   // Optional "load more" button: drive the nearest preceding calendar.
-  $(document).on('click', '.simple-events-load-more', function (e) {
+  $(document).on('click', '.simple-events-load-more', (e) => {
     e.preventDefault();
-    var $btn = $(this);
-    var $cal = $btn.prevAll('.simple-events-calendar').first();
+    const $btn = $(e.currentTarget);
+    let $cal = $btn.prevAll('.simple-events-calendar').first();
     if (!$cal.length) {
       $cal = $btn.closest('.simple-events-load-more-container').prevAll('.simple-events-calendar').first();
     }
-    calendars.forEach(function (cal) {
+    calendars.forEach((cal) => {
       if (cal.$container.is($cal)) {
         cal.load();
       }
@@ -273,17 +269,17 @@ jQuery(document).ready(function ($) {
   $('body').addClass('simple-events-js-enabled');
 
   // If the initial content is shorter than the viewport, prime each calendar.
-  setTimeout(function () {
+  setTimeout(() => {
     if ($(document).height() <= $(window).height()) {
-      calendars.forEach(function (cal) { cal.load(); });
+      calendars.forEach((cal) => cal.load());
     }
   }, 100);
 
   // Public API.
   window.SimpleEventsCalendar = {
-    loadMore: function () {
-      calendars.forEach(function (cal) { cal.load(); });
+    loadMore() {
+      calendars.forEach((cal) => cal.load());
     },
-    calendars: calendars
+    calendars,
   };
 });
