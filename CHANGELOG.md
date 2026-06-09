@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v5.1.0] (2026-05-30)
+## [v5.1.0] (2026-06-08)
 
 ### Added
 
@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Per-element Elementor widgets** (Title/Image/Date/Time/Location/Excerpt/Content/Categories/Button) are gated to event-loop contexts (single-event templates, archives, Loop Grid bound to events). Outside those contexts they preview a sample event (`Simple_Events_Elementor::sample_event_id()`) in the editor and render nothing on the front end. The "Simple Events" widget category now sits just below "Basic".
 * Front-end stylesheet/script registered for on-demand loading so the display widgets and `[sec_event]` work on any page.
 * **Single & archive views now defer to Elementor Pro Theme Builder explicitly.** When a "Single" template (or "Archive" template) is assigned to events, that template displays the event(s); the plugin's default template is used only as a fallback. Detected via the Theme Builder conditions manager (`Simple_Events_Templates::elementor_has_location_template()`), not just filter priority.
+* **Front-end and admin JavaScript modernized to ES2023.** The four hand-maintained scripts in `assets/js/` were rewritten with `const`/`let`, arrow functions, template literals, optional chaining / nullish coalescing, `Number.parseInt`/`Number.isNaN`, `Array.includes`, `Object.hasOwn`, and native NodeList iteration. No build/transpile step was added — the syntax stays within Baseline browser support. Behavior is unchanged; a stray debug `console.log` was removed from the shortcode script.
 
 ### Fixed
 

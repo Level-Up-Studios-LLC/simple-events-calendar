@@ -143,7 +143,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 
 == Changelog ==
 
-= 5.1.0 (2026-05-30) =
+= 5.1.0 (2026-06-08) =
 
 **Added**
 * Single-event shortcode `[sec_event id="123" layout="card|list"]` — display one event anywhere on your site in card or image-left list layout
@@ -163,6 +163,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Per-element Elementor widgets (Title/Image/Date/Time/Location etc.) are now gated to event-loop contexts — they preview a sample event in the editor but render nothing on an ordinary page on the front end
 * Front-end stylesheet and script are now registered for on-demand loading so the display widgets and `[sec_event]` shortcode work on any page
 * Single event and archive views now use your Elementor Pro Theme Builder template when one is assigned to events (the plugin's default template is the fallback when no Elementor template exists)
+* Front-end and admin JavaScript modernized to ES2023 syntax (no build step; runs natively in current browsers). No change in behavior.
 
 **Fixed**
 * AJAX "load more" event cards were missing time, excerpt, location, and "Learn More" link — fixed a show-flag type mismatch between the AJAX path and the card template

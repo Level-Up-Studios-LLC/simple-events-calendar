@@ -241,7 +241,7 @@ npm run zip            # Create plugin zip file
 **JavaScript Development:**
 
 - JavaScript files are maintained directly in `assets/js/`
-- No build process required for JS files
+- Written in modern **ES2023** syntax that runs natively in current browsers — no build, bundle, or transpile step
 - Files are ready for production use
 
 ### File Structure
@@ -262,6 +262,7 @@ simple-events-calendar/
 │   └── js/
 │       ├── simple-events.js           # Main JavaScript (infinite scroll)
 │       ├── simple-events-admin.js     # Edit-screen conditional logic
+│       ├── simple-events-settings.js  # Settings page date-format toggle
 │       └── simple-events-shortcode.js # Shortcode-specific JS
 ├── includes/
 │   ├── class-admin-columns.php        # Admin list-table columns + Series indicator
