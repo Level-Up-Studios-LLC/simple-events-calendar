@@ -248,14 +248,6 @@ class Simple_Events_Settings {
                                 </label>
                                 <input type="text" id="sec-date-format-custom" class="regular-text" name="<?php echo esc_attr(self::OPTION); ?>[date_format_custom]" value="<?php echo esc_attr(!$is_preset ? $current : ''); ?>" placeholder="l, F j, Y" aria-label="<?php esc_attr_e('Custom date format', 'simple_events'); ?>" />
                                 <p class="description">
-                                    <?php
-                                    printf(
-                                        /* translators: %s: example formatted date */
-                                        esc_html__('Preview: %s', 'simple_events'),
-                                        '<strong id="sec-date-format-preview">' . esc_html(wp_date($current)) . '</strong>'
-                                    );
-                                    ?>
-                                    <br />
                                     <?php echo esc_html__('Choose a preset, or pick "Custom" to enter a PHP date format.', 'simple_events'); ?>
                                     <a href="https://wordpress.org/documentation/article/customize-date-and-time-format/" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Format reference', 'simple_events'); ?></a>
                                 </p>
