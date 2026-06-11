@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.2.0] (2026-06-11)
+
+### Added
+
+* **Pro upsell UI** (`includes/class-pro-upsell.php`, `Simple_Events_Pro_Upsell`) — an admin-only marketing surface advertising the forthcoming **Simple Events Calendar Pro**:
+  * A dismissible CTA banner at the top of the **Events → Settings** and **Events → Documentation** pages (dismissal is per-user, stored in user meta).
+  * An **"Available in Pro"** preview section on the Settings page showing disabled controls with **PRO** badges, sourced from a single filterable list (`simple_events_pro_features`).
+  * An **"Upgrade to Pro"** submenu under the Events menu opening a feature/CTA landing page; the purchase URL is filterable via `simple_events_pro_url`.
+  * Styles appended to the existing hand-written `assets/css/simple-events-admin.css`, enqueued only on the plugin's three admin screens (no leakage elsewhere). Writes no plugin data and never affects the front end.
+
+### Notes
+
+* This release adds **no** front-end behavior or data changes — it is purely the in-admin Pro upsell/marketing surface.
+
 ## [v5.1.0] (2026-06-08)
 
 ### Added

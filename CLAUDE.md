@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Simple Events Calendar is a WordPress plugin (v5.1.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode, per-element shortcodes, post-type archives, and default templates. It is **fully self-contained** — event fields are edited through a native meta box (`includes/class-meta-box.php`). **As of v5.0.0 there is no Advanced Custom Fields dependency.** (Versions ≤ 4.4.0 required ACF; v5.0.0 removed it without any data migration — event values were always plain post meta.)
+Simple Events Calendar is a WordPress plugin (v5.2.0) that registers a `simple-events` custom post type and renders events via the `[sec_events]` shortcode, per-element shortcodes, post-type archives, and default templates. It is **fully self-contained** — event fields are edited through a native meta box (`includes/class-meta-box.php`). **As of v5.0.0 there is no Advanced Custom Fields dependency.** (Versions ≤ 4.4.0 required ACF; v5.0.0 removed it without any data migration — event values were always plain post meta.)
 
 - PHP 7.4+, WordPress 6.0+
 - Text domain: `simple_events`
@@ -50,14 +50,15 @@ PHP code style is enforced via **phpcs.xml** (WordPress Coding Standards). Run w
 7. `class-meta-box.php` → `Simple_Events_Meta_Box` (native Event Details editing UI)
 8. `class-settings.php` → `Simple_Events_Settings` (Events → Settings page + `simple_events_settings` option)
 9. `class-docs.php` → `Simple_Events_Docs` (read-only Events → Documentation page; capability `edit_posts`, slug `simple-events-docs`)
-10. `class-ics.php` → `Simple_Events_ICS` ("Add to Calendar" .ics generator; streams on `template_redirect` via `?sec_ical=<id>`)
-11. `class-templates.php` → `Simple_Events_Templates` (default single/archive/taxonomy templates via `template_include`)
-12. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
-13. `includes/elementor/class-elementor.php` → `Simple_Events_Elementor::init()` (no-op unless Elementor is active)
+10. `class-pro-upsell.php` → `Simple_Events_Pro_Upsell` (admin-only Pro upsell/marketing UI; new in v5.2.0)
+11. `class-ics.php` → `Simple_Events_ICS` ("Add to Calendar" .ics generator; streams on `template_redirect` via `?sec_ical=<id>`)
+12. `class-templates.php` → `Simple_Events_Templates` (default single/archive/taxonomy templates via `template_include`)
+13. `class-recurrence.php` → `Simple_Events_Recurrence` (recurring-events engine)
+14. `includes/elementor/class-elementor.php` → `Simple_Events_Elementor::init()` (no-op unless Elementor is active)
 
 `includes/class-migrations.php` → `Simple_Events_Migrations` is also loaded (first) — a one-time, version-flagged DB migration runner (`init` priority 1).
 
-All component instances hang off the main singleton (`$plugin->migrations`, `->post_type`, `->renderer`, `->shortcode`, `->ajax`, `->admin_columns`, `->meta_box`, `->settings`, `->docs`, `->ics`, `->templates`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
+All component instances hang off the main singleton (`$plugin->migrations`, `->post_type`, `->renderer`, `->shortcode`, `->ajax`, `->admin_columns`, `->meta_box`, `->settings`, `->docs`, `->pro_upsell`, `->ics`, `->templates`, `->recurrence`) — reach them via `simple_events_calendar()` rather than constructing new ones.
 
 ### Settings and the display helpers
 All tunables live in one option array `simple_events_settings` (see `Simple_Events_Settings` + `simple_events_get_setting_defaults()`). Read settings via `simple_events_get_setting($key, $fallback)`. The front-end date/time format is a setting, so **never** read `event_date`/time meta raw for display — use `simple_events_get_event_date($id)` and `simple_events_get_event_time($id, $key)`, which convert the stored `Ymd` / `g:i a` values to the configured display format. Schema is built once by `simple_events_get_event_schema($id)` (returns null when the JSON-LD setting is off). Saving settings flushes the shortcode transients.
@@ -69,6 +70,14 @@ All tunables live in one option array `simple_events_settings` (see `Simple_Even
 - **`delete_data_on_uninstall`** (new in v5.1.0, default `'no'`) controls whether uninstall deletes plugin data. See the "Uninstall" section below.
 
 **Documentation page** (`includes/class-docs.php`, `Simple_Events_Docs`): a read-only admin page at Events → Documentation that lists all shortcodes (`[sec_events]`, `[sec_event]`, element shortcodes) and Elementor widgets with their usage contexts. Registered on `admin_menu` with the `edit_posts` capability, slug `simple-events-docs`. It has no settings form and writes nothing to the database.
+
+### Pro upsell UI and freemium model (v5.2.0)
+`includes/class-pro-upsell.php` (`Simple_Events_Pro_Upsell`) is an **admin-only marketing surface** for the forthcoming commercial Pro version. It writes no plugin data and never touches the front end. Pieces:
+- **CTA banner** — `Simple_Events_Pro_Upsell::banner()` (static) is echoed by `Simple_Events_Settings::render_page()` and `Simple_Events_Docs::render_page()` right after their `<h1>`. Dismissal is **per-user**: a nonce-protected link sets the `sec_pro_banner_dismissed` user meta via `maybe_dismiss_banner()` on `admin_init`, after which `banner()` returns early for that user.
+- **"Available in Pro" preview** — `locked_section()` (static, called near the end of the Settings page) renders a `form-table` of disabled controls with `PRO` badges.
+- **Upgrade page** — an Events submenu (slug `simple-events-upgrade`, `manage_options`) rendering a feature grid + CTA.
+- **Single sources of truth / filters:** the teaser list comes from `pro_features()` (filter `simple_events_pro_features`); the purchase URL from `pro_url()` (filter `simple_events_pro_url`).
+- **Assets:** styles live in the existing hand-written `assets/css/simple-events-admin.css` (not part of the SCSS build) and are enqueued by `enqueue()` **only** on the three plugin screens (`simple-events_page_{settings,docs,upgrade}`) — keep that gate; do not enqueue globally. The "Upgrade to Pro" menu item is highlighted purely via CSS targeting `#adminmenu a[href*="simple-events-upgrade"]`.
 
 ### Native fields and storage formats (critical)
 The meta box writes times as `g:i a`, but **reads** them tolerantly via `simple_events_parse_time_of_day()` (accepts `g:i a`, `H:i:s`, `H:i`) — older ACF-based installs stored 24-hour `H:i:s`, and this keeps them displaying, editing (the edit field no longer blanks → no time loss on re-save), and feeding the `.ics`/schema correctly; new saves normalize to `g:i a`. The meta box reads/writes the exact keys earlier versions used via ACF, so existing data is untouched: `event_date` = `Ymd`, `event_start_time`/`event_end_time` = `g:i a` (legacy `H:i:s` tolerated), `event_location` = text, and the rule keys `event_repeats` (int 1/0), `event_repeat_interval` (int), `event_repeat_frequency` (`daily|weekly|monthly|yearly`), `event_repeat_end_type` (`never|count|until`), `event_repeat_count` (int), `event_repeat_until` (`Ymd`). The meta box hooks `save_post_simple-events` at priority 10 (which fires before any `save_post`), so the recurrence engine at `save_post`:30 still reads the persisted rule. **The meta box bails when `$GLOBALS['sec_generating_series']` is set**, so generated children are never overwritten with the parent's submitted values.

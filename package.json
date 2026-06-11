@@ -1,6 +1,6 @@
 {
   "name": "simple-events-calendar",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "A simple, responsive events calendar for WordPress. Easily create one-time or recurring events and display them anywhere with shortcodes, Elementor widgets, and one-click Add to Calendar.",
   "main": "assets/js/simple-events.js",
   "scripts": {

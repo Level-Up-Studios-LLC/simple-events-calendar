@@ -209,6 +209,8 @@ class Simple_Events_Settings {
         <div class="wrap">
             <h1><?php echo esc_html__('Events Settings', 'simple_events'); ?></h1>
 
+            <?php Simple_Events_Pro_Upsell::banner(); ?>
+
             <?php if (isset($_GET['sec_cache_cleared'])) : ?>
                 <div class="notice notice-success is-dismissible">
                     <p><?php echo esc_html__('Event cache cleared.', 'simple_events'); ?></p>
@@ -343,6 +345,9 @@ class Simple_Events_Settings {
 
                 <?php submit_button(); ?>
             </form>
+
+            <hr />
+            <?php Simple_Events_Pro_Upsell::locked_section(); ?>
 
             <hr />
             <h2><?php echo esc_html__('Maintenance', 'simple_events'); ?></h2>

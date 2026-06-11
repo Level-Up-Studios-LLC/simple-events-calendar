@@ -4,7 +4,7 @@ A clean, responsive WordPress plugin for displaying events with infinite scroll,
 
 ## Description
 
-Simple Events Calendar provides an elegant way to create and display events on your WordPress website. The plugin features a responsive grid layout that adapts to all screen sizes, infinite scroll loading, and automatic filtering to show only current and upcoming events. As of **v4.4.0** it also supports recurring events that repeat every N days, weeks, months, or years — each occurrence is a real post, so it Just Works with the existing shortcode, archive, and admin UI. **v5.1.0** adds the `[sec_event]` single-event shortcode, Elementor Events Grid and Single Event display widgets (usable on any page), and weekly by-day recurrence (repeat on specific weekdays, weekdays only, or weekends).
+Simple Events Calendar provides an elegant way to create and display events on your WordPress website. The plugin features a responsive grid layout that adapts to all screen sizes, infinite scroll loading, and automatic filtering to show only current and upcoming events. As of **v4.4.0** it also supports recurring events that repeat every N days, weeks, months, or years — each occurrence is a real post, so it Just Works with the existing shortcode, archive, and admin UI. **v5.1.0** adds the `[sec_event]` single-event shortcode, Elementor Events Grid and Single Event display widgets (usable on any page), and weekly by-day recurrence (repeat on specific weekdays, weekdays only, or weekends). **v5.2.0** adds an in-admin "Upgrade to Pro" area (banner, feature preview, and menu link).
 
 ## Features
 

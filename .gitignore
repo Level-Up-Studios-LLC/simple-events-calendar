@@ -62,3 +62,6 @@ wp-config.php
 
 # WordPress export / site-data files (never commit real site content)
 *.WordPress.*.xml
+
+# Internal notes (kept local; not published)
+ROADMAP.md

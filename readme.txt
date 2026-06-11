@@ -5,7 +5,7 @@ Tags: events, calendar, shortcode, responsive, elementor
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 5.1.0
+Stable tag: 5.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -142,6 +142,14 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 4. Shortcode parameters and usage examples
 
 == Changelog ==
+
+= 5.2.0 (2026-06-11) =
+
+**Added**
+* A **Pro upsell area** in the admin: a dismissible "Upgrade to Pro" banner on the Events → Settings and Events → Documentation pages, an "Available in Pro" preview of upcoming premium features on the Settings page, and an **Upgrade to Pro** link under the Events menu.
+
+**Notes**
+* This update only adds in-admin information about the upcoming Pro version — it makes no changes to your events, settings, or anything visitors see on the front end. The banner can be dismissed per user.
 
 = 5.1.0 (2026-06-08) =
 
@@ -325,6 +333,9 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Event ordering consistency
 
 == Upgrade Notice ==
+
+= 5.2.0 =
+Adds an in-admin "Upgrade to Pro" area (banner, feature preview, and menu link) for the upcoming Pro version. No changes to your events, settings, or the front end; the banner is dismissible per user.
 
 = 5.1.0 =
 Adds display widgets, single-event/Add-to-Calendar features, and a one-time migration that renames very old `events`/`events-cat` data to `simple-events`/`simple-events-cat` so existing events keep working. Back up your database and test on staging before upgrading a production site.

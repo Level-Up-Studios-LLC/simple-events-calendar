@@ -92,6 +92,9 @@ class Simple_Events_Docs {
         ?>
         <div class="wrap sec-docs">
             <h1><?php echo esc_html__('Simple Events Documentation', 'simple_events'); ?></h1>
+
+            <?php Simple_Events_Pro_Upsell::banner(); ?>
+
             <p class="sec-docs__intro"><?php echo esc_html__('Reference for the shortcodes and Elementor widgets this plugin provides. Use shortcodes in the block/classic editor or widgets; use the Elementor widgets when building with Elementor.', 'simple_events'); ?></p>
 
             <h2><?php echo esc_html__('Shortcodes', 'simple_events'); ?></h2>

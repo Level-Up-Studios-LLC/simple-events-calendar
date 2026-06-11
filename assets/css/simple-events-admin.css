@@ -202,3 +202,122 @@
 .sec-mb__child-note {
     margin-top: 14px;
 }
+
+/* -------------------------------------------------------------------------
+   Pro upsell UI (Settings / Documentation / Upgrade pages). Admin only.
+   ------------------------------------------------------------------------- */
+
+.sec-pro-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 9px;
+    background: #8b5cf6;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+}
+
+/* CTA banner */
+.sec-pro-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    border: 1px solid #ddd6fe;
+    border-left: 4px solid #8b5cf6;
+    border-radius: 6px;
+}
+
+.sec-pro-banner__body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1 1 320px;
+}
+
+.sec-pro-banner__text {
+    margin: 0;
+    font-size: 13px;
+    color: #3c2e6b;
+}
+
+.sec-pro-banner__actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.sec-pro-banner__dismiss {
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.sec-pro-banner__dismiss:hover {
+    color: #3c2e6b;
+}
+
+/* Locked "Available in Pro" rows */
+.sec-pro-locked__heading {
+    margin-top: 8px;
+}
+
+.sec-pro-locked th {
+    color: #4b5563;
+}
+
+.sec-pro-locked .sec-pro-locked__control {
+    color: #9ca3af;
+}
+
+.sec-pro-locked tr {
+    opacity: 0.85;
+}
+
+/* Upgrade landing page */
+.sec-pro-upgrade__intro {
+    font-size: 14px;
+    max-width: 640px;
+}
+
+.sec-pro-upgrade__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 20px 0 28px;
+}
+
+.sec-pro-upgrade__card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 18px 20px;
+}
+
+.sec-pro-upgrade__card-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.sec-pro-upgrade__cta {
+    margin-top: 8px;
+}
+
+/* Highlight the "Upgrade to Pro" item in the Events submenu */
+#adminmenu a[href*="simple-events-upgrade"] {
+    color: #c4b5fd;
+    font-weight: 600;
+}
+
+#adminmenu a[href*="simple-events-upgrade"]:hover {
+    color: #fff;
+}
