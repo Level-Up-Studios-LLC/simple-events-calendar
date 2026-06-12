@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * `simple_events_settings_after_sections` (action, args: `$settings`) — fires inside the settings form before the submit button so add-ons can render their own `form-table` sections.
   * `simple_events_sanitize_settings` (filter, args: `$clean, $input, $previous`) — lets add-ons sanitize and persist their own setting keys (the core sanitizer otherwise drops unknown keys); `$previous` is the pre-save option so a changed value can be detected.
   * `simple_events_setting_defaults` (filter, args: `$defaults`) — register defaults for add-on setting keys.
+  * `simple_events_pro_active` (filter, default `false`) — when a companion plugin returns `true`, every Pro upsell surface (the Settings/Documentation banner, the "Available in Pro" preview section, the "Upgrade to Pro" menu item and page, and their styles) is hidden.
 * No user-facing or behavior changes — these are no-ops unless a companion plugin hooks them.
 
 ## [v5.2.0] (2026-06-11)

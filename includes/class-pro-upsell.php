@@ -42,6 +42,20 @@ class Simple_Events_Pro_Upsell {
     }
 
     /**
+     * Whether the Pro version is installed and active.
+     *
+     * The free plugin has no knowledge of Pro's internals; the Pro plugin simply
+     * hooks this filter (e.g. `add_filter('simple_events_pro_active', '__return_true')`).
+     * When it returns true, every upsell surface in this class — banner, locked
+     * preview section, Upgrade menu/page, and their styles — is suppressed.
+     *
+     * @return bool
+     */
+    public static function is_pro_active() {
+        return (bool) apply_filters('simple_events_pro_active', false);
+    }
+
+    /**
      * Purchase / marketing URL for the Pro version.
      *
      * @return string
@@ -83,6 +97,10 @@ class Simple_Events_Pro_Upsell {
      * Register the "Upgrade to Pro" submenu page under the Events menu.
      */
     public function add_menu() {
+        if (self::is_pro_active()) {
+            return;
+        }
+
         add_submenu_page(
             'edit.php?post_type=simple-events',
             __('Upgrade to Pro', 'simple_events'),
@@ -99,6 +117,10 @@ class Simple_Events_Pro_Upsell {
      * @param string $hook Current admin page hook suffix.
      */
     public function enqueue($hook) {
+        if (self::is_pro_active()) {
+            return;
+        }
+
         $screens = array(
             'simple-events_page_' . Simple_Events_Settings::PAGE,
             'simple-events_page_' . Simple_Events_Docs::PAGE,
@@ -140,6 +162,10 @@ class Simple_Events_Pro_Upsell {
      * Echo the dismissible Pro CTA banner. No-op if the current user dismissed it.
      */
     public static function banner() {
+        if (self::is_pro_active()) {
+            return;
+        }
+
         if (get_user_meta(get_current_user_id(), self::DISMISS_META, true)) {
             return;
         }
@@ -170,6 +196,9 @@ class Simple_Events_Pro_Upsell {
      * Echo the "Available in Pro" preview section (disabled rows with PRO badges).
      */
     public static function locked_section() {
+        if (self::is_pro_active()) {
+            return;
+        }
         ?>
         <h2 class="sec-pro-locked__heading"><?php echo esc_html__('Available in Pro', 'simple_events'); ?></h2>
         <p class="description"><?php echo esc_html__('These features are unlocked in Simple Events Calendar Pro.', 'simple_events'); ?></p>
@@ -200,7 +229,7 @@ class Simple_Events_Pro_Upsell {
      * Render the "Upgrade to Pro" landing page.
      */
     public function render_upgrade_page() {
-        if (!current_user_can('manage_options')) {
+        if (self::is_pro_active() || !current_user_can('manage_options')) {
             return;
         }
         ?>
