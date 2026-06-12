@@ -144,7 +144,7 @@ if (!defined('SIMPLE_EVENTS_SETTINGS_OPTION')) {
  * @return array
  */
 function simple_events_get_setting_defaults() {
-    return array(
+    $defaults = array(
         // Display formatting.
         'date_format'    => 'l, F j, Y',
         'time_format'    => '12', // '12' => g:i a, '24' => H:i.
@@ -174,6 +174,9 @@ function simple_events_get_setting_defaults() {
         // Data lifecycle: 'no' keeps events on uninstall (default), 'yes' deletes.
         'delete_data_on_uninstall' => 'no',
     );
+
+    // Add-ons register defaults for their own setting keys here.
+    return apply_filters('simple_events_setting_defaults', $defaults);
 }
 
 /**

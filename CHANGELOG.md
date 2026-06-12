@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.3.0] (2026-06-11)
+
+### Added (developer)
+
+* **Extension hooks** so other plugins can extend the plugin without editing core files:
+  * `simple_events_event_slug` (filter) — overrides the single-event permalink base (default `events`) in `Simple_Events_Post_Type::register_post_type()`.
+  * `simple_events_settings_after_sections` (action, args: `$settings`) — fires inside the settings form before the submit button so add-ons can render their own `form-table` sections.
+  * `simple_events_sanitize_settings` (filter, args: `$clean, $input, $previous`) — lets add-ons sanitize and persist their own setting keys (the core sanitizer otherwise drops unknown keys); `$previous` is the pre-save option so a changed value can be detected.
+  * `simple_events_setting_defaults` (filter, args: `$defaults`) — register defaults for add-on setting keys.
+* No user-facing or behavior changes — these are no-ops unless a companion plugin hooks them.
+
 ## [v5.2.0] (2026-06-11)
 
 ### Added

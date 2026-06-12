@@ -132,7 +132,18 @@ class Simple_Events_Settings {
             simple_events_clear_all_transients();
         }
 
-        return $clean;
+        /**
+         * Filter the sanitized settings before they are saved. Add-ons hook this to
+         * sanitize and persist their own setting keys — the logic above only keeps
+         * keys the free plugin knows about, so unknown keys are dropped otherwise.
+         * `$previous` is the currently stored option (array, or false if unset), so
+         * add-ons can detect a changed value (e.g. to flag a rewrite-rule flush).
+         *
+         * @param array $clean    Sanitized known settings.
+         * @param array $input    Raw submitted settings.
+         * @param mixed $previous Previously stored option value.
+         */
+        return apply_filters('simple_events_sanitize_settings', $clean, $input, get_option(self::OPTION));
     }
 
     /**
@@ -342,6 +353,18 @@ class Simple_Events_Settings {
                         </td>
                     </tr>
                 </table>
+
+                <?php
+                /**
+                 * Fires inside the settings form, after the built-in sections and
+                 * before the submit button. Add-ons echo their own settings sections
+                 * (form-table markup) here; persist their keys via the
+                 * `simple_events_sanitize_settings` filter.
+                 *
+                 * @param array $settings Current settings values.
+                 */
+                do_action('simple_events_settings_after_sections', $settings);
+                ?>
 
                 <?php submit_button(); ?>
             </form>

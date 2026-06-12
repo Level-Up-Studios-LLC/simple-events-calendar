@@ -115,7 +115,8 @@ class Simple_Events_Post_Type {
             'rest_base'             => 'simple-events',
             'rest_controller_class' => 'WP_REST_Posts_Controller',
             'rewrite'               => array(
-                'slug'       => 'events',
+                // Add-ons (e.g. Pro's configurable URLs) can override the single-event base.
+                'slug'       => apply_filters('simple_events_event_slug', 'events'),
                 'with_front' => false,
                 'pages'      => true,
                 'feeds'      => true,
