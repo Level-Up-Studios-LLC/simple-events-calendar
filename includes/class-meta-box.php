@@ -3,8 +3,8 @@
 /**
  * Native event-details meta box for Simple Events Calendar
  *
- * Replaces the ACF-provided editing UI. Reads and writes the exact same post
- * meta keys and storage formats ACF used, so existing events are unaffected:
+ * Registers and persists every event field. The meta keys and storage formats
+ * are unchanged from earlier versions, so existing events are unaffected:
  *   - event_date          stored as Ymd      (e.g. 20260529)
  *   - event_start_time    stored as g:i a    (e.g. "2:30 pm")
  *   - event_end_time      stored as g:i a    (optional)
@@ -17,7 +17,7 @@
  *   - event_repeat_until      Ymd
  *
  * Saves at save_post priority 10 so the recurrence engine (priority 30) reads
- * the persisted rule meta — matching ACF's old timing.
+ * the persisted rule meta.
  *
  * @package Simple_Events_Calendar
  * @since 5.0.0
@@ -476,9 +476,9 @@ class Simple_Events_Meta_Box {
         if ('' === (string) $time) {
             return '';
         }
-        // Tolerant of g:i a (native) and legacy H:i:s / H:i (ACF imports), so
-        // editing an imported event populates the time field instead of
-        // blanking it (which would erase the time on the next save).
+        // Tolerant of g:i a (current) and legacy H:i:s / H:i written by
+        // versions <= 4.4.0, so editing such an event populates the time field
+        // instead of blanking it (which would erase the time on the next save).
         $dt = function_exists('simple_events_parse_time_of_day')
             ? simple_events_parse_time_of_day((string) $time)
             : DateTimeImmutable::createFromFormat('g:i a', (string) $time);

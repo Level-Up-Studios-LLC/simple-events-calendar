@@ -138,8 +138,8 @@ if (!defined('SIMPLE_EVENTS_SETTINGS_OPTION')) {
 /**
  * Default values for every plugin setting.
  *
- * Defaults are chosen so that a site upgrading from a version that relied on
- * ACF renders and behaves identically until the admin changes something.
+ * Defaults are chosen so that a site upgrading from an earlier version renders
+ * and behaves identically until the admin changes something.
  *
  * @return array
  */
@@ -233,9 +233,8 @@ function simple_events_resolve_event_id($maybe_id = 0) {
 /**
  * Get an event's date, reformatted from the stored `Ymd` meta.
  *
- * The raw meta value is stored in `Ymd` form (e.g. 20260529) — historically by
- * ACF's date picker and now by the native meta box. This isolates the one place
- * the stored format differs from the display format.
+ * The raw meta value is stored in `Ymd` form (e.g. 20260529). This isolates the
+ * one place the stored format differs from the display format.
  *
  * @param int    $post_id Event post ID.
  * @param string $format  PHP date format. Defaults to the `date_format` setting.
@@ -295,9 +294,9 @@ function simple_events_get_event_time($post_id, $key) {
 /**
  * Parse a stored event time-of-day string into a DateTimeImmutable.
  *
- * Tolerant of multiple stored formats: the native meta box writes `g:i a`
- * (e.g. "2:30 pm"), but events imported from older ACF-based versions may be
- * stored as `H:i:s` (e.g. "14:30:00") or `H:i`. Only the time component is
+ * Tolerant of multiple stored formats: the meta box writes `g:i a`
+ * (e.g. "2:30 pm"), but events created by versions <= 4.4.0 may be stored as
+ * `H:i:s` (e.g. "14:30:00") or `H:i`. Only the time component is
  * meaningful (the date is reset to the epoch). Returns false when none match.
  *
  * @param string             $raw Stored time string.
@@ -729,7 +728,7 @@ function simple_events_is_event_page() {
  * Whether the given post is the parent of a recurring series.
  *
  * Detected via the persisted rule snapshot meta, so the function works in
- * cron / background contexts that don't have ACF loaded.
+ * cron / background contexts where the admin-only meta box is not loaded.
  *
  * @param int $post_id Post ID.
  * @return bool

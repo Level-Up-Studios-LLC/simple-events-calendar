@@ -37,7 +37,7 @@ class Simple_Events_Recurrence
     /**
      * Snapshots of OLD post/meta values captured at post_updated time,
      * keyed by post_id. Used to compute the change diff on child saves
-     * after ACF has overwritten the meta at save_post priority 10.
+     * after the meta box has rewritten the meta at save_post priority 10.
      *
      * @var array
      */
@@ -60,9 +60,10 @@ class Simple_Events_Recurrence
     private function init_hooks()
     {
         add_action('post_updated', array($this, 'snapshot_pre_save'), 10, 3);
-        // save_post_{type} fires before save_post, but ACF hooks save_post at
-        // priority 10 — so we hook the general save_post action at 30 to read
-        // meta values that ACF has already persisted, then filter on post_type.
+        // save_post_{type} fires before save_post, and the meta box persists
+        // field meta on save_post_simple-events at priority 10 — so we hook the
+        // general save_post action at 30 to read meta values it has already
+        // written, then filter on post_type.
         add_action('save_post', array($this, 'handle_save_post'), 30, 3);
         add_action('before_delete_post', array($this, 'handle_before_delete'));
         add_action('deleted_post', array($this, 'handle_deleted_post'));
@@ -1046,7 +1047,7 @@ class Simple_Events_Recurrence
         if (in_array($key, array('post_title', 'post_content', 'post_excerpt'), true)) {
             global $wpdb;
             // Direct posts-table write: wp_update_post would re-fire save_post
-            // (and ACF's field-save handler) on every propagation target,
+            // (and the meta box's save handler) on every propagation target,
             // overwriting their meta with $_POST values from the OTHER post
             // being edited. Cache is invalidated explicitly below.
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1148,7 +1149,8 @@ class Simple_Events_Recurrence
                 delete_post_meta($parent_id, self::META_RULE_HORIZON);
             }
 
-            // Persist rule snapshot so cron / background workers don't need ACF.
+            // Persist rule snapshot so cron / background workers can read the
+            // rule without loading the admin-only meta box.
             update_post_meta($parent_id, self::META_RULE_FREQ, $rule['freq']);
             update_post_meta($parent_id, self::META_RULE_INTERVAL, $rule['interval']);
             update_post_meta($parent_id, self::META_RULE_END_TYPE, $rule['end_type']);
@@ -1697,14 +1699,14 @@ class Simple_Events_Recurrence
             }
         }
 
-        foreach (array('event_start_time', 'event_end_time', 'event_location') as $acf_key) {
-            if (!in_array($acf_key, $copyable, true)) {
+        foreach (array('event_start_time', 'event_end_time', 'event_location') as $meta_key) {
+            if (!in_array($meta_key, $copyable, true)) {
                 continue;
             }
-            $value = isset($effective[$acf_key])
-                ? $effective[$acf_key]
-                : get_post_meta($parent_id, $acf_key, true);
-            update_post_meta($child_id, $acf_key, $value);
+            $value = isset($effective[$meta_key])
+                ? $effective[$meta_key]
+                : get_post_meta($parent_id, $meta_key, true);
+            update_post_meta($child_id, $meta_key, $value);
         }
 
         update_post_meta($child_id, 'event_date', $ymd);

@@ -21,8 +21,7 @@
     "wordpress",
     "plugin",
     "events",
-    "calendar",
-    "acf"
+    "calendar"
   ],
   "author": "Level Up Studios, LLC",
   "license": "GPL-2.0-or-later",

@@ -138,7 +138,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 
 1. Event display with responsive grid layout
 2. WordPress admin events list with custom columns
-3. Event creation form with ACF fields
+3. Event creation form with the built-in Event Details meta box
 4. Shortcode parameters and usage examples
 
 == Changelog ==
