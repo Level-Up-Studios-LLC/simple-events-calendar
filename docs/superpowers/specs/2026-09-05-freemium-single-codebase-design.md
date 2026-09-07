@@ -26,9 +26,9 @@ ticketing are separate projects with their own specs.
 | Decision | Value | Rationale |
 |---|---|---|
 | Distribution model | One plugin, two builds (Freemius processor) | A single ZIP whose features unlock by license key is prohibited by the WordPress.org trialware rule. Two co-active plugins imposes a permanent "add a hook to free first" tax that the one-price-unlocks-everything business model gets nothing back for. |
-| wp.org slug | `simple-events-calendar-lite` | `simple-events-calendar` is permanently taken (closed 2021-06-02 for a security issue); `simple-event-calendar` and `simple-events` are likewise taken and closed. `simple-events-calendar-lite` is free and retains the search terms users actually type. |
-| Plugin display name | `Simple Events Calendar Lite` — **permanent** | Slug is derived from the name at submission. Name is not changed after approval; "Lite" stays in both builds. |
-| Text domain | `simple-events-calendar-lite` | WordPress.org requires the text domain to equal the slug. |
+| wp.org slug | `simply-events-calendar` | `simple-events-calendar` is permanently taken (closed 2021-06-02 for a security issue); `simple-event-calendar` and `simple-events` are likewise taken and closed. `simply-events-calendar` was verified free on 2026-09-07, carries **no tier marker**, and keeps `events calendar` — the phrase users actually search. A tier-marked slug such as `-lite` was rejected: wp.org slugs are permanent, so a paying customer would carry `lite` in their install path and text domain forever. |
+| Plugin display name | `Simply Events Calendar` | Slug is derived from the name at submission, so the two are locked together at that moment. Free and premium builds carry the same name; the premium build appends `premium_suffix`. |
+| Text domain | `simply-events-calendar` | WordPress.org requires the text domain to equal the slug. Identical in both builds — they share one source tree and one `languages/` directory, so a divergent domain would make every `__()` call miss. |
 | Stripping mechanism | `@fs_premium_only /includes/pro/` + one `is__premium_only()` block | Smallest reviewable marker surface. |
 | Canonical repo | Existing `simple-events-calendar`, made **private** | Already holds the free code in the correct state; the Pro repo deleted all of it in `dbb82c4`. |
 | Version | `6.0.0` | Slug, text domain, and global constants all break. |
@@ -63,7 +63,7 @@ levelupstudios.com.
 
 ```
 simple-events-calendar/                     (private canonical repo)
-├── simple-events-calendar-lite.php         main file: header, constants,
+├── simply-events-calendar.php              main file: header, constants,
 │                                           Freemius bootstrap, @fs_premium_only
 ├── freemius/                               vendored SDK 2.13.1
 ├── includes/
@@ -84,7 +84,7 @@ premium goes into a shared file.
 
 ### Main file rename
 
-`simple-events-calendar.php` → `simple-events-calendar-lite.php`, matching the
+`simple-events-calendar.php` → `simply-events-calendar.php`, matching the
 slug.
 
 This changes `plugin_basename()`, so WordPress treats it as a different plugin:
@@ -156,12 +156,12 @@ if ( ! function_exists( 'sec_fs' ) ) {
 
             $sec_fs = fs_dynamic_init( array(
                 'id'                  => SIMPLE_EVENTS_FS_ID,
-                'slug'                => 'simple-events-calendar-lite',
-                'premium_slug'        => 'simple-events-calendar-lite-premium',
+                'slug'                => 'simply-events-calendar',
+                'premium_slug'        => 'simply-events-calendar-premium',
                 'type'                => 'plugin',
                 'public_key'          => SIMPLE_EVENTS_FS_PUBLIC_KEY,
                 'is_premium'          => true,
-                'premium_suffix'      => 'Pro',
+                'premium_suffix'      => '(Pro)',
                 'has_premium_version' => true,
                 'has_paid_plans'      => true,
                 'has_addons'          => false,
@@ -197,10 +197,15 @@ Notes on specific keys:
 - **`pricing => false`, `contact => false`, `support => false`** because the
   plugin keeps its own Events → Upgrade to Pro page; leaving them on produces
   duplicate menu items.
-- **`premium_suffix => 'Pro'`** renders the paid product as "Simple Events
-  Calendar Lite Pro" in Freemius's own UI only; the WordPress plugins list shows
-  the header name for both builds. This is a one-string change if the wording
-  proves awkward in practice.
+- **`premium_suffix => '(Pro)'`** makes the premium build read as "Simply Events
+  Calendar (Pro)" in the WordPress plugins list. The suffix lives in the premium
+  build's own `Plugin Name:` header — not only in Freemius's UI: `set_name()`
+  (`freemius/includes/class-freemius.php:10212`) strips a trailing suffix off the
+  header value, and the updater strips it again before querying the wp.org update
+  API (`freemius/includes/class-fs-plugin-updater.php:944`) so wp.org never tries
+  to update a premium copy. Whether the deployment processor writes the suffix
+  into the header or we maintain it in source is confirmed by the first dry-run
+  deployment (see Release pipeline).
 
 ### Key handling
 
@@ -283,11 +288,11 @@ Two distinct problems, one fix.
   untranslatable** and absent from the generated `.pot`. This is a pre-existing
   bug, not merely a compliance issue.
 
-All 856 sites take the literal `'simple-events-calendar-lite'`. The
+All 856 sites take the literal `'simply-events-calendar'`. The
 `PLUGIN_TEXT_DOMAIN` constant is deleted rather than renamed, so the constant
 form cannot reappear.
 
-Header gains `Text Domain: simple-events-calendar-lite` and
+Header gains `Text Domain: simply-events-calendar` and
 `Domain Path: /languages`.
 
 `Simple_Events_Calendar::load_textdomain()` stays hooked on `init` (not
@@ -303,18 +308,18 @@ domain so lint enforces it.
 Rename to the new domain, preserving msgids so existing translations survive:
 
 ```
-languages/simple-events.pot        → simple-events-calendar-lite.pot
-languages/simple-events-es_ES.po   → simple-events-calendar-lite-es_ES.po
-languages/simple-events-es_ES.mo   → simple-events-calendar-lite-es_ES.mo
-languages/simple-events-fr_FR.po   → simple-events-calendar-lite-fr_FR.po
-languages/simple-events-fr_FR.mo   → simple-events-calendar-lite-fr_FR.mo
+languages/simple-events.pot        → simply-events-calendar.pot
+languages/simple-events-es_ES.po   → simply-events-calendar-es_ES.po
+languages/simple-events-es_ES.mo   → simply-events-calendar-es_ES.mo
+languages/simple-events-fr_FR.po   → simply-events-calendar-fr_FR.po
+languages/simple-events-fr_FR.mo   → simply-events-calendar-fr_FR.mo
 ```
 
 See the Internationalisation section for the full treatment.
 
 ### 4. readme.txt
 
-- `=== Simple Events Calendar Lite ===`
+- `=== Simply Events Calendar ===`
 - `Stable tag: 6.0.0`
 - `Tested up to:` the current stable WordPress release at submission time
 - Add an **External services** section disclosing that the plugin communicates
@@ -322,6 +327,32 @@ See the Internationalisation section for the full treatment.
   analytics; what is transmitted; when; and links to Freemius's terms and privacy
   policy. WordPress.org requires this disclosure for any third-party service.
 - Update the description and screenshots to match the new name.
+
+### 5. Product rename
+
+The product is renamed from **Simple Events Calendar** to **Simply Events
+Calendar**. The slug is derived from the submitted plugin name, so the name is
+fixed at the moment of submission and the two cannot be chosen independently
+afterwards.
+
+User-facing surfaces to update: the `Plugin Name:` header, `readme.txt`,
+`README.md`, `changelog.md`, the `name` and `description` fields in
+`package.json`, and any admin string that spells the product out (settings page
+title, Documentation page, upsell banner and Upgrade page copy). The Freemius
+dashboard product name must match as well, or the license email and account
+screens will name a different product than the one installed.
+
+What does **not** change: the `simple-events` post type, the `simple-events-cat`
+taxonomy, the `simple_events_settings` option, every `event_*` and `_sec_*` meta
+key, the `sec_*` filter names, the `simple_events_*` function prefix, and the
+`Simple_Events_*` class prefix. These are internal identifiers; renaming them
+would be a data migration, which is an explicit non-goal. The `phpcs.xml`
+`prefixes` array therefore keeps `simple_events`, `Simple_Events`, and
+`SIMPLE_EVENTS_`.
+
+The mismatch between the internal `simple_events` prefix and the public
+`simply-events-calendar` name is deliberate and permanent. It costs nothing at
+runtime and avoids touching stored data.
 
 ## Internationalisation
 
@@ -340,7 +371,7 @@ a harmless fallback — `load_plugin_textdomain()` checks `WP_LANG_DIR/plugins/`
 before the plugin's own directory, so a downloaded pack always wins over a
 bundled file. Because WordPress.org requires the text domain to equal the slug,
 the pack filename and the bundled filename are the same
-(`simple-events-calendar-lite-{locale}.mo`), and a site that ran the free build
+(`simply-events-calendar-{locale}.mo`), and a site that ran the free build
 before upgrading keeps working either way.
 
 ### String correctness pass
@@ -363,7 +394,7 @@ string is audited for:
   translators cannot break the HTML.
 
 `phpcs` with `WordPress.WP.I18n` and the `text_domain` property set to
-`simple-events-calendar-lite` catches most of these mechanically.
+`simply-events-calendar` catches most of these mechanically.
 
 ### Tooling
 
@@ -371,7 +402,7 @@ The project currently has no i18n build step; the existing `.pot` is stale and
 missing the 295 constant-domain strings. Two npm scripts wrap WP-CLI:
 
 ```
-"i18n:pot": generate languages/simple-events-calendar-lite.pot via `wp i18n make-pot`
+"i18n:pot": generate languages/simply-events-calendar.pot via `wp i18n make-pot`
 "i18n:mo":  compile every languages/*.po to .mo via `wp i18n make-mo`
 ```
 
@@ -393,7 +424,7 @@ without its compiled `.mo`. WP-CLI becomes a documented development dependency.
   locales are hand-maintained.
 
 After the plugin is approved, the GlotPress project appears at
-`translate.wordpress.org/projects/wp-plugins/simple-events-calendar-lite`.
+`translate.wordpress.org/projects/wp-plugins/simply-events-calendar`.
 Post-approval actions, outside the code work but part of the plan:
 
 1. Import the maintained `es_ES` and `fr_FR` catalogues to seed the project.
@@ -424,7 +455,7 @@ It needs no work here.
    - `includes/pro/` exists in the archive
    - `is__premium_only` appears in any file **outside `freemius/`**
    - `sk_` appears in any file **outside `freemius/`**
-   - the `Text Domain:` header does not equal `simple-events-calendar-lite`
+   - the `Text Domain:` header does not equal `simply-events-calendar`
 
    The `freemius/` exclusion is required, not incidental: the SDK legitimately
    defines `is__premium_only()`, `is_paying__premium_only()`, and siblings in
@@ -488,7 +519,7 @@ Documented changeover procedure:
 2. Take a database backup regardless.
 3. **Deactivate** the old plugin; do not delete it yet. Both plugins active
    simultaneously fatals on duplicate class and post-type declarations.
-4. Install and activate `simple-events-calendar-lite` (or the premium build).
+4. Install and activate `simply-events-calendar` (or the premium build).
 5. Confirm events, dates, categories, recurring series, and settings are all
    present.
 6. Visit Settings → Permalinks once to flush rewrite rules.
