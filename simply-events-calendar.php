@@ -13,6 +13,7 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: simply-events-calendar
  * Domain Path: /languages
+ * @fs_premium_only /includes/pro/
  *
  * @copyright Copyright (C) 2026 Level Up Studios, LLC
  *

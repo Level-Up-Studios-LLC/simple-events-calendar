@@ -229,6 +229,16 @@ class Simple_Events_Calendar {
         // Elementor integration (no-op unless Elementor is active).
         require_once SIMPLE_EVENTS_DIR . '/includes/elementor/class-elementor.php';
         Simple_Events_Elementor::init();
+
+        // Premium features. includes/pro/ is stripped from the free build, so
+        // this block is a no-op there even if the processor leaves it behind.
+        if (sec_fs()->is__premium_only()) {
+            $pro = SIMPLE_EVENTS_DIR . '/includes/pro/class-pro-loader.php';
+            if (file_exists($pro)) {
+                require_once $pro;
+                Simple_Events_Pro_Loader::init();
+            }
+        }
     }
 
     /**
