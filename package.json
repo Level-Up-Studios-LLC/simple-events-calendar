@@ -11,6 +11,8 @@
     "lint:js": "echo 'JS Linting: Run manually with a code editor'",
     "lint:css": "stylelint \"src/css/**/*.scss\"",
     "lint": "npm run lint:js && npm run lint:css",
+    "i18n:pot": "wp i18n make-pot . languages/simply-events-calendar.pot --slug=simply-events-calendar --exclude=node_modules,dist,src,docs,freemius",
+    "i18n:mo": "wp i18n make-mo languages languages",
     "watch": "chokidar \"src/css/**/*.scss\" -c \"npm run build:css:dev\"",
     "watch:css": "sass src/css:assets/css --style=expanded --source-map --watch",
     "dev": "npm run build:css:dev",
