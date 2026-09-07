@@ -280,15 +280,15 @@ reintroduced generic constant fails lint.
 
 Two distinct problems, one fix.
 
-- 561 call sites pass the literal `'simple_events'`, which does not match the
+- 280 call sites pass the literal `'simple_events'`, which does not match the
   slug — a hard WordPress.org requirement, and translate.wordpress.org keys on
   it.
-- 295 call sites pass the `PLUGIN_TEXT_DOMAIN` **constant**. WordPress i18n
-  tooling extracts only literal strings, so **those 295 strings are currently
+- 105 call sites pass the `PLUGIN_TEXT_DOMAIN` **constant**. WordPress i18n
+  tooling extracts only literal strings, so **those 105 strings are currently
   untranslatable** and absent from the generated `.pot`. This is a pre-existing
   bug, not merely a compliance issue.
 
-All 856 sites take the literal `'simply-events-calendar'`. The
+All 385 sites take the literal `'simply-events-calendar'`. The
 `PLUGIN_TEXT_DOMAIN` constant is deleted rather than renamed, so the constant
 form cannot reappear.
 
@@ -399,7 +399,7 @@ string is audited for:
 ### Tooling
 
 The project currently has no i18n build step; the existing `.pot` is stale and
-missing the 295 constant-domain strings. Two npm scripts wrap WP-CLI:
+missing the 105 constant-domain strings. Two npm scripts wrap WP-CLI:
 
 ```
 "i18n:pot": generate languages/simply-events-calendar.pot via `wp i18n make-pot`
@@ -413,7 +413,7 @@ without its compiled `.mo`. WP-CLI becomes a documented development dependency.
 ### Locale strategy
 
 - **Maintained in-repo:** `es_ES` and `fr_FR`. Both are stale — they predate
-  v5.1.0 and miss every string added since, plus all 295 newly extractable ones.
+  v5.1.0 and miss every string added since, plus all 105 newly extractable ones.
   They are brought current as part of this work: regenerate the `.pot`, merge
   into each `.po`, translate the gaps, and review. Machine translation is
   acceptable for the first pass provided every machine-translated entry is
@@ -482,7 +482,7 @@ project to port the tooling.
 caches self-invalidate on upgrade with no extra work.
 
 `changelog.md` gets a `6.0.0` entry covering: the single-codebase merge, the
-rename and slug change, the text-domain fix (calling out the 295 newly
+rename and slug change, the text-domain fix (calling out the 105 newly
 translatable strings), the constant renames, Freemius licensing, and the
 manual reinstall required of existing installs.
 
@@ -579,7 +579,7 @@ WordPress install.
 |---|---|
 | Premium code leaks into the free build | Two markers only, both in files a reviewer reads; `verify:free` gates the artifact; `file_exists()` guard makes the two failure modes independent. |
 | WordPress.org review rejects the submission | The known blockers — generic constants, mismatched text domain, missing service disclosure — are all fixed here. Review latency remains outside our control, which is why this spec stops at "ready to submit" rather than bundling a feature release behind the queue. |
-| 856-site text-domain edit introduces a typo | Scripted replacement, then `phpcs` with the `WordPress.WP.I18n` `text_domain` property set to the new domain, which flags any site that does not match. |
+| 385-site text-domain edit introduces a typo | Scripted replacement, then `phpcs` with the `WordPress.WP.I18n` `text_domain` property set to the new domain, which flags any site that does not match. |
 | Existing client sites broken by the rename | Documented reinstall procedure; data survives because it lives in posts, post meta, and options that the uninstall routine does not touch by default. |
 | Freemius processor behaviour differs from documentation | The first deployment is a dry run: upload, download the generated free build, and inspect it before any SVN push. |
 | Premium build ships with no translations | Premium is outside the language-pack system by design, so `languages/` is bundled in both builds and `i18n:mo` runs in the release pipeline before the ZIP is cut. Release verification confirms a `.mo` exists for every `.po`. |

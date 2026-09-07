@@ -169,6 +169,23 @@ Yes. It ships with English, Spanish (es_ES), and French (fr_FR) translations, an
 
 == Changelog ==
 
+= 6.0.0 (2026-09-07) =
+
+**Changed**
+* The plugin is now Simply Events Calendar. One codebase now produces both the free build and the licensed Pro build of the same plugin, so there is one plugin to install and manage rather than two. Entering a license upgrades the plugin in place.
+* The plugin folder and main file are renamed to `simply-events-calendar`. WordPress identifies a plugin by that path, so this release requires a manual changeover — see the Upgrade Notice below. No event data is affected.
+* Global constants `PLUGIN_DIR`, `PLUGIN_URL`, `PLUGIN_ASSETS`, and `PLUGIN_VERSION` are now `SIMPLE_EVENTS_*`. Anything reading them directly needs updating; they were unprefixed globals that could collide with any other plugin.
+
+**Fixed**
+* 105 admin and front-end strings were untranslatable and now are not. They passed the text domain as a PHP constant, and WordPress extracts translatable strings by reading literals out of the source, so those strings never reached the translation template in any locale. All 385 call sites now use a literal domain matching the plugin slug.
+* Placeholder strings carry translator comments, "(s)" plural hedges are now real plural forms, and ambiguous single-word labels carry context — so translators can produce correct output rather than guesses.
+
+**Added**
+* Licensing, updates, and optional usage analytics through Freemius. The opt-in is skippable; choosing "Skip" transmits nothing. See the External services section below for exactly what is sent and when.
+
+**Migration / compatibility**
+* Your data is safe. Events are posts, their fields are post meta, categories are terms, and settings are a single option. None of those names change in this release, and deactivating a plugin never deletes them. Because the plugin folder changed, WordPress treats this as a different plugin, so the changeover is manual — see the Upgrade Notice below for the step-by-step procedure.
+
 = 5.2.0 (2026-06-11) =
 
 **Added**
@@ -350,6 +367,13 @@ Yes. It ships with English, Spanish (es_ES), and French (fr_FR) translations, an
 * Event ordering consistency
 
 == Upgrade Notice ==
+
+= 6.0.0 =
+The plugin is renamed to Simply Events Calendar and its folder changes, so
+WordPress sees it as a new plugin: deactivate the old one (do not delete it
+yet), install this one, verify your events, then visit Settings → Permalinks.
+Your events, categories, and settings are preserved — none of the data they
+live in is renamed. Back up your database first.
 
 = 5.2.0 =
 Adds an in-admin "Upgrade to Pro" area (banner, feature preview, and menu link) for the upcoming Pro version. No changes to your events, settings, or the front end; the banner is dismissible per user.

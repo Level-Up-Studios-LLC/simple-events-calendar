@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v6.0.0] (2026-09-07)
+
+### Changed
+
+* **The plugin is now Simply Events Calendar.** One codebase now produces both
+  the free build and the licensed Pro build of the same plugin, so there is one
+  plugin to install and manage rather than two. Entering a license upgrades the
+  plugin in place.
+* **The plugin folder and main file are renamed** to `simply-events-calendar`.
+  WordPress identifies a plugin by that path, so this release requires a manual
+  changeover — see below. **No event data is affected.**
+* Global constants `PLUGIN_DIR`, `PLUGIN_URL`, `PLUGIN_ASSETS`, and
+  `PLUGIN_VERSION` are now `SIMPLE_EVENTS_*`. Anything reading them directly
+  needs updating; they were unprefixed globals that could collide with any other
+  plugin.
+
+### Fixed
+
+* **105 admin and front-end strings were untranslatable and now are not.** They
+  passed the text domain as a PHP constant, and WordPress extracts translatable
+  strings by reading literals out of the source, so those strings never reached
+  the translation template in any locale. All 385 call sites now use a literal
+  domain matching the plugin slug.
+* Placeholder strings carry translator comments, "(s)" plural hedges are now
+  real plural forms, and ambiguous single-word labels carry context — so
+  translators can produce correct output rather than guesses.
+
+### Added
+
+* Licensing, updates, and optional usage analytics through Freemius. The opt-in
+  is skippable; choosing "Skip" transmits nothing. See the External services
+  section of readme.txt for exactly what is sent and when.
+
+### Migration / compatibility
+
+**Your data is safe.** Events are posts, their fields are post meta, categories
+are terms, and settings are a single option. None of those names change in this
+release, and deactivating a plugin never deletes them.
+
+Because the plugin folder changed, WordPress treats this as a different plugin,
+so the changeover is manual:
+
+1. Go to **Events → Settings → Data** and confirm "Delete data on uninstall" is
+   set to **No**. (No is the default.)
+2. Back up your database anyway.
+3. **Deactivate** the old plugin. Do not delete it yet — running both plugins at
+   once fatals on duplicate class and post-type declarations.
+4. Install and activate Simply Events Calendar.
+5. Confirm your events, dates, categories, recurring series, and settings are
+   all present.
+6. Visit **Settings → Permalinks** once to flush rewrite rules.
+7. Delete the old plugin.
+
+For a zero-risk step 7, delete the old plugin's folder over SFTP or your host's
+file manager instead of through the WordPress admin. Removing files directly
+never fires the uninstall hook, which makes the delete-on-uninstall setting
+irrelevant either way.
+
 ## [v5.3.0] (2026-06-11)
 
 ### Added (developer)

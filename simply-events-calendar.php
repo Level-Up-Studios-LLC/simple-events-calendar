@@ -4,7 +4,7 @@
  * Plugin Name: Simply Events Calendar
  * Plugin URI: https://www.levelupstudios.com/simply-events-calendar/
  * Description: A simple, responsive events calendar for WordPress. Easily create one-time or recurring events and display them anywhere with shortcodes, Elementor widgets, and one-click Add to Calendar.
- * Version: 5.3.0
+ * Version: 6.0.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Level Up Studios, LLC
@@ -95,7 +95,7 @@ if (!function_exists('sec_fs')) {
 define('SIMPLE_EVENTS_DIR', __DIR__);
 define('SIMPLE_EVENTS_URL', untrailingslashit(plugin_dir_url(__FILE__)));
 define('SIMPLE_EVENTS_ASSETS', SIMPLE_EVENTS_URL . '/assets');
-define('SIMPLE_EVENTS_VERSION', '5.3.0');
+define('SIMPLE_EVENTS_VERSION', '6.0.0');
 define('SIMPLE_EVENTS_PLUGIN_FILE', __FILE__);
 define('SIMPLE_EVENTS_NONCE_ACTION', 'load_more_events_nonce');
 
