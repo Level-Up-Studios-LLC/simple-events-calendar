@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Elementor widgets for Simple Events Calendar element fields.
+ * Elementor widgets for Simply Events Calendar element fields.
  *
  * Required only from Simple_Events_Elementor::register_widgets(), so the
  * Elementor base class is guaranteed to exist here.

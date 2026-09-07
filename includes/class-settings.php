@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Settings page for Simple Events Calendar
+ * Settings page for Simply Events Calendar
  *
  * Registers a single option array (simple_events_settings) via the WordPress
  * Settings API and renders an admin page under the Events menu. Also wires the

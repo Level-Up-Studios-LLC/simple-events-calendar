@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AJAX functionality class for Simple Events Calendar
+ * AJAX functionality class for Simply Events Calendar
  *
  * @package Simple_Events_Calendar
  * @since 3.0.0
@@ -251,7 +251,7 @@ class Simple_Events_Ajax {
      */
     private function handle_error($message, $code = 500) {
         if (defined('DOING_AJAX') && DOING_AJAX) {
-            error_log('Simple Events Calendar AJAX Error: ' . $message);
+            error_log('Simply Events Calendar AJAX Error: ' . $message);
             wp_die($message, 'Loading Error', array('response' => $code));
         }
     }

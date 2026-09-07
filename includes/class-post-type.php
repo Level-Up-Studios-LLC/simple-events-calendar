@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Post type registration class for Simple Events Calendar
+ * Post type registration class for Simply Events Calendar
  *
  * @package Simple_Events_Calendar
  * @since 3.0.0
@@ -94,7 +94,7 @@ class Simple_Events_Post_Type {
 
         $args = array(
             'label'                 => __('Event', 'simply-events-calendar'),
-            'description'           => __('Events for the Simple Events Calendar', 'simply-events-calendar'),
+            'description'           => __('Events for the Simply Events Calendar', 'simply-events-calendar'),
             'labels'                => $labels,
             'supports'              => array('title', 'editor', 'thumbnail', 'revisions', 'excerpt'),
             'taxonomies'            => array('simple-events-cat'),

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Utility functions for Simple Events Calendar
+ * Utility functions for Simply Events Calendar
  *
  * @package Simple_Events_Calendar
  * @since 3.0.0
@@ -661,7 +661,7 @@ function simple_events_get_assets_url() {
  */
 function simple_events_debug_log($message, $context = array()) {
     if (defined('WP_DEBUG') && WP_DEBUG) {
-        $log_message = 'Simple Events Calendar: ' . $message;
+        $log_message = 'Simply Events Calendar: ' . $message;
 
         if (!empty($context)) {
             $log_message .= ' Context: ' . print_r($context, true);

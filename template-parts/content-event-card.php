@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Event Card Template for Simple Events Calendar
+ * Event Card Template for Simply Events Calendar
  *
  * Outputs an event card for a single event post with improved accessibility
  * and error handling.

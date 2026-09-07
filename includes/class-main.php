@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Main plugin class for Simple Events Calendar
+ * Main plugin class for Simply Events Calendar
  *
  * @package Simple_Events_Calendar
  * @since 3.0.0
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Main Simple Events Calendar class
+ * Main Simply Events Calendar class
  */
 class Simple_Events_Calendar {
 

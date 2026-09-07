@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Native event-details meta box for Simple Events Calendar
+ * Native event-details meta box for Simply Events Calendar
  *
  * Registers and persists every event field. The meta keys and storage formats
  * are unchanged from earlier versions, so existing events are unaffected:

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Elementor display widgets for Simple Events Calendar.
+ * Elementor display widgets for Simply Events Calendar.
  *
  * Standalone listing widgets (not gated): an Events Grid (grid or image-left
  * list) and a Single Event (chosen via a searchable picker). Both reuse the

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Elementor Dynamic Tags for Simple Events Calendar fields.
+ * Elementor Dynamic Tags for Simply Events Calendar fields.
  *
  * Lets users bind native Elementor widgets (Heading, Text, Image, Button, …) to
  * event fields. Required only from Simple_Events_Elementor::register_tags(), so

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Elementor integration loader for Simple Events Calendar
+ * Elementor integration loader for Simply Events Calendar
  *
  * Registers a "Simple Events" widget category, one drag-and-drop widget per
  * event element, and Dynamic Tags for binding native Elementor widgets to

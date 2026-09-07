@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Recurrence engine for Simple Events Calendar.
+ * Recurrence engine for Simply Events Calendar.
  *
  * @package Simple_Events_Calendar
  * @since 4.4.0

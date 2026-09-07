@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Shortcode functionality class for Simple Events Calendar
+ * Shortcode functionality class for Simply Events Calendar
  *
  * @package Simple_Events_Calendar
  * @since 3.0.0

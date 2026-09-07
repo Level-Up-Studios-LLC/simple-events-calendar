@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Documentation page for Simple Events Calendar.
+ * Documentation page for Simply Events Calendar.
  *
  * Adds a read-only "Documentation" screen under the Events menu that lists the
  * available shortcodes (and their attributes) and the Elementor widgets (and

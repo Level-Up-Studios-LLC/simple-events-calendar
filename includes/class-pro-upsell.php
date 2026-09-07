@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Pro upsell UI for Simple Events Calendar (free version).
+ * Pro upsell UI for Simply Events Calendar (free version).
  *
  * Pure admin-only marketing surface: a dismissible CTA banner on the Settings and
  * Documentation pages, an "Available in Pro" preview section (disabled controls with
@@ -180,7 +180,7 @@ class Simple_Events_Pro_Upsell {
             <div class="sec-pro-banner__body">
                 <span class="sec-pro-badge"><?php echo esc_html__('PRO', 'simply-events-calendar'); ?></span>
                 <p class="sec-pro-banner__text">
-                    <strong><?php echo esc_html__('Do more with Simple Events Calendar Pro.', 'simply-events-calendar'); ?></strong>
+                    <strong><?php echo esc_html__('Do more with Simply Events Calendar Pro.', 'simply-events-calendar'); ?></strong>
                     <?php echo esc_html__('Configurable URLs, a month-view calendar, ticketing, and priority support.', 'simply-events-calendar'); ?>
                 </p>
             </div>
@@ -201,7 +201,7 @@ class Simple_Events_Pro_Upsell {
         }
         ?>
         <h2 class="sec-pro-locked__heading"><?php echo esc_html__('Available in Pro', 'simply-events-calendar'); ?></h2>
-        <p class="description"><?php echo esc_html__('These features are unlocked in Simple Events Calendar Pro.', 'simply-events-calendar'); ?></p>
+        <p class="description"><?php echo esc_html__('These features are unlocked in Simply Events Calendar Pro.', 'simply-events-calendar'); ?></p>
         <table class="form-table sec-pro-locked" role="presentation">
             <?php foreach (self::pro_features() as $feature) : ?>
                 <tr>
@@ -234,7 +234,7 @@ class Simple_Events_Pro_Upsell {
         }
         ?>
         <div class="wrap sec-pro-upgrade">
-            <h1><?php echo esc_html__('Upgrade to Simple Events Calendar Pro', 'simply-events-calendar'); ?></h1>
+            <h1><?php echo esc_html__('Upgrade to Simply Events Calendar Pro', 'simply-events-calendar'); ?></h1>
             <p class="sec-pro-upgrade__intro"><?php echo esc_html__('Everything in the free plugin, plus powerful tools to run events at scale.', 'simply-events-calendar'); ?></p>
 
             <div class="sec-pro-upgrade__grid">
@@ -250,7 +250,7 @@ class Simple_Events_Pro_Upsell {
             </div>
 
             <p class="sec-pro-upgrade__cta">
-                <a class="button button-primary button-hero" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Get Simple Events Calendar Pro', 'simply-events-calendar'); ?></a>
+                <a class="button button-primary button-hero" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Get Simply Events Calendar Pro', 'simply-events-calendar'); ?></a>
             </p>
         </div>
         <?php

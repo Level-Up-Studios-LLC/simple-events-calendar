@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Front-end template loader for Simple Events Calendar
+ * Front-end template loader for Simply Events Calendar
  *
  * Provides default single / archive / taxonomy templates for events, but only
  * as a fallback. It yields to:

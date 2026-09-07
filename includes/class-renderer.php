@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Shared element renderer for Simple Events Calendar
+ * Shared element renderer for Simply Events Calendar
  *
  * Single source of truth for rendering individual pieces of an event (title,
  * image, date, time, location, excerpt, content, categories, button). Consumed

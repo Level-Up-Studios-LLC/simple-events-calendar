@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Admin columns functionality class for Simple Events Calendar
+ * Admin columns functionality class for Simply Events Calendar
  *
  * @package Simple_Events_Calendar
  * @since 3.0.0

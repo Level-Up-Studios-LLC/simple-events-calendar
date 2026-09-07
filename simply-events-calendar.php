@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Plugin Name: Simple Events Calendar
- * Plugin URI: https://github.com/Level-Up-Studios-LLC/simple-events-calendar
+ * Plugin Name: Simply Events Calendar
+ * Plugin URI: https://www.levelupstudios.com/simply-events-calendar/
  * Description: A simple, responsive events calendar for WordPress. Easily create one-time or recurring events and display them anywhere with shortcodes, Elementor widgets, and one-click Add to Calendar.
  * Version: 5.3.0
  * Requires at least: 6.0
@@ -16,12 +16,12 @@
  *
  * @copyright Copyright (C) 2026 Level Up Studios, LLC
  *
- * Simple Events Calendar is free software: you can redistribute it and/or modify
+ * Simply Events Calendar is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * Simple Events Calendar is distributed in the hope that it will be useful,
+ * Simply Events Calendar is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
