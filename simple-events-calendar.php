@@ -11,7 +11,8 @@
  * Author URI: https://www.levelupstudios.com/
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: simple_events
+ * Text Domain: simply-events-calendar
+ * Domain Path: /languages
  *
  * @copyright Copyright (C) 2026 Level Up Studios, LLC
  *
@@ -34,7 +35,6 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('PLUGIN_TEXT_DOMAIN', 'simple_events');
 define('PLUGIN_DIR', __DIR__);
 define('PLUGIN_URL', untrailingslashit(plugin_dir_url(__FILE__)));
 define('PLUGIN_ASSETS', PLUGIN_URL . '/assets');

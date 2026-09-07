@@ -40,7 +40,7 @@ class Simple_Events_Ajax {
     public function load_more_events() {
         if (!$this->verify_nonce()) {
             wp_send_json_error(
-                array('message' => __('Security check failed.', PLUGIN_TEXT_DOMAIN)),
+                array('message' => __('Security check failed.', 'simply-events-calendar')),
                 403
             );
         }
@@ -48,7 +48,7 @@ class Simple_Events_Ajax {
         $request_data = $this->sanitize_request_data();
         if (!$request_data) {
             wp_send_json_error(
-                array('message' => __('Invalid request data.', PLUGIN_TEXT_DOMAIN)),
+                array('message' => __('Invalid request data.', 'simply-events-calendar')),
                 400
             );
         }
@@ -286,9 +286,9 @@ class Simple_Events_Ajax {
             'nonce'   => self::get_nonce(),
             'initial_offset' => $increment,
             'load_increment' => $increment,
-            'loading_text' => __('Loading more events...', PLUGIN_TEXT_DOMAIN),
-            'error_text'   => __('Error loading events. Please try again.', PLUGIN_TEXT_DOMAIN),
-            'no_more_text' => __('No more events to load.', PLUGIN_TEXT_DOMAIN)
+            'loading_text' => __('Loading more events...', 'simply-events-calendar'),
+            'error_text'   => __('Error loading events. Please try again.', 'simply-events-calendar'),
+            'no_more_text' => __('No more events to load.', 'simply-events-calendar')
         );
     }
 }

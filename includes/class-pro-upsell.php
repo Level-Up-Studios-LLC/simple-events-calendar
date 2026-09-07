@@ -73,20 +73,20 @@ class Simple_Events_Pro_Upsell {
     public static function pro_features() {
         $features = array(
             array(
-                'title' => __('Configurable event URLs', 'simple_events'),
-                'desc'  => __('Rename the /events/ permalink base to anything you like — or remove it entirely for top-level event URLs.', 'simple_events'),
+                'title' => __('Configurable event URLs', 'simply-events-calendar'),
+                'desc'  => __('Rename the /events/ permalink base to anything you like — or remove it entirely for top-level event URLs.', 'simply-events-calendar'),
             ),
             array(
-                'title' => __('Calendar & month view', 'simple_events'),
-                'desc'  => __('Show your events in a full month-grid calendar your visitors can browse, in addition to the list layout.', 'simple_events'),
+                'title' => __('Calendar & month view', 'simply-events-calendar'),
+                'desc'  => __('Show your events in a full month-grid calendar your visitors can browse, in addition to the list layout.', 'simply-events-calendar'),
             ),
             array(
-                'title' => __('Ticketing & RSVPs', 'simple_events'),
-                'desc'  => __('Let visitors RSVP or buy tickets to your events, with attendee tracking and check-in.', 'simple_events'),
+                'title' => __('Ticketing & RSVPs', 'simply-events-calendar'),
+                'desc'  => __('Let visitors RSVP or buy tickets to your events, with attendee tracking and check-in.', 'simply-events-calendar'),
             ),
             array(
-                'title' => __('Priority support', 'simple_events'),
-                'desc'  => __('Direct help from the team that builds the plugin, with priority response times.', 'simple_events'),
+                'title' => __('Priority support', 'simply-events-calendar'),
+                'desc'  => __('Direct help from the team that builds the plugin, with priority response times.', 'simply-events-calendar'),
             ),
         );
 
@@ -103,8 +103,8 @@ class Simple_Events_Pro_Upsell {
 
         add_submenu_page(
             'edit.php?post_type=simple-events',
-            __('Upgrade to Pro', 'simple_events'),
-            __('Upgrade to Pro', 'simple_events'),
+            __('Upgrade to Pro', 'simply-events-calendar'),
+            __('Upgrade to Pro', 'simply-events-calendar'),
             'manage_options',
             self::PAGE,
             array($this, 'render_upgrade_page')
@@ -178,15 +178,15 @@ class Simple_Events_Pro_Upsell {
         ?>
         <div class="sec-pro-banner">
             <div class="sec-pro-banner__body">
-                <span class="sec-pro-badge"><?php echo esc_html__('PRO', 'simple_events'); ?></span>
+                <span class="sec-pro-badge"><?php echo esc_html__('PRO', 'simply-events-calendar'); ?></span>
                 <p class="sec-pro-banner__text">
-                    <strong><?php echo esc_html__('Do more with Simple Events Calendar Pro.', 'simple_events'); ?></strong>
-                    <?php echo esc_html__('Configurable URLs, a month-view calendar, ticketing, and priority support.', 'simple_events'); ?>
+                    <strong><?php echo esc_html__('Do more with Simple Events Calendar Pro.', 'simply-events-calendar'); ?></strong>
+                    <?php echo esc_html__('Configurable URLs, a month-view calendar, ticketing, and priority support.', 'simply-events-calendar'); ?>
                 </p>
             </div>
             <div class="sec-pro-banner__actions">
-                <a class="button button-primary" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Upgrade to Pro', 'simple_events'); ?></a>
-                <a class="sec-pro-banner__dismiss" href="<?php echo esc_url($dismiss_url); ?>" aria-label="<?php echo esc_attr__('Dismiss this notice', 'simple_events'); ?>"><?php echo esc_html__('Dismiss', 'simple_events'); ?></a>
+                <a class="button button-primary" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Upgrade to Pro', 'simply-events-calendar'); ?></a>
+                <a class="sec-pro-banner__dismiss" href="<?php echo esc_url($dismiss_url); ?>" aria-label="<?php echo esc_attr__('Dismiss this notice', 'simply-events-calendar'); ?>"><?php echo esc_html__('Dismiss', 'simply-events-calendar'); ?></a>
             </div>
         </div>
         <?php
@@ -200,19 +200,19 @@ class Simple_Events_Pro_Upsell {
             return;
         }
         ?>
-        <h2 class="sec-pro-locked__heading"><?php echo esc_html__('Available in Pro', 'simple_events'); ?></h2>
-        <p class="description"><?php echo esc_html__('These features are unlocked in Simple Events Calendar Pro.', 'simple_events'); ?></p>
+        <h2 class="sec-pro-locked__heading"><?php echo esc_html__('Available in Pro', 'simply-events-calendar'); ?></h2>
+        <p class="description"><?php echo esc_html__('These features are unlocked in Simple Events Calendar Pro.', 'simply-events-calendar'); ?></p>
         <table class="form-table sec-pro-locked" role="presentation">
             <?php foreach (self::pro_features() as $feature) : ?>
                 <tr>
                     <th scope="row">
                         <?php echo esc_html($feature['title']); ?>
-                        <span class="sec-pro-badge"><?php echo esc_html__('PRO', 'simple_events'); ?></span>
+                        <span class="sec-pro-badge"><?php echo esc_html__('PRO', 'simply-events-calendar'); ?></span>
                     </th>
                     <td>
                         <label class="sec-pro-locked__control">
                             <input type="checkbox" disabled />
-                            <?php echo esc_html__('Disabled — upgrade to enable', 'simple_events'); ?>
+                            <?php echo esc_html__('Disabled — upgrade to enable', 'simply-events-calendar'); ?>
                         </label>
                         <p class="description"><?php echo esc_html($feature['desc']); ?></p>
                     </td>
@@ -220,7 +220,7 @@ class Simple_Events_Pro_Upsell {
             <?php endforeach; ?>
         </table>
         <p>
-            <a class="button button-primary" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('See everything in Pro', 'simple_events'); ?></a>
+            <a class="button button-primary" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('See everything in Pro', 'simply-events-calendar'); ?></a>
         </p>
         <?php
     }
@@ -234,15 +234,15 @@ class Simple_Events_Pro_Upsell {
         }
         ?>
         <div class="wrap sec-pro-upgrade">
-            <h1><?php echo esc_html__('Upgrade to Simple Events Calendar Pro', 'simple_events'); ?></h1>
-            <p class="sec-pro-upgrade__intro"><?php echo esc_html__('Everything in the free plugin, plus powerful tools to run events at scale.', 'simple_events'); ?></p>
+            <h1><?php echo esc_html__('Upgrade to Simple Events Calendar Pro', 'simply-events-calendar'); ?></h1>
+            <p class="sec-pro-upgrade__intro"><?php echo esc_html__('Everything in the free plugin, plus powerful tools to run events at scale.', 'simply-events-calendar'); ?></p>
 
             <div class="sec-pro-upgrade__grid">
                 <?php foreach (self::pro_features() as $feature) : ?>
                     <div class="sec-pro-upgrade__card">
                         <h2 class="sec-pro-upgrade__card-title">
                             <?php echo esc_html($feature['title']); ?>
-                            <span class="sec-pro-badge"><?php echo esc_html__('PRO', 'simple_events'); ?></span>
+                            <span class="sec-pro-badge"><?php echo esc_html__('PRO', 'simply-events-calendar'); ?></span>
                         </h2>
                         <p><?php echo esc_html($feature['desc']); ?></p>
                     </div>
@@ -250,7 +250,7 @@ class Simple_Events_Pro_Upsell {
             </div>
 
             <p class="sec-pro-upgrade__cta">
-                <a class="button button-primary button-hero" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Get Simple Events Calendar Pro', 'simple_events'); ?></a>
+                <a class="button button-primary button-hero" href="<?php echo esc_url(self::pro_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Get Simple Events Calendar Pro', 'simply-events-calendar'); ?></a>
             </p>
         </div>
         <?php

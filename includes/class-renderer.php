@@ -251,7 +251,7 @@ class Simple_Events_Renderer {
      * @return string
      */
     public static function button($post_id, $args = array()) {
-        $text = isset($args['text']) && '' !== $args['text'] ? (string) $args['text'] : __('View Event', 'simple_events');
+        $text = isset($args['text']) && '' !== $args['text'] ? (string) $args['text'] : __('View Event', 'simply-events-calendar');
         return '<a href="' . esc_url(get_permalink($post_id)) . '"' . self::class_attr('sec-event-button', isset($args['class']) ? $args['class'] : '') . '>' . esc_html($text) . '</a>';
     }
 

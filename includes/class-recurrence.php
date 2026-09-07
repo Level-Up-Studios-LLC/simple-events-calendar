@@ -488,7 +488,7 @@ class Simple_Events_Recurrence
             $parent_id,
             sprintf(
                 /* translators: 1: future unmodified occurrences deleted, 2: past / modified / trashed occurrences kept as standalone events */
-                __('Recurrence disabled. %1$d future unmodified occurrence(s) deleted; %2$d occurrence(s) (past, edited, or trashed) kept as standalone events.', PLUGIN_TEXT_DOMAIN),
+                __('Recurrence disabled. %1$d future unmodified occurrence(s) deleted; %2$d occurrence(s) (past, edited, or trashed) kept as standalone events.', 'simply-events-calendar'),
                 $deleted,
                 $detached
             ),
@@ -513,7 +513,7 @@ class Simple_Events_Recurrence
 
         add_meta_box(
             'sec_recur_edit_scope',
-            __('Series Edit Scope', PLUGIN_TEXT_DOMAIN),
+            __('Series Edit Scope', 'simply-events-calendar'),
             array($this, 'render_edit_scope_metabox'),
             'simple-events',
             'side',
@@ -529,9 +529,9 @@ class Simple_Events_Recurrence
         wp_nonce_field(self::NONCE_ACTION_SCOPE, self::NONCE_FIELD_SCOPE);
 
         $options = array(
-            'only'   => __('Only this occurrence', PLUGIN_TEXT_DOMAIN),
-            'future' => __('This and future occurrences', PLUGIN_TEXT_DOMAIN),
-            'series' => __('Entire series', PLUGIN_TEXT_DOMAIN),
+            'only'   => __('Only this occurrence', 'simply-events-calendar'),
+            'future' => __('This and future occurrences', 'simply-events-calendar'),
+            'series' => __('Entire series', 'simply-events-calendar'),
         );
 
         $parent_edit_url = get_edit_post_link($parent_id);
@@ -539,15 +539,15 @@ class Simple_Events_Recurrence
         echo '<p>';
         printf(
             /* translators: %d is the occurrence number within the series */
-            esc_html__('This event is occurrence #%d in a recurring series.', PLUGIN_TEXT_DOMAIN),
+            esc_html__('This event is occurrence #%d in a recurring series.', 'simply-events-calendar'),
             (int) $index
         );
         if ($parent_edit_url) {
-            echo ' <a href="' . esc_url($parent_edit_url) . '">' . esc_html__('Edit parent', PLUGIN_TEXT_DOMAIN) . '</a>';
+            echo ' <a href="' . esc_url($parent_edit_url) . '">' . esc_html__('Edit parent', 'simply-events-calendar') . '</a>';
         }
         echo '</p>';
 
-        echo '<p><label for="sec_edit_scope"><strong>' . esc_html__('Apply changes to:', PLUGIN_TEXT_DOMAIN) . '</strong></label></p>';
+        echo '<p><label for="sec_edit_scope"><strong>' . esc_html__('Apply changes to:', 'simply-events-calendar') . '</strong></label></p>';
         echo '<select name="sec_edit_scope" id="sec_edit_scope" class="widefat">';
         foreach ($options as $value => $label) {
             printf(
@@ -559,7 +559,7 @@ class Simple_Events_Recurrence
         echo '</select>';
 
         echo '<p class="description">';
-        esc_html_e('Only this occurrence: changes stay here. This and future: changes propagate to later siblings (date excluded). Entire series: propagates to the parent and every sibling, and a date change shifts the whole series.', PLUGIN_TEXT_DOMAIN);
+        esc_html_e('Only this occurrence: changes stay here. This and future: changes propagate to later siblings (date excluded). Entire series: propagates to the parent and every sibling, and a date change shifts the whole series.', 'simply-events-calendar');
         echo '</p>';
     }
 
@@ -1193,7 +1193,7 @@ class Simple_Events_Recurrence
                 $parent_id,
                 sprintf(
                     /* translators: %d is the number of occurrences created in the foreground pass */
-                    __('Created %d occurrence(s) so far; the remaining occurrences will be generated in the background within a few minutes.', PLUGIN_TEXT_DOMAIN),
+                    __('Created %d occurrence(s) so far; the remaining occurrences will be generated in the background within a few minutes.', 'simply-events-calendar'),
                     $created_this_pass
                 ),
                 'info'

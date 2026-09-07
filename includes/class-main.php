@@ -236,7 +236,7 @@ class Simple_Events_Calendar {
      */
     public function load_textdomain() {
         load_plugin_textdomain(
-            PLUGIN_TEXT_DOMAIN,
+            'simply-events-calendar',
             false,
             dirname(plugin_basename(SIMPLE_EVENTS_PLUGIN_FILE)) . '/languages/'
         );
@@ -429,9 +429,9 @@ class Simple_Events_Calendar {
                     'nonce'          => wp_create_nonce(SIMPLE_EVENTS_NONCE_ACTION),
                     'initial_offset' => $increment,
                     'load_increment' => $increment,
-                    'loading_text'   => __('Loading more events...', 'simple_events'),
-                    'retry_text'     => __('Try Again', 'simple_events'),
-                    'no_more_text'   => __('No more events to load.', 'simple_events'),
+                    'loading_text'   => __('Loading more events...', 'simply-events-calendar'),
+                    'retry_text'     => __('Try Again', 'simply-events-calendar'),
+                    'no_more_text'   => __('No more events to load.', 'simply-events-calendar'),
                 )
             );
         }
@@ -475,8 +475,8 @@ class Simple_Events_Calendar {
      */
     public function action_links($links) {
         $plugin_links = array(
-            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events')) . '">' . esc_html__('Events', 'simple_events') . '</a>',
-            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events&page=' . Simple_Events_Settings::PAGE)) . '">' . esc_html__('Settings', 'simple_events') . '</a>',
+            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events')) . '">' . esc_html__('Events', 'simply-events-calendar') . '</a>',
+            '<a href="' . esc_url(admin_url('edit.php?post_type=simple-events&page=' . Simple_Events_Settings::PAGE)) . '">' . esc_html__('Settings', 'simply-events-calendar') . '</a>',
         );
 
         return array_merge($plugin_links, $links);

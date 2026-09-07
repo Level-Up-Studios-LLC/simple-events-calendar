@@ -69,7 +69,7 @@ function simple_events_render_fallback_card($post_data) {
             <?php if ($show_footer) : ?>
                 <div class="simple-events-calendar__post__footer">
                     <a href="<?php echo esc_url($post_data['permalink']); ?>" class="simple-events-calendar__read-more">
-                        <?php esc_html_e('Learn More', PLUGIN_TEXT_DOMAIN); ?>
+                        <?php esc_html_e('Learn More', 'simply-events-calendar'); ?>
                     </a>
                 </div>
             <?php endif; ?>
@@ -880,15 +880,15 @@ function simple_events_render_events_grid($args = array()) {
         // Context-aware empty message, mirroring the [sec_events] shortcode.
         if (!empty($args['category'])) {
             /* translators: %s: category slug */
-            $message = sprintf(esc_html__('No events found in the "%s" category.', 'simple_events'), esc_html((string) $args['category']));
+            $message = sprintf(esc_html__('No events found in the "%s" category.', 'simply-events-calendar'), esc_html((string) $args['category']));
         } elseif (empty($args['show_past'])) {
-            $message = esc_html__('No upcoming events scheduled. Check back soon!', 'simple_events');
+            $message = esc_html__('No upcoming events scheduled. Check back soon!', 'simply-events-calendar');
         } else {
-            $message = esc_html__('No events have been created yet.', 'simple_events');
+            $message = esc_html__('No events have been created yet.', 'simply-events-calendar');
         }
 
         return '<div class="simple-events-calendar simple-events-no-events"><div class="simple-events-empty-state"><h3>'
-            . esc_html__('No Events Found', 'simple_events') . '</h3><p>'
+            . esc_html__('No Events Found', 'simply-events-calendar') . '</h3><p>'
             . $message
             . '</p></div></div>';
     }

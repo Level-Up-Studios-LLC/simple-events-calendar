@@ -133,7 +133,7 @@ class Simple_Events_Elementor {
         $elements_manager->add_category(
             'simple-events',
             array(
-                'title' => __('Simple Events', 'simple_events'),
+                'title' => __('Simple Events', 'simply-events-calendar'),
                 'icon'  => 'eicon-calendar',
             )
         );
@@ -229,7 +229,7 @@ class Simple_Events_Elementor {
         // Ensure our group exists.
         $dynamic_tags->register_group(
             'simple-events',
-            array('title' => __('Simple Events', 'simple_events'))
+            array('title' => __('Simple Events', 'simply-events-calendar'))
         );
 
         $dynamic_tags->register(new Simple_Events_Tag_Date());
@@ -303,7 +303,7 @@ class Simple_Events_Elementor {
             return self::$event_options_cache;
         }
 
-        $options = array('' => __('— Select an event —', 'simple_events'));
+        $options = array('' => __('— Select an event —', 'simply-events-calendar'));
         $events = get_posts(array(
             'post_type'        => 'simple-events',
             'post_status'      => 'publish',
