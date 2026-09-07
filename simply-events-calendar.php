@@ -34,6 +34,62 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
+/*
+ * Freemius product credentials. The product ID and public key are not secrets
+ * and ship inside the plugin by design. The SECRET key is never placed in this
+ * repo — set it in wp-config.php on a sandbox while testing, then remove it.
+ */
+if (!defined('SIMPLE_EVENTS_FS_ID')) {
+    define('SIMPLE_EVENTS_FS_ID', '31777');
+}
+if (!defined('SIMPLE_EVENTS_FS_PUBLIC_KEY')) {
+    define('SIMPLE_EVENTS_FS_PUBLIC_KEY', 'pk_4757bcafb4cc8ca98d6f7b6fdac2c');
+}
+
+if (!function_exists('sec_fs')) {
+    /**
+     * Freemius SDK singleton accessor.
+     *
+     * @return Freemius
+     */
+    function sec_fs()
+    {
+        global $sec_fs;
+
+        if (!isset($sec_fs)) {
+            require_once __DIR__ . '/freemius/start.php';
+
+            $sec_fs = fs_dynamic_init(array(
+                'id'                  => SIMPLE_EVENTS_FS_ID,
+                'slug'                => 'simply-events-calendar',
+                'premium_slug'        => 'simply-events-calendar-premium',
+                'type'                => 'plugin',
+                'public_key'          => SIMPLE_EVENTS_FS_PUBLIC_KEY,
+                'is_premium'          => true,
+                'premium_suffix'      => '(Pro)',
+                'has_premium_version' => true,
+                'has_paid_plans'      => true,
+                'has_addons'          => false,
+                'is_org_compliant'    => true,
+                'anonymous_mode'      => true,
+                'menu'                => array(
+                    'slug'       => 'edit.php?post_type=simple-events',
+                    'account'    => true,
+                    'pricing'    => false,
+                    'contact'    => false,
+                    'support'    => false,
+                    'first-path' => 'edit.php?post_type=simple-events&page=simple-events-settings',
+                ),
+            ));
+        }
+
+        return $sec_fs;
+    }
+
+    sec_fs();
+    do_action('sec_fs_loaded');
+}
+
 // Define plugin constants
 define('SIMPLE_EVENTS_DIR', __DIR__);
 define('SIMPLE_EVENTS_URL', untrailingslashit(plugin_dir_url(__FILE__)));
