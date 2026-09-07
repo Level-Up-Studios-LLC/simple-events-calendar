@@ -99,8 +99,10 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
         <div class="simple-events-calendar__post__thumbnail">
             <a href="<?php echo $permalink; ?>"
                 class="simple-events-calendar__post__link"
+                <?php /* translators: %s is the event title */ ?>
                 aria-label="<?php printf(__('View event: %s', 'simply-events-calendar'), $title); ?>">
                 <img src="<?php echo $thumbnail; ?>"
+                    <?php /* translators: %s is the event title */ ?>
                     alt="<?php echo esc_attr(sprintf(__('Image for event: %s', 'simply-events-calendar'), $title)); ?>"
                     itemprop="image"
                     loading="lazy"
@@ -123,12 +125,14 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
             <time class="simple-events-calendar__post__date"
                 datetime="<?php echo esc_attr($start_iso); ?>"
                 itemprop="startDate">
+                <?php /* translators: %s is the event date, already formatted per the site's date-format setting */ ?>
                 <span class="simple-events-calendar__date-text" aria-label="<?php printf(__('Event date: %s', 'simply-events-calendar'), $date); ?>">
                     <?php echo $date; ?>
                 </span>
             </time>
 
             <?php if ($time_display && $show_time) : ?>
+                <?php /* translators: %s is the event's start (and, if set, end) time, already formatted per the site's time-format setting */ ?>
                 <span class="simple-events-calendar__post__time" aria-label="<?php printf(__('Event time: %s', 'simply-events-calendar'), trim($time_display, ' <span class="simple-events-calendar__post__time__separator">|</span>')); ?>">
                     <?php echo $time_display; ?>
                 </span>
@@ -164,6 +168,7 @@ $start_iso = (is_array($event_schema) && !empty($event_schema['startDate']))
             <footer class="simple-events-calendar__post__footer">
                 <a href="<?php echo $permalink; ?>"
                     class="simple-events-calendar__read-more"
+                    <?php /* translators: %s is the event title */ ?>
                     aria-label="<?php printf(__('Read more about %s', 'simply-events-calendar'), $title); ?>">
                     <?php _e('Learn More', 'simply-events-calendar'); ?>
                     <svg class="simple-events-calendar__arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

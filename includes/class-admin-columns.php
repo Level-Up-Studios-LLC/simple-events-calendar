@@ -48,11 +48,11 @@ class Simple_Events_Admin_Columns {
         return array(
             'cb' => isset($columns['cb']) ? $columns['cb'] : '<input type="checkbox" />',
             'title' => __('Event Title', 'simply-events-calendar'),
-            'event_thumbnail' => __('Image', 'simply-events-calendar'),
+            'event_thumbnail' => _x('Image', 'admin list table column heading', 'simply-events-calendar'),
             'event_date' => __('Event Date', 'simply-events-calendar'),
-            'event_time' => __('Time', 'simply-events-calendar'),
-            'event_location' => __('Location', 'simply-events-calendar'),
-            'taxonomy-simple-events-cat' => __('Categories', 'simply-events-calendar'),
+            'event_time' => _x('Time', 'admin list table column heading', 'simply-events-calendar'),
+            'event_location' => _x('Location', 'admin list table column heading', 'simply-events-calendar'),
+            'taxonomy-simple-events-cat' => _x('Categories', 'admin list table column heading', 'simply-events-calendar'),
             'event_series' => __('Series', 'simply-events-calendar'),
             'date' => isset($columns['date']) ? $columns['date'] : __('Published', 'simply-events-calendar')
         );
@@ -601,7 +601,7 @@ class Simple_Events_Admin_Columns {
     public static function get_column_config() {
         return array(
             'event_thumbnail' => array(
-                'label' => __('Image', 'simply-events-calendar'),
+                'label' => _x('Image', 'admin list table column heading', 'simply-events-calendar'),
                 'width' => '80px',
                 'sortable' => false
             ),
@@ -611,12 +611,12 @@ class Simple_Events_Admin_Columns {
                 'sortable' => true
             ),
             'event_time' => array(
-                'label' => __('Time', 'simply-events-calendar'),
+                'label' => _x('Time', 'admin list table column heading', 'simply-events-calendar'),
                 'width' => '120px',
                 'sortable' => true
             ),
             'event_location' => array(
-                'label' => __('Location', 'simply-events-calendar'),
+                'label' => _x('Location', 'admin list table column heading', 'simply-events-calendar'),
                 'width' => '150px',
                 'sortable' => true
             )

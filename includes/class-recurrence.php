@@ -487,10 +487,28 @@ class Simple_Events_Recurrence
         $this->enqueue_admin_notice(
             $parent_id,
             sprintf(
-                /* translators: 1: future unmodified occurrences deleted, 2: past / modified / trashed occurrences kept as standalone events */
-                __('Recurrence disabled. %1$d future unmodified occurrence(s) deleted; %2$d occurrence(s) (past, edited, or trashed) kept as standalone events.', 'simply-events-calendar'),
-                $deleted,
-                $detached
+                /* translators: 1: sentence about deleted occurrences, 2: sentence about kept occurrences */
+                __('Recurrence disabled. %1$s %2$s', 'simply-events-calendar'),
+                sprintf(
+                    /* translators: %d is the number of future unmodified occurrences deleted */
+                    _n(
+                        '%d future unmodified occurrence deleted.',
+                        '%d future unmodified occurrences deleted.',
+                        $deleted,
+                        'simply-events-calendar'
+                    ),
+                    $deleted
+                ),
+                sprintf(
+                    /* translators: %d is the number of past, edited, or trashed occurrences kept as standalone events */
+                    _n(
+                        '%d occurrence (past, edited, or trashed) kept as a standalone event.',
+                        '%d occurrences (past, edited, or trashed) kept as standalone events.',
+                        $detached,
+                        'simply-events-calendar'
+                    ),
+                    $detached
+                )
             ),
             'warning'
         );
@@ -1193,7 +1211,12 @@ class Simple_Events_Recurrence
                 $parent_id,
                 sprintf(
                     /* translators: %d is the number of occurrences created in the foreground pass */
-                    __('Created %d occurrence(s) so far; the remaining occurrences will be generated in the background within a few minutes.', 'simply-events-calendar'),
+                    _n(
+                        'Created %d occurrence so far; the remaining occurrences will be generated in the background within a few minutes.',
+                        'Created %d occurrences so far; the remaining occurrences will be generated in the background within a few minutes.',
+                        $created_this_pass,
+                        'simply-events-calendar'
+                    ),
                     $created_this_pass
                 ),
                 'info'

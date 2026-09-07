@@ -110,11 +110,18 @@ class Simple_Events_Meta_Box {
                 'monthly' => __('month(s)', 'simply-events-calendar'),
                 'yearly'  => __('year(s)', 'simply-events-calendar'),
             ),
+            // Plural pair for the JS-rendered recurrence summary. The count is
+            // only known client-side, so _n() cannot apply; the JS picks one.
+            // Two-form approximation - languages with more forms read wrong here.
+            /* translators: %d is the number of occurrences (singular form, count = 1) */
             'countOne' => __('%d occurrence', 'simply-events-calendar'),
+            /* translators: %d is the number of occurrences (plural form, count != 1) */
             'countMany'=> __('%d occurrences', 'simply-events-calendar'),
             'never'    => __('repeats indefinitely', 'simply-events-calendar'),
+            /* translators: %s is the recurrence end date value from the date picker (e.g. 2026-12-31) */
             'until'    => __('until %s', 'simply-events-calendar'),
             'sep'      => ' · ',
+            /* translators: %s is a comma-separated list of weekday abbreviations, e.g. "Mon, Wed, Fri" */
             'onDays'   => __('on %s', 'simply-events-calendar'),
             'dayNames' => $day_names,
         ));
@@ -206,7 +213,7 @@ class Simple_Events_Meta_Box {
                 <div class="sec-mb__field">
                     <label class="sec-mb__label" for="sec_event_location">
                         <svg class="sec-mb__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
-                        <?php esc_html_e('Location', 'simply-events-calendar'); ?> <span class="sec-mb__opt"><?php esc_html_e('optional', 'simply-events-calendar'); ?></span>
+                        <?php echo esc_html_x('Location', 'event meta box field label', 'simply-events-calendar'); ?> <span class="sec-mb__opt"><?php esc_html_e('optional', 'simply-events-calendar'); ?></span>
                     </label>
                     <input type="text" id="sec_event_location" name="sec_event_location" class="widefat" maxlength="255" value="<?php echo esc_attr($location); ?>" placeholder="<?php esc_attr_e('e.g., Conference Room A, 123 Main St, or Online', 'simply-events-calendar'); ?>" />
                 </div>
