@@ -52,7 +52,9 @@ class Simple_Events_Pro_Upsell {
      * @return bool
      */
     public static function is_pro_active() {
-        return (bool) apply_filters('simple_events_pro_active', false);
+        $active = function_exists('sec_fs') && sec_fs()->can_use_premium_code();
+
+        return (bool) apply_filters('simple_events_pro_active', $active);
     }
 
     /**
@@ -61,7 +63,11 @@ class Simple_Events_Pro_Upsell {
      * @return string
      */
     public static function pro_url() {
-        return apply_filters('simple_events_pro_url', 'https://levelupstudios.com/simple-events-calendar-pro/');
+        $url = function_exists('sec_fs')
+            ? sec_fs()->get_upgrade_url()
+            : 'https://www.levelupstudios.com/simply-events-calendar/';
+
+        return apply_filters('simple_events_pro_url', $url);
     }
 
     /**
