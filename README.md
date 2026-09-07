@@ -82,7 +82,7 @@ Simple Events Calendar provides an elegant way to create and display events on y
 3. Activate the **Simple Events Calendar** plugin
 4. Start creating events! (Event date/time/location are entered in the "Event Details" box; adjust formatting under Events → Settings.)
 
-> **Upgrading from 4.x (ACF-based)?** No action needed. v5.0.0 removed the Advanced Custom Fields dependency; existing event data is preserved with no migration, and ACF can be deactivated.
+> **Upgrading from 4.x?** No action needed. v5.0.0 removed the third-party custom-fields dependency; existing event data is preserved with no migration, and that plugin can be deactivated.
 
 ## Usage
 

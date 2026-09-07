@@ -18,7 +18,7 @@ Simple Events Calendar is a lightweight, user-friendly plugin that creates beaut
 = Key Features =
 
 * **Responsive Design**: Automatically adapts to different screen sizes (3 columns on desktop, 2 on tablet, 1 on mobile)
-* **No external dependencies**: Native event fields — ACF is no longer required
+* **No external dependencies**: Native event fields — no companion plugin required
 * **Settings page**: Choose the front-end date/time format, display defaults, cache lifetime, and more
 * **Default templates**: Built-in single, archive, and category templates (theme-, Elementor-, and block-theme-overridable)
 * **Single Event shortcode**: `[sec_event id="123"]` — display one event anywhere in card or image-left list layout
@@ -85,7 +85,7 @@ To sort an Elementor **Loop Grid** of events by their event date (instead of the
 
 = No Required Plugins =
 
-This plugin is fully self-contained. Previous versions required Advanced Custom Fields; version 5.0.0 removed that dependency. Existing events created with earlier versions continue to work unchanged — their data is preserved and no migration is needed. ACF can be safely deactivated.
+This plugin is fully self-contained. Versions before 5.0.0 required a separate custom-fields plugin; that dependency was removed in 5.0.0. Existing events created with earlier versions continue to work unchanged — their data is preserved and no migration is needed.
 
 = Developer Features =
 
@@ -114,9 +114,9 @@ Additional languages can be added using standard WordPress translation methods.
 
 == Frequently Asked Questions ==
 
-= Do I need Advanced Custom Fields Pro? =
+= Does this plugin require any other plugin? =
 
-No. Advanced Custom Fields is not required and has not been required since v5.0.0. The plugin is fully self-contained — event date, time, location, and recurrence are all managed through a built-in "Event Details" meta box. Existing events created with earlier ACF-based versions are preserved with no migration needed; ACF can be safely deactivated or removed.
+No. The plugin is fully self-contained — event date, time, location, and recurrence are all managed through a built-in "Event Details" meta box. Events created with any earlier version are preserved with no migration needed.
 
 = Can I customize the event display? =
 
@@ -184,10 +184,10 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 = 5.0.0 (2026-05-29) =
 
 **Removed**
-* Advanced Custom Fields dependency — the plugin is now fully self-contained
+* Third-party custom-fields plugin dependency — the plugin is now fully self-contained
 
 **Added**
-* Native "Event Details" meta box for editing date, time, location, and recurrence (replaces the ACF UI)
+* Native "Event Details" meta box for editing date, time, location, and recurrence (replaces the previous third-party UI)
 * Settings page (Events → Settings): front-end date/time format, display defaults, empty-state copy, cache lifetime + clear button, load-more batch size, recurrence limits, schema.org toggle
 * Element shortcodes for custom layouts: [sec_event_title], [sec_event_image], [sec_event_date], [sec_event_time], [sec_event_location], [sec_event_excerpt], [sec_event_content], [sec_event_categories], [sec_event_button]
 * Default single, archive, and category templates (theme-, Elementor-, and block-theme-overridable)
@@ -195,7 +195,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * schema.org Event structured data on single event pages
 
 **Compatibility**
-* Existing events are preserved with no migration; ACF can be safely deactivated
+* Existing events are preserved with no migration; the previously required field plugin can be safely deactivated
 
 = 4.4.0 (2026-05-28) =
 
@@ -222,7 +222,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 **Fixed**
 * Fixed asset cache-busting (plugin version was hardcoded to an older value, causing browsers to serve stale CSS/JS after upgrades)
 * Fixed archive query meta_query merging so existing relation keys from other plugins are preserved
-* Prevented duplicate `init()` execution caused by hooking both `plugins_loaded` and `acf/init`
+* Prevented duplicate `init()` execution caused by hooking both `plugins_loaded` and a second init action
 * Moved translation loading to the `init` hook to silence the WordPress 6.7+ notice
 * AJAX-loaded event cards now render the "Learn More" footer link, matching shortcode output
 
@@ -262,7 +262,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Improved accessibility features and reduced motion support
 
 **Fixed**
-* Fixed plugin description to clearly specify ACF® requirement
+* Fixed plugin description to clearly specify the custom-fields plugin requirement
 * Improved WordPress version compatibility requirements
 * Enhanced color definitions and margin adjustments for better layout consistency
 * Fixed media query structure for improved readability and maintainability
@@ -282,8 +282,8 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 = 4.1.0 (2024-09-22) =
 
 **Improved**
-* Enhanced ACF dependency error message for better user experience
-* Added direct download link button "Download ACF Free Plugin" to WordPress plugin installer
+* Enhanced dependency error message for better user experience
+* Added a direct download-link button for the required plugin to the WordPress plugin installer
 * Cleaner, more actionable error messages for missing dependencies
 
 = 4.0.3 (2024-09-22) =
@@ -314,7 +314,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * 4:3 aspect ratio for featured images with responsive design
 * Event status filtering in admin
 * Location field with visual indicators
-* Comprehensive ACF dependency checking
+* Comprehensive dependency checking
 * Scroll hints and loading animations
 * Enhanced event card design with hover effects
 
@@ -329,7 +329,7 @@ Yes, the plugin is fully responsive and adapts to different screen sizes automat
 * Infinite scroll error handling
 * Past events filtering
 * Date comparison issues using WordPress timezone
-* ACF Pro detection reliability
+* Field-plugin detection reliability
 * Event ordering consistency
 
 == Upgrade Notice ==
@@ -341,7 +341,7 @@ Adds an in-admin "Upgrade to Pro" area (banner, feature preview, and menu link) 
 Adds display widgets, single-event/Add-to-Calendar features, and a one-time migration that renames very old `events`/`events-cat` data to `simple-events`/`simple-events-cat` so existing events keep working. Back up your database and test on staging before upgrading a production site.
 
 = 5.0.0 =
-Advanced Custom Fields is no longer required. Your existing events are preserved with no migration needed, and ACF can be deactivated after upgrading. Event date/time/location are now edited in the built-in "Event Details" box.
+The separate custom-fields plugin is no longer required. Your existing events are preserved with no migration needed, and that plugin can be deactivated after upgrading. Event date/time/location are now edited in the built-in "Event Details" box.
 
 = 4.2.4 =
 BREAKING CHANGE: Shortcode changed from [simple_events_calendar] to [sec_events]. Please update your shortcodes after upgrading.
