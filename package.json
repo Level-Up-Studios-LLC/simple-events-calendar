@@ -14,7 +14,7 @@
     "watch": "chokidar \"src/css/**/*.scss\" -c \"npm run build:css:dev\"",
     "watch:css": "sass src/css:assets/css --style=expanded --source-map --watch",
     "dev": "npm run build:css:dev",
-    "dist": "rm -rf dist && mkdir dist && robocopy . dist /E /XD node_modules src .git dist docs bin /XF .gitignore package.json package-lock.json .npmrc phpcs.xml *.md /NFL /NDL /NJH /NJS || echo 'Distribution created'",
+    "dist": "rm -rf dist && mkdir dist && robocopy . dist /E /XD node_modules src .git dist docs bin .superpowers /XF .gitignore package.json package-lock.json .npmrc phpcs.xml *.md *.WordPress.*.xml /NFL /NDL /NJH /NJS || echo 'Distribution created'",
     "zip": "npm run dist && cd dist && python -c \"import zipfile, os; z = zipfile.ZipFile('../simply-events-calendar.zip', 'w'); [z.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), '.')) for root, dirs, files in os.walk('.') for file in files]; z.close()\"",
     "verify:free": "bash bin/verify-free.sh"
   },
