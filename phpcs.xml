@@ -44,7 +44,6 @@
             <property name="prefixes" type="array">
                 <element value="simple_events"/>
                 <element value="Simple_Events"/>
-                <element value="PLUGIN_"/>
                 <element value="SIMPLE_EVENTS_"/>
             </property>
         </properties>

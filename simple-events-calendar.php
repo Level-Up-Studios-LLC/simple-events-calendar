@@ -35,15 +35,15 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('PLUGIN_DIR', __DIR__);
-define('PLUGIN_URL', untrailingslashit(plugin_dir_url(__FILE__)));
-define('PLUGIN_ASSETS', PLUGIN_URL . '/assets');
-define('PLUGIN_VERSION', '5.3.0');
+define('SIMPLE_EVENTS_DIR', __DIR__);
+define('SIMPLE_EVENTS_URL', untrailingslashit(plugin_dir_url(__FILE__)));
+define('SIMPLE_EVENTS_ASSETS', SIMPLE_EVENTS_URL . '/assets');
+define('SIMPLE_EVENTS_VERSION', '5.3.0');
 define('SIMPLE_EVENTS_PLUGIN_FILE', __FILE__);
 define('SIMPLE_EVENTS_NONCE_ACTION', 'load_more_events_nonce');
 
 // Load the main plugin class
-require_once PLUGIN_DIR . '/includes/class-main.php';
+require_once SIMPLE_EVENTS_DIR . '/includes/class-main.php';
 
 /**
  * Initialize the plugin

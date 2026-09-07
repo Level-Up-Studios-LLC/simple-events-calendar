@@ -83,17 +83,17 @@ class Simple_Events_Meta_Box {
 
         wp_enqueue_script(
             'simple-events-admin',
-            PLUGIN_ASSETS . '/js/simple-events-admin.js',
+            SIMPLE_EVENTS_ASSETS . '/js/simple-events-admin.js',
             array(),
-            PLUGIN_VERSION,
+            SIMPLE_EVENTS_VERSION,
             true
         );
 
         wp_enqueue_style(
             'simple-events-admin',
-            PLUGIN_ASSETS . '/css/simple-events-admin.css',
+            SIMPLE_EVENTS_ASSETS . '/css/simple-events-admin.css',
             array(),
-            PLUGIN_VERSION
+            SIMPLE_EVENTS_VERSION
         );
 
         $wp_locale = isset($GLOBALS['wp_locale']) ? $GLOBALS['wp_locale'] : null;

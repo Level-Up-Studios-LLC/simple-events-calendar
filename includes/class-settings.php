@@ -200,9 +200,9 @@ class Simple_Events_Settings {
 
         wp_enqueue_script(
             'simple-events-settings',
-            PLUGIN_ASSETS . '/js/simple-events-settings.js',
+            SIMPLE_EVENTS_ASSETS . '/js/simple-events-settings.js',
             array(),
-            PLUGIN_VERSION,
+            SIMPLE_EVENTS_VERSION,
             true
         );
     }

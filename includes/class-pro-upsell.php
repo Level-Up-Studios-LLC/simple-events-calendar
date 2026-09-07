@@ -133,9 +133,9 @@ class Simple_Events_Pro_Upsell {
 
         wp_enqueue_style(
             'simple-events-admin',
-            PLUGIN_ASSETS . '/css/simple-events-admin.css',
+            SIMPLE_EVENTS_ASSETS . '/css/simple-events-admin.css',
             array(),
-            PLUGIN_VERSION
+            SIMPLE_EVENTS_VERSION
         );
     }
 

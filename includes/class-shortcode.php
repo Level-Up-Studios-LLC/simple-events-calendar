@@ -67,7 +67,7 @@ class Simple_Events_Shortcode
         // Include plugin version + login state so cache is naturally invalidated
         // on upgrade, and admin-visible variations don't leak into anon output.
         $cache_key = 'simple_events_shortcode_' . md5(
-            serialize($sanitized_atts) . '|' . PLUGIN_VERSION . '|' . (is_user_logged_in() ? '1' : '0')
+            serialize($sanitized_atts) . '|' . SIMPLE_EVENTS_VERSION . '|' . (is_user_logged_in() ? '1' : '0')
         );
         $cached_result = get_transient($cache_key);
 
@@ -236,7 +236,7 @@ class Simple_Events_Shortcode
             return;
         }
 
-        $template_path = PLUGIN_DIR . '/template-parts/content-event-card.php';
+        $template_path = SIMPLE_EVENTS_DIR . '/template-parts/content-event-card.php';
         if (file_exists($template_path)) {
             include $template_path;
         } else {
@@ -378,9 +378,9 @@ class Simple_Events_Shortcode
             wp_enqueue_style('simple-events-style');
             wp_enqueue_script(
                 'simple-events-shortcode',
-                PLUGIN_ASSETS . '/js/simple-events-shortcode.js',
+                SIMPLE_EVENTS_ASSETS . '/js/simple-events-shortcode.js',
                 array('jquery'),
-                PLUGIN_VERSION,
+                SIMPLE_EVENTS_VERSION,
                 true
             );
 

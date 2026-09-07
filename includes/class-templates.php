@@ -95,7 +95,7 @@ class Simple_Events_Templates {
             return $located;
         }
 
-        $plugin_template = PLUGIN_DIR . '/templates/' . $file;
+        $plugin_template = SIMPLE_EVENTS_DIR . '/templates/' . $file;
         return file_exists($plugin_template) ? $plugin_template : $template;
     }
 

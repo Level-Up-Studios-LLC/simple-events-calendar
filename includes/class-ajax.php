@@ -226,7 +226,7 @@ class Simple_Events_Ajax {
      * @param array $post_data Event data
      */
     private function render_event_card($post_data) {
-        $template_path = PLUGIN_DIR . '/template-parts/content-event-card.php';
+        $template_path = SIMPLE_EVENTS_DIR . '/template-parts/content-event-card.php';
         if (file_exists($template_path)) {
             include $template_path;
         } else {

@@ -120,7 +120,7 @@ function simple_events_render_event_card($flags = array()) {
         return;
     }
 
-    $template_path = PLUGIN_DIR . '/template-parts/content-event-card.php';
+    $template_path = SIMPLE_EVENTS_DIR . '/template-parts/content-event-card.php';
     if (file_exists($template_path)) {
         include $template_path;
     } else {
@@ -623,7 +623,7 @@ function simple_events_clear_all_transients() {
  * @return string Plugin version
  */
 function simple_events_get_version() {
-    return defined('PLUGIN_VERSION') ? PLUGIN_VERSION : '3.0.0';
+    return defined('SIMPLE_EVENTS_VERSION') ? SIMPLE_EVENTS_VERSION : '3.0.0';
 }
 
 /**
@@ -632,7 +632,7 @@ function simple_events_get_version() {
  * @return string Plugin directory path
  */
 function simple_events_get_plugin_dir() {
-    return defined('PLUGIN_DIR') ? PLUGIN_DIR : plugin_dir_path(__FILE__);
+    return defined('SIMPLE_EVENTS_DIR') ? SIMPLE_EVENTS_DIR : plugin_dir_path(__FILE__);
 }
 
 /**
@@ -641,7 +641,7 @@ function simple_events_get_plugin_dir() {
  * @return string Plugin directory URL
  */
 function simple_events_get_plugin_url() {
-    return defined('PLUGIN_URL') ? PLUGIN_URL : plugin_dir_url(__FILE__);
+    return defined('SIMPLE_EVENTS_URL') ? SIMPLE_EVENTS_URL : plugin_dir_url(__FILE__);
 }
 
 /**
@@ -650,7 +650,7 @@ function simple_events_get_plugin_url() {
  * @return string Assets URL
  */
 function simple_events_get_assets_url() {
-    return defined('PLUGIN_ASSETS') ? PLUGIN_ASSETS : simple_events_get_plugin_url() . '/assets';
+    return defined('SIMPLE_EVENTS_ASSETS') ? SIMPLE_EVENTS_ASSETS : simple_events_get_plugin_url() . '/assets';
 }
 
 /**
